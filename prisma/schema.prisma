@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  ATTENDEE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  role      UserRole @default(ATTENDEE)
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizedEvents Event[]        @relation("EventOrganizer")
+  registrations   Registration[]
+  createdEvents   Event[]        @relation("EventCreator")
+  activities Activity[]
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String?
+  location    String
+  venue       String?
+  startDate   DateTime
+  endDate     DateTime
+  capacity    Int
+  price       Float       @default(0)
+  status      EventStatus @default(DRAFT)
+  
+  organizerId String
+  organizer   User        @relation("EventOrganizer", fields: [organizerId], references: [id])
+  
+  creatorId   String
+  creator     User        @relation("EventCreator", fields: [creatorId], references: [id])
+  
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  
+  registrations Registration[]
+  activities Activity[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([organizerId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Registration {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  status    String   @default("CONFIRMED") // CONFIRMED, CANCELLED
+  
+  metadata  Json?
+  ticketNumber String?  @unique @default(cuid())
+  quantity  Int      @default(1)
+  totalAmount Float  @default(0)
+  paymentStatus String? // PENDING, COMPLETED, FAILED
+  paymentId String?
+  
+  // Check-in tracking - Add these new fields
+  checkedIn Boolean  @default(false)
+  checkedInAt DateTime?
+  checkedInBy String? // User ID of who checked them in
+  checkInNotes String? @db.Text // Add this field for notes
+  qrCode    String?  @unique // QR code data
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@index([ticketNumber])
+  @@index([qrCode])
+  @@index([checkedIn]) // Add this index
+  @@index([checkedInAt]) // Add this index
+}
+
+// Add Activity model for tracking check-in history
+model Activity {
+  id        String   @id @default(uuid())
+  type      String   // CHECK_IN, CHECK_IN_UNDO, BULK_CHECK_IN, etc.
+  userId    String
+  eventId   String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event?   @relation(fields: [eventId], references: [id])
+  
+  @@index([type])
+  @@index([userId])
+  @@index([eventId])
+  @@index([createdAt])
+}
