@@ -9,10 +9,10 @@ export default function SignInPage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Top Navigation */}
-      <div className="p-6 lg:p-8">
+      <div className="px-6 lg:px-8 pt-6 pb-4">
         <Link 
           href="/" 
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors group"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 transition-transform" />
           Back to home
@@ -20,22 +20,22 @@ export default function SignInPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-6 lg:px-8">
+      <div className="flex-1 flex items-center justify-center px-6 lg:px-8 pb-8">
         <div className="w-full max-w-sm">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="mb-8">
             {/* Mobile Logo */}
-            <div className="lg:hidden mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-600/20">
-                <Sparkles className="w-8 h-8 text-white" />
+            <div className="lg:hidden mb-6 flex justify-center">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-blue-600" />
               </div>
             </div>
             
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Sign in to EventHub
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Sign in to your account
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your credentials to access your account
+            <p className="text-sm text-gray-600">
+              Welcome back! Please enter your details.
             </p>
           </div>
 
@@ -48,24 +48,24 @@ export default function SignInPage() {
                 headerTitle: "hidden",
                 headerSubtitle: "hidden",
                 socialButtonsBlockButton: 
-                  "relative border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-normal text-gray-700 shadow-sm",
-                socialButtonsBlockButtonText: "font-normal text-sm",
-                dividerLine: "bg-gradient-to-r from-transparent via-gray-200 to-transparent",
-                dividerText: "text-gray-400 bg-white px-4 text-xs font-normal uppercase tracking-wide",
+                  "border border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-gray-700 h-11",
+                socialButtonsBlockButtonText: "font-medium text-sm",
+                dividerLine: "bg-gray-200",
+                dividerText: "text-gray-500 bg-white px-4 text-xs font-medium uppercase tracking-wide",
                 formButtonPrimary: 
-                  "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white transition-all duration-200 font-medium shadow-lg shadow-violet-600/20 hover:shadow-xl hover:shadow-violet-600/30",
+                  "bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 font-medium h-11",
                 footerActionLink: 
-                  "text-violet-600 hover:text-violet-700 transition-colors font-medium",
-                formFieldLabel: "text-gray-700 font-medium text-sm mb-1.5",
+                  "text-blue-600 hover:text-blue-700 transition-colors font-medium",
+                formFieldLabel: "text-gray-900 font-medium text-sm mb-1.5",
                 formFieldInput: 
-                  "border-gray-200 bg-gray-50/50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200",
+                  "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all h-11",
                 formFieldInputShowPasswordButton: "text-gray-400 hover:text-gray-600",
-                identityPreviewEditButton: "text-violet-600 hover:text-violet-700",
-                identityPreviewText: "text-gray-700",
+                identityPreviewEditButton: "text-blue-600 hover:text-blue-700",
+                identityPreviewText: "text-gray-900",
                 formHeaderTitle: "hidden",
                 formHeaderSubtitle: "hidden",
-                otpCodeFieldInput: "border-gray-200 focus:border-violet-500 focus:ring-violet-500/20",
-                formResendCodeLink: "text-violet-600 hover:text-violet-700",
+                otpCodeFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20",
+                formResendCodeLink: "text-blue-600 hover:text-blue-700",
                 alertText: "text-sm",
                 formFieldError: "text-red-600 text-xs mt-1",
                 formFieldSuccessText: "text-green-600 text-xs mt-1",
@@ -81,14 +81,14 @@ export default function SignInPage() {
           />
 
           {/* Footer Links */}
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              New to EventHub?{' '}
+              Don&apos;t have an account?{' '}
               <Link 
                 href="/sign-up" 
-                className="font-semibold text-violet-600 hover:text-violet-700 transition-colors"
+                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
               >
-                Create an account
+                Sign up
               </Link>
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function SignInPage() {
       </div>
 
       {/* Bottom Footer */}
-      <div className="p-6 lg:p-8 border-t border-gray-100">
+      <div className="px-6 lg:px-8 py-6 border-t border-gray-200">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
           <Link href="/terms" className="hover:text-gray-900 transition-colors">
             Terms
@@ -104,11 +104,8 @@ export default function SignInPage() {
           <Link href="/privacy" className="hover:text-gray-900 transition-colors">
             Privacy
           </Link>
-          <Link href="/security" className="hover:text-gray-900 transition-colors">
-            Security
-          </Link>
           <Link href="/help" className="hover:text-gray-900 transition-colors">
-            Help Center
+            Help
           </Link>
         </div>
       </div>

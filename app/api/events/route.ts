@@ -5,22 +5,68 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { getOrCreateUser } from '@/lib/get-or-create-user'
+import { RegistrationMetadata } from '@/types'
 
+
+
+// Alternative: Use nullish() which allows both null and undefined
 const createEventSchema = z.object({
   title: z.string().min(1).max(100),
-  description: z.string().optional(),
+  description: z.string().nullish(), // nullish = optional + nullable
   location: z.string().min(1),
-  venue: z.string().optional(),
+  venue: z.string().nullish(),
   startDate: z.string(),
   endDate: z.string(),
   capacity: z.coerce.number().min(1),
   price: z.coerce.number().min(0),
-  categoryId: z.string().optional(),
-  imageUrl: z.string().optional(),
+  categoryId: z.string().nullish(),
+  imageUrl: z.string().nullish(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+  requiresSeating: z.boolean().optional(),
+  allowGroupBooking: z.boolean().optional(),
+  groupDiscountPercentage: z.number().min(0).max(100).nullish(), // nullish = optional + nullable
+  groupMinQuantity: z.number().min(2).nullish(),
 })
 
-// Add this new function at the end of the file
+// Helper function to calculate total tickets sold for an event
+async function calculateEventTicketsSold(eventId: string): Promise<number> {
+  // Count tickets from ticket purchases (new system)
+  const ticketPurchasesCount = await prisma.ticketPurchase.aggregate({
+    where: {
+      registration: {
+        eventId: eventId,
+        status: 'CONFIRMED' // Only count confirmed registrations
+      }
+    },
+    _sum: { quantity: true }
+  })
+
+  // Count legacy registrations (old system without ticket purchases)
+  const legacyRegistrations = await prisma.registration.findMany({
+    where: {
+      eventId: eventId,
+      status: 'CONFIRMED',
+      ticketPurchases: {
+        none: {} // Registrations without ticket purchases
+      }
+    },
+    select: {
+      metadata: true
+    }
+  })
+
+  // Sum up legacy quantities
+  let legacyCount = 0
+  for (const reg of legacyRegistrations) {
+    const metadata = reg.metadata as RegistrationMetadata | null
+    legacyCount += metadata?.quantity || 1
+  }
+
+  const newSystemCount = ticketPurchasesCount._sum.quantity || 0
+  return newSystemCount + legacyCount
+}
+
+// PUT /api/events - Handle check-in via QR code
 export async function PUT(req: NextRequest) {
   console.log('🧪 CHECK-IN VIA PUT REQUEST')
   
@@ -88,6 +134,11 @@ export async function PUT(req: NextRequest) {
             imageUrl: true,
           },
         },
+        ticketPurchases: {
+          include: {
+            ticketType: true
+          }
+        }
       },
     })
 
@@ -129,6 +180,11 @@ export async function PUT(req: NextRequest) {
             imageUrl: true,
           },
         },
+        ticketPurchases: {
+          include: {
+            ticketType: true
+          }
+        }
       },
     })
 
@@ -192,15 +248,23 @@ export async function GET(req: NextRequest) {
               imageUrl: true,
             },
           },
-          // Include registrations with quantity to calculate total tickets sold
-          registrations: {
+          ticketTypes: {
+            where: { status: 'ACTIVE' },
             select: {
               id: true,
+              name: true,
+              price: true,
               quantity: true,
-            },
+              quantitySold: true,
+              earlyBirdPrice: true,
+              earlyBirdEndDate: true,
+            }
           },
           _count: {
-            select: { registrations: true },
+            select: { 
+              registrations: true,
+              ticketTypes: true,
+            },
           },
         },
         skip,
@@ -211,28 +275,17 @@ export async function GET(req: NextRequest) {
     ])
 
     // Calculate total tickets sold for each event
-    const eventsWithTicketsSold = events.map(event => {
-      const totalTicketsSold = event.registrations.reduce(
-        (sum, reg) => sum + (reg.quantity || 1),
-        0
-      )
-      
-      // Log for debugging
-      console.log(`Event: ${event.title}`)
-      console.log(`Registrations:`, event.registrations)
-      console.log(`Total tickets sold: ${totalTicketsSold}`)
-      console.log(`Capacity: ${event.capacity}`)
-      console.log(`Available spots: ${event.capacity - totalTicketsSold}`)
-      
-      // Remove the full registrations array to keep response light
-      const { registrations, ...eventData } = event
-      
-      return {
-        ...eventData,
-        totalTicketsSold,
-        availableSpots: Math.max(0, event.capacity - totalTicketsSold),
-      }
-    })
+    const eventsWithTicketsSold = await Promise.all(
+      events.map(async (event) => {
+        const totalTicketsSold = await calculateEventTicketsSold(event.id)
+        
+        return {
+          ...event,
+          totalTicketsSold,
+          availableSpots: Math.max(0, event.capacity - totalTicketsSold),
+        }
+      })
+    )
 
     return NextResponse.json({
       events: eventsWithTicketsSold,
@@ -285,24 +338,30 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     console.log('Received event data:', body)
     
+    // Validate the data
     const validatedData = createEventSchema.parse(body)
     console.log('Validated data:', validatedData)
 
+    // Create the event
     const event = await prisma.event.create({
       data: {
         title: validatedData.title,
-        description: validatedData.description || null,
+        description: validatedData.description ?? null,
         location: validatedData.location,
-        venue: validatedData.venue || null,
+        venue: validatedData.venue ?? null,
         startDate: new Date(validatedData.startDate),
         endDate: new Date(validatedData.endDate),
         capacity: validatedData.capacity,
         price: validatedData.price,
-        imageUrl: validatedData.imageUrl || null,
+        imageUrl: validatedData.imageUrl ?? null,
         status: validatedData.status || 'DRAFT',
-        categoryId: validatedData.categoryId || null,
+        categoryId: validatedData.categoryId ?? null,
         organizerId: user.id,
         creatorId: user.id,
+        requiresSeating: validatedData.requiresSeating ?? false,
+        allowGroupBooking: validatedData.allowGroupBooking ?? true,
+        groupDiscountPercentage: validatedData.groupDiscountPercentage ?? null,
+        groupMinQuantity: validatedData.groupMinQuantity ?? 5,
       },
       include: {
         category: true,
@@ -314,31 +373,23 @@ export async function POST(req: NextRequest) {
             imageUrl: true,
           },
         },
-        registrations: {
+        ticketTypes: true,
+        _count: {
           select: {
-            id: true,
-            quantity: true,
-          },
-        },
+            registrations: true,
+            ticketTypes: true,
+          }
+        }
       },
     })
 
-    // Calculate total tickets sold for the newly created event
-    const totalTicketsSold = event.registrations.reduce(
-      (sum, reg) => sum + (reg.quantity || 1),
-      0
-    )
-
-    // Remove registrations array and add calculated fields
-    const { registrations, ...eventData } = event
+    // Calculate total tickets sold for the newly created event (should be 0)
+    const totalTicketsSold = await calculateEventTicketsSold(event.id)
 
     const eventResponse = {
-      ...eventData,
+      ...event,
       totalTicketsSold,
       availableSpots: Math.max(0, event.capacity - totalTicketsSold),
-      _count: {
-        registrations: registrations.length,
-      },
     }
 
     console.log('Event created:', eventResponse)

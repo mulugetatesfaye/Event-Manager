@@ -1,6 +1,18 @@
+// hooks/use-events.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@clerk/nextjs'
 import { toast } from 'sonner'
-import { EventWithRelations, EventFormData } from '@/types'
+import { 
+  EventWithRelations, 
+  EventFormData, 
+  RegistrationWithRelations,
+  DashboardEvent,
+  DashboardRegistration
+} from '@/types'
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface EventsResponse {
   events: EventWithRelations[]
@@ -17,8 +29,16 @@ interface EventsParams {
   limit?: number
   search?: string
   category?: string
+  status?: string
 }
 
+// ============================================================================
+// Query Hooks
+// ============================================================================
+
+/**
+ * Fetch paginated list of events
+ */
 export function useEvents(params?: EventsParams) {
   return useQuery<EventsResponse>({
     queryKey: ['events', params],
@@ -28,26 +48,105 @@ export function useEvents(params?: EventsParams) {
       if (params?.limit) searchParams.set('limit', params.limit.toString())
       if (params?.search) searchParams.set('search', params.search)
       if (params?.category) searchParams.set('category', params.category)
+      if (params?.status) searchParams.set('status', params.status)
 
       const response = await fetch(`/api/events?${searchParams}`)
-      if (!response.ok) throw new Error('Failed to fetch events')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch events')
+      }
       return response.json()
     },
   })
 }
 
+/**
+ * Fetch a single event by ID
+ */
 export function useEvent(id: string) {
   return useQuery<EventWithRelations>({
     queryKey: ['event', id],
     queryFn: async () => {
+      if (!id) throw new Error('Event ID is required')
+      
       const response = await fetch(`/api/events/${id}`)
-      if (!response.ok) throw new Error('Failed to fetch event')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch event')
+      }
       return response.json()
     },
     enabled: !!id,
   })
 }
 
+/**
+ * Fetch current user's organized events (for organizers)
+ */
+export function useMyEvents() {
+  const { isSignedIn } = useAuth()
+  
+  return useQuery<DashboardEvent[]>({
+    queryKey: ['my-events'],
+    queryFn: async () => {
+      const response = await fetch('/api/events/my-events')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch your events')
+      }
+      return response.json()
+    },
+    enabled: isSignedIn,
+  })
+}
+
+/**
+ * Fetch registrations for a specific event
+ */
+export function useEventRegistrations(eventId: string, options?: { enabled?: boolean }) {
+  return useQuery<RegistrationWithRelations[]>({
+    queryKey: ['event-registrations', eventId],
+    queryFn: async () => {
+      if (!eventId) return []
+      
+      const response = await fetch(`/api/events/${eventId}/registrations`)
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch event registrations')
+      }
+      return response.json()
+    },
+    enabled: options?.enabled ?? !!eventId,
+  })
+}
+
+/**
+ * Fetch current user's registrations (events they're attending)
+ */
+export function useMyRegistrations() {
+  const { isSignedIn } = useAuth()
+  
+  return useQuery<DashboardRegistration[]>({
+    queryKey: ['my-registrations'],
+    queryFn: async () => {
+      const response = await fetch('/api/registrations/my')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch your registrations')
+      }
+      return response.json()
+    },
+    enabled: isSignedIn,
+  })
+}
+
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
+
+/**
+ * Create a new event
+ */
 export function useCreateEvent() {
   const queryClient = useQueryClient()
 
@@ -58,15 +157,19 @@ export function useCreateEvent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
+      
+      const result = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create event')
+        throw new Error(result.error || 'Failed to create event')
       }
-      return response.json()
+      return result
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['my-events'] })
       toast.success('Event created successfully')
+      return data
     },
     onError: (error: Error) => {
       toast.error(error.message)
@@ -74,6 +177,9 @@ export function useCreateEvent() {
   })
 }
 
+/**
+ * Update an existing event
+ */
 export function useUpdateEvent(id: string) {
   const queryClient = useQueryClient()
 
@@ -84,15 +190,18 @@ export function useUpdateEvent(id: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
+      
+      const result = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update event')
+        throw new Error(result.error || 'Failed to update event')
       }
-      return response.json()
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] })
       queryClient.invalidateQueries({ queryKey: ['event', id] })
+      queryClient.invalidateQueries({ queryKey: ['my-events'] })
       toast.success('Event updated successfully')
     },
     onError: (error: Error) => {
@@ -101,6 +210,9 @@ export function useUpdateEvent(id: string) {
   })
 }
 
+/**
+ * Delete an event
+ */
 export function useDeleteEvent() {
   const queryClient = useQueryClient()
 
@@ -109,14 +221,17 @@ export function useDeleteEvent() {
       const response = await fetch(`/api/events/${id}`, {
         method: 'DELETE',
       })
+      
+      const result = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to delete event')
+        throw new Error(result.error || 'Failed to delete event')
       }
-      return response.json()
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['my-events'] })
       toast.success('Event deleted successfully')
     },
     onError: (error: Error) => {
@@ -125,23 +240,31 @@ export function useDeleteEvent() {
   })
 }
 
+/**
+ * Register for an event
+ */
 export function useRegisterForEvent(eventId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (data?: unknown) => {
       const response = await fetch(`/api/events/${eventId}/register`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: data ? JSON.stringify(data) : undefined,
       })
+      
+      const result = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to register for event')
+        throw new Error(result.error || 'Failed to register for event')
       }
-      return response.json()
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] })
       toast.success('Successfully registered for the event')
     },
     onError: (error: Error) => {
@@ -150,6 +273,9 @@ export function useRegisterForEvent(eventId: string) {
   })
 }
 
+/**
+ * Cancel event registration
+ */
 export function useCancelRegistration(eventId: string) {
   const queryClient = useQueryClient()
 
@@ -158,16 +284,120 @@ export function useCancelRegistration(eventId: string) {
       const response = await fetch(`/api/events/${eventId}/register`, {
         method: 'DELETE',
       })
+      
+      const result = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to cancel registration')
+        throw new Error(result.error || 'Failed to cancel registration')
       }
-      return response.json()
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] })
       toast.success('Registration cancelled successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+/**
+ * Check in an attendee
+ */
+export function useCheckInAttendee(eventId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (registrationId: string) => {
+      const response = await fetch(`/api/events/${eventId}/check-in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId }),
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to check in attendee')
+      }
+      return result
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['check-in-data', eventId] })
+      toast.success('Attendee checked in successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+/**
+ * Undo check-in for an attendee
+ */
+export function useUndoCheckIn(eventId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (registrationId: string) => {
+      const response = await fetch(`/api/events/${eventId}/check-in`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId }),
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to undo check-in')
+      }
+      return result
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['check-in-data', eventId] })
+      toast.success('Check-in undone successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+/**
+ * Bulk check-in multiple attendees
+ */
+export function useBulkCheckIn(eventId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (registrationIds: string[]) => {
+      const response = await fetch(`/api/events/${eventId}/check-in/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationIds }),
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to bulk check-in attendees')
+      }
+      return result
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['check-in-data', eventId] })
+      toast.success(
+        `Checked in ${data.summary?.successful || 0} of ${data.summary?.total || 0} attendees`
+      )
     },
     onError: (error: Error) => {
       toast.error(error.message)

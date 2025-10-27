@@ -21,14 +21,14 @@ Event management platform with web app (Next.js) and mobile scanner (Flutter)
 ## 🚀 HIGH PRIORITY - Core Features
 
 ### 1. QR Code & Check-in System
-- [ ] Complete Flutter scanner integration with API
-- [ ] Web-based check-in dashboard
-- [ ] Bulk check-in capabilities
-- [ ] Check-in history and timestamps
-- [ ] Export check-in data to CSV
-- [ ] Check-in statistics per event
-- [ ] Undo check-in functionality
-- [ ] Check-in notes/comments
+- [x ] Complete Flutter scanner integration with API
+- [ x] Web-based check-in dashboard
+- [x ] Bulk check-in capabilities
+- [ x] Check-in history and timestamps
+- [x ] Export check-in data to CSV
+- [ x] Check-in statistics per event
+- [x ] Undo check-in functionality
+- [x ] Check-in notes/comments
 
 ### 2. Ticketing System
 - [ ] Multiple ticket types per event

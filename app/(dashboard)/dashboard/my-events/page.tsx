@@ -40,15 +40,14 @@ import {
   Eye, 
   Calendar,
   Users,
-  TrendingUp,
   MapPin,
   DollarSign,
-  Sparkles,
   BarChart3,
   Clock,
   CheckCircle2,
   XCircle,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -128,23 +127,23 @@ export default function MyEventsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-8">
         <div className="flex justify-between items-center">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-32 mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-48" />
+          <div className="animate-pulse space-y-3">
+            <div className="h-8 bg-gray-200 rounded w-48" />
+            <div className="h-4 bg-gray-200 rounded w-64" />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
         <Card>
-          <CardContent className="p-4">
-            <div className="animate-pulse space-y-3">
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-200 rounded" />
+                <div key={i} className="h-16 bg-gray-200 rounded-lg" />
               ))}
             </div>
           </CardContent>
@@ -154,29 +153,25 @@ export default function MyEventsPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 pb-8">
+    <div className="space-y-8 pb-24 lg:pb-8">
       {/* Header Section */}
       <FadeIn direction="down">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-              <span className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                My Events
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              My Events
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+            <p className="text-sm text-gray-600">
               Manage and track all your events
             </p>
           </div>
           <Button 
             asChild 
-            size="sm" 
-            className="h-7 text-xs shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all group relative overflow-hidden w-fit"
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
             <Link href="/events/create">
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <Plus className="w-3 h-3 mr-1.5 relative" />
-              <span className="relative">Create Event</span>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
             </Link>
           </Button>
         </div>
@@ -184,93 +179,105 @@ export default function MyEventsPage() {
 
       {/* Stats Overview */}
       {events && events.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           <FadeIn direction="up" delay={100}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Total</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Calendar className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">{stats.total}</p>
-                <p className="text-[10px] text-gray-500">Events</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-xs text-gray-600">Events</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={150}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Published</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-green-500 to-green-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <CheckCircle2 className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Published</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">{stats.published}</p>
-                <p className="text-[10px] text-gray-500">Live</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">{stats.published}</p>
+                  <p className="text-xs text-gray-600">Live</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={200}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Drafts</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FileText className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Drafts</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">{stats.draft}</p>
-                <p className="text-[10px] text-gray-500">Unpublished</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">{stats.draft}</p>
+                  <p className="text-xs text-gray-600">Unpublished</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={250}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Completed</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Clock className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Completed</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">{stats.completed}</p>
-                <p className="text-[10px] text-gray-500">Past</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+                  <p className="text-xs text-gray-600">Past</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={300}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Attendees</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-pink-500 to-pink-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Attendees</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Users className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">{stats.totalAttendees}</p>
-                <p className="text-[10px] text-gray-500">Total</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalAttendees}</p>
+                  <p className="text-xs text-gray-600">Total</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={350}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Revenue</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <DollarSign className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Revenue</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tabular-nums">${stats.totalRevenue.toFixed(0)}</p>
-                <p className="text-[10px] text-gray-500">Earned</p>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-gray-900">${stats.totalRevenue.toFixed(0)}</p>
+                  <p className="text-xs text-gray-600">Earned</p>
+                </div>
               </CardContent>
             </Card>
           </FadeIn>
@@ -280,36 +287,22 @@ export default function MyEventsPage() {
       {/* Events Table/Empty State */}
       {!events || events.length === 0 ? (
         <FadeIn direction="up" delay={200}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50 relative overflow-hidden">
-            {/* Pattern overlay */}
-            <div 
-              className="absolute inset-0 opacity-[0.015]"
-              style={{
-                backgroundImage: 'radial-gradient(circle, rgb(0, 0, 0) 0.5px, transparent 0.5px)',
-                backgroundSize: '1rem 1rem'
-              }}
-            />
-            
-            <CardContent className="flex flex-col items-center justify-center py-12 relative">
-              <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-2xl blur-xl" />
-                <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Calendar className="w-8 h-8 text-white" />
-                </div>
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="h-20 w-20 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                <Calendar className="h-10 w-10 text-blue-600" />
               </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">No events yet</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center max-w-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No events yet</h3>
+              <p className="text-sm text-gray-600 mb-6 text-center max-w-md">
                 Get started by creating your first event and sharing it with your audience
               </p>
               <Button 
                 asChild 
-                size="sm" 
-                className="h-8 text-xs shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all group relative overflow-hidden"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               >
                 <Link href="/events/create">
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                  <Plus className="w-3.5 h-3.5 mr-1.5 relative" />
-                  <span className="relative">Create Your First Event</span>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Event
                 </Link>
               </Button>
             </CardContent>
@@ -317,139 +310,134 @@ export default function MyEventsPage() {
         </FadeIn>
       ) : (
         <FadeIn direction="up" delay={400}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-            <CardHeader className="pt-4 pb-3">
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="border-b border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded flex items-center justify-center">
-                      <BarChart3 className="w-3 h-3 text-white" />
-                    </div>
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-600" />
                     All Events
                   </CardTitle>
-                  <CardDescription className="text-[10px] mt-0.5">
+                  <CardDescription className="text-xs mt-1">
                     {events.length} {events.length === 1 ? 'event' : 'events'} total
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pb-4">
-              <div className="rounded-lg border border-gray-200/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50/50 hover:bg-gray-50/80">
-                        <TableHead className="text-[10px] font-semibold text-gray-700 h-9">Event Name</TableHead>
-                        <TableHead className="text-[10px] font-semibold text-gray-700 h-9">Date</TableHead>
-                        <TableHead className="text-[10px] font-semibold text-gray-700 h-9">Location</TableHead>
-                        <TableHead className="text-[10px] font-semibold text-gray-700 h-9">Capacity</TableHead>
-                        <TableHead className="text-[10px] font-semibold text-gray-700 h-9">Status</TableHead>
-                        <TableHead className="text-right text-[10px] font-semibold text-gray-700 h-9">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((event: DashboardEvent, index: number) => {
-                        const fillRate = Math.round(((event._count?.registrations || 0) / event.capacity) * 100)
-                        const StatusIcon = getStatusIcon(event.status)
-                        
-                        return (
-                          <TableRow 
-                            key={event.id} 
-                            className="hover:bg-gray-50/50 transition-colors group"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            <TableCell className="font-medium text-xs text-gray-900 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 bg-gradient-to-br from-primary/10 to-purple-600/10 rounded flex items-center justify-center flex-shrink-0 group-hover:from-primary group-hover:to-purple-600 transition-all">
-                                  <Calendar className="w-3 h-3 text-primary group-hover:text-white transition-colors" />
-                                </div>
-                                <span className="truncate max-w-[200px]">{event.title}</span>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                      <TableHead className="text-xs font-semibold text-gray-700">Event Name</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-700">Date & Time</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-700">Location</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-700">Capacity</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-700">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-gray-700">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events.map((event: DashboardEvent) => {
+                      const fillRate = Math.round(((event._count?.registrations || 0) / event.capacity) * 100)
+                      const StatusIcon = getStatusIcon(event.status)
+                      
+                      return (
+                        <TableRow 
+                          key={event.id} 
+                          className="hover:bg-gray-50 transition-colors group"
+                        >
+                          <TableCell className="font-medium text-sm text-gray-900">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Calendar className="w-5 h-5 text-gray-600" />
                               </div>
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-600 py-3">
-                              <div className="flex flex-col">
-                                <span>{format(new Date(event.startDate), 'MMM dd, yyyy')}</span>
-                                <span className="text-[10px] text-gray-500">
-                                  {format(new Date(event.startDate), 'h:mm a')}
+                              <span className="truncate max-w-[250px]">{event.title}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            <div className="space-y-0.5">
+                              <div>{format(new Date(event.startDate), 'MMM dd, yyyy')}</div>
+                              <div className="text-xs text-gray-500">
+                                {format(new Date(event.startDate), 'h:mm a')}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            <div className="flex items-center gap-2 max-w-[200px]">
+                              <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{event.location}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-2 min-w-[140px]">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Users className="w-4 h-4 text-gray-400" />
+                                <span className="text-gray-900 font-medium">
+                                  {event._count?.registrations || 0} / {event.capacity}
                                 </span>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-600 py-3">
-                              <div className="flex items-center gap-1 max-w-[150px]">
-                                <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                <span className="truncate">{event.location}</span>
+                              <div className="flex items-center gap-2">
+                                <Progress value={fillRate} className="h-2 flex-1" />
+                                <span className="text-xs text-gray-600 font-medium min-w-[3rem] text-right">
+                                  {fillRate}%
+                                </span>
                               </div>
-                            </TableCell>
-                            <TableCell className="py-3">
-                              <div className="space-y-1 min-w-[100px]">
-                                <div className="flex items-center gap-1.5 text-xs">
-                                  <Users className="w-3 h-3 text-gray-400" />
-                                  <span className="text-gray-900 font-medium tabular-nums">
-                                    {event._count?.registrations || 0} / {event.capacity}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <Progress value={fillRate} className="h-0.5 flex-1" />
-                                  <span className="text-[10px] text-gray-600 font-medium tabular-nums">
-                                    {fillRate}%
-                                  </span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-3">
-                              <Badge 
-                                variant={getStatusColor(event.status)}
-                                className="text-[10px] h-5 px-2 gap-1"
-                              >
-                                <StatusIcon className="w-2.5 h-2.5" />
-                                {event.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right py-3">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <MoreHorizontal className="w-3.5 h-3.5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40 backdrop-blur-sm bg-white/95">
-                                  <DropdownMenuLabel className="text-[10px] text-gray-500 font-medium">
-                                    ACTIONS
-                                  </DropdownMenuLabel>
-                                  <DropdownMenuSeparator className="bg-gray-100" />
-                                  <DropdownMenuItem asChild className="text-xs cursor-pointer">
-                                    <Link href={`/events/${event.id}`} className="flex items-center">
-                                      <Eye className="w-3 h-3 mr-2 text-gray-400" />
-                                      View Details
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem asChild className="text-xs cursor-pointer">
-                                    <Link href={`/events/${event.id}/edit`} className="flex items-center">
-                                      <Edit className="w-3 h-3 mr-2 text-gray-400" />
-                                      Edit Event
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator className="bg-gray-100" />
-                                  <DropdownMenuItem
-                                    className="text-xs text-red-600 cursor-pointer focus:text-red-600"
-                                    onClick={() => handleDeleteClick(event.id)}
-                                  >
-                                    <Trash2 className="w-3 h-3 mr-2" />
-                                    Delete Event
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={getStatusColor(event.status)}
+                              className="text-xs gap-1.5"
+                            >
+                              <StatusIcon className="w-3 h-3" />
+                              {event.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel className="text-xs text-gray-500">
+                                  Actions
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                  <Link href={`/events/${event.id}`} className="flex items-center">
+                                    <Eye className="w-4 h-4 mr-2 text-gray-400" />
+                                    View Details
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                  <Link href={`/events/${event.id}/edit`} className="flex items-center">
+                                    <Edit className="w-4 h-4 mr-2 text-gray-400" />
+                                    Edit Event
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                                  onClick={() => handleDeleteClick(event.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Event
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -458,24 +446,28 @@ export default function MyEventsPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="backdrop-blur-sm bg-white/95 border-gray-200/50">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-600" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-12 w-12 bg-red-50 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
-              <AlertDialogTitle className="text-base">Delete Event?</AlertDialogTitle>
+              <div>
+                <AlertDialogTitle className="text-lg">Delete Event?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                  This action cannot be undone
+                </AlertDialogDescription>
+              </div>
             </div>
-            <AlertDialogDescription className="text-xs text-gray-600">
-              This action cannot be undone. This will permanently delete the
-              event and all associated registrations from our servers.
+            <AlertDialogDescription className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              This will permanently delete the event and all associated registrations from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-8 text-xs border-gray-300">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="h-8 text-xs bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Delete Event
             </AlertDialogAction>

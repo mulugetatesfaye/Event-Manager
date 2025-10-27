@@ -1,4 +1,4 @@
-// app/api/registrations/my-events/route.ts
+// app/api/registrations/my/route.ts
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
@@ -9,29 +9,17 @@ export async function GET() {
     const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get or create user in database
     const user = await getOrCreateUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Failed to get user information' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to get user information' }, { status: 500 })
     }
 
-    // Fetch registrations for all events organized by this user
     const registrations = await prisma.registration.findMany({
-      where: {
-        event: {
-          organizerId: user.id,
-        },
-      },
+      where: { userId: user.id },
       include: {
         event: {
           include: {
@@ -46,15 +34,6 @@ export async function GET() {
             },
           },
         },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            imageUrl: true,
-          },
-        },
         ticketPurchases: {
           include: {
             ticketType: true,
@@ -67,10 +46,7 @@ export async function GET() {
 
     return NextResponse.json(registrations)
   } catch (error) {
-    console.error('Error fetching registrations for organizer:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch registrations' },
-      { status: 500 }
-    )
+    console.error('Error fetching user registrations:', error)
+    return NextResponse.json({ error: 'Failed to fetch your registrations' }, { status: 500 })
   }
 }

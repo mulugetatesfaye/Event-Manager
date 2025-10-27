@@ -17,52 +17,52 @@ import {
   Calendar, 
   CheckCircle, 
   AlertTriangle,
-  Sparkles,
   Award,
   Lock,
   Settings as SettingsIcon,
   Bell,
   Eye,
   Globe,
-  Clock
+  Clock,
+  Info
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
 // Permission Item Component
 function PermissionItem({ icon: Icon, text }: { icon: ComponentType<SVGProps<SVGSVGElement>>, text: string }) {
   return (
-    <li className="flex items-center gap-2 text-[10px] text-gray-600">
-      <Icon className="w-3 h-3 text-green-600 flex-shrink-0" />
+    <li className="flex items-center gap-2 text-sm text-gray-600">
+      <Icon className="w-4 h-4 text-green-600 flex-shrink-0" />
       <span>{text}</span>
     </li>
   )
 }
 
-
 // Role Icon Component
 function RoleIconDisplay({ role }: { role: string }) {
   switch (role) {
     case 'ADMIN':
-      return <Shield className="w-6 h-6 text-white" />
+      return <Shield className="w-6 h-6 text-blue-600" />
     case 'ORGANIZER':
-      return <Award className="w-6 h-6 text-white" />
+      return <Award className="w-6 h-6 text-blue-600" />
     case 'ATTENDEE':
-      return <UserIcon className="w-6 h-6 text-white" />
+      return <UserIcon className="w-6 h-6 text-blue-600" />
     default:
-      return <UserIcon className="w-6 h-6 text-white" />
+      return <UserIcon className="w-6 h-6 text-blue-600" />
   }
 }
 
-// Helper function for role color
-function getRoleColor(role: string) {
+// Helper function for role badge color
+function getRoleBadgeVariant(role: string) {
   switch (role) {
     case 'ADMIN':
-      return 'from-red-500 to-orange-600'
+      return 'destructive'
     case 'ORGANIZER':
-      return 'from-blue-500 to-blue-600'
+      return 'default'
     case 'ATTENDEE':
-      return 'from-green-500 to-green-600'
+      return 'secondary'
     default:
-      return 'from-gray-500 to-gray-600'
+      return 'secondary'
   }
 }
 
@@ -71,14 +71,14 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-2" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-3">
+          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-4 bg-gray-200 rounded w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-48 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-64 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -86,101 +86,100 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 pb-8">
+    <div className="space-y-8 pb-24 lg:pb-8">
       {/* Header */}
       <FadeIn direction="down">
-        <div>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-            <span className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Settings
-            </span>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Settings
           </h1>
-          <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+          <p className="text-sm text-gray-600">
             Manage your account settings and preferences
           </p>
         </div>
       </FadeIn>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Profile Information */}
         <FadeIn direction="up" delay={100}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-            <CardHeader className="pt-4 pb-3">
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="border-b border-gray-200 bg-gray-50">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded flex items-center justify-center">
-                  <UserIcon className="w-3 h-3 text-white" />
+                <UserIcon className="w-5 h-5 text-blue-600" />
+                <div>
+                  <CardTitle className="text-base font-semibold">Profile Information</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Your profile is managed by Clerk authentication
+                  </CardDescription>
                 </div>
-                <CardTitle className="text-sm">Profile Information</CardTitle>
               </div>
-              <CardDescription className="text-[10px]">
-                Your profile is managed by Clerk authentication
-              </CardDescription>
             </CardHeader>
-            <CardContent className="pb-4 space-y-4">
-              <div className="flex items-center gap-3">
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full ring-2 ring-gray-100 overflow-hidden">
+                  <div className="w-16 h-16 rounded-full ring-2 ring-gray-200 overflow-hidden">
                     <UserButton 
                       appearance={{
                         elements: {
-                          avatarBox: 'w-14 h-14'
+                          avatarBox: 'w-16 h-16'
                         }
                       }}
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded-full border-2 border-white flex items-center justify-center">
-                    <CheckCircle className="w-2.5 h-2.5 text-white" />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-3.5 h-3.5 text-white" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900 truncate">
+                  <p className="font-semibold text-base text-gray-900 truncate">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-gray-600 truncate">{user?.email}</p>
+                  <p className="text-sm text-gray-600 truncate">{user?.email}</p>
                   <Badge 
                     variant="outline" 
-                    className="mt-1 text-[10px] h-4 px-1.5"
+                    className="mt-2 text-xs border-gray-300"
                   >
+                    <CheckCircle className="w-3 h-3 mr-1 text-green-600" />
                     Verified Account
                   </Badge>
                 </div>
               </div>
 
-              <Separator className="bg-gray-200" />
+              <Separator />
 
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-[10px] text-gray-600 font-medium">First Name</Label>
+                    <Label className="text-sm text-gray-700 font-medium">First Name</Label>
                     <Input 
                       value={user?.firstName || ''} 
                       disabled 
-                      className="h-8 text-xs mt-1 bg-gray-50 border-gray-200"
+                      className="mt-2 bg-gray-50 border-gray-300"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] text-gray-600 font-medium">Last Name</Label>
+                    <Label className="text-sm text-gray-700 font-medium">Last Name</Label>
                     <Input 
                       value={user?.lastName || ''} 
                       disabled 
-                      className="h-8 text-xs mt-1 bg-gray-50 border-gray-200"
+                      className="mt-2 bg-gray-50 border-gray-300"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600 font-medium">Email Address</Label>
+                  <Label className="text-sm text-gray-700 font-medium">Email Address</Label>
                   <Input 
                     value={user?.email || ''} 
                     disabled 
-                    className="h-8 text-xs mt-1 bg-gray-50 border-gray-200"
+                    className="mt-2 bg-gray-50 border-gray-300"
                   />
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-[10px] text-blue-800">
-                  To update your profile, click on your avatar above
+              <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-800">
+                  To update your profile information, click on your avatar above
                 </p>
               </div>
             </CardContent>
@@ -189,42 +188,39 @@ export default function SettingsPage() {
 
         {/* Account Role */}
         <FadeIn direction="up" delay={150}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-            <CardHeader className="pt-4 pb-3">
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="border-b border-gray-200 bg-gray-50">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center">
-                  <Shield className="w-3 h-3 text-white" />
+                <Shield className="w-5 h-5 text-blue-600" />
+                <div>
+                  <CardTitle className="text-base font-semibold">Account Role</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Your current role and permissions
+                  </CardDescription>
                 </div>
-                <CardTitle className="text-sm">Account Role</CardTitle>
               </div>
-              <CardDescription className="text-[10px]">
-                Your current role and permissions
-              </CardDescription>
             </CardHeader>
-            <CardContent className="pb-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-12 h-12 bg-gradient-to-br rounded-lg flex items-center justify-center shadow-sm",
-                  getRoleColor(user?.role || 'ATTENDEE')
-                )}>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-blue-50 rounded-lg flex items-center justify-center">
                   <RoleIconDisplay role={user?.role || 'ATTENDEE'} />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-xs text-gray-600 mb-0.5">Current Role</p>
+                  <p className="font-medium text-sm text-gray-600 mb-2">Current Role</p>
                   <Badge 
-                    variant={user?.role === 'ADMIN' ? 'default' : 'secondary'}
-                    className="text-xs h-5 px-2"
+                    variant={getRoleBadgeVariant(user?.role || 'ATTENDEE')}
+                    className="text-sm"
                   >
                     {user?.role}
                   </Badge>
                 </div>
               </div>
 
-              <Separator className="bg-gray-200" />
+              <Separator />
 
-              <div className="space-y-2">
-                <p className="font-semibold text-xs text-gray-900">Role Permissions:</p>
-                <ul className="space-y-1.5">
+              <div className="space-y-3">
+                <p className="font-semibold text-sm text-gray-900">Role Permissions:</p>
+                <ul className="space-y-2">
                   {user?.role === 'ADMIN' && (
                     <>
                       <PermissionItem icon={CheckCircle} text="Full access to all features" />
@@ -253,13 +249,13 @@ export default function SettingsPage() {
               </div>
 
               {user?.role === 'ATTENDEE' && (
-                <div className="flex items-start gap-2 p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] text-blue-800 font-medium mb-0.5">
+                    <p className="text-sm text-blue-800 font-medium mb-1">
                       Want to create events?
                     </p>
-                    <p className="text-[10px] text-blue-700">
+                    <p className="text-sm text-blue-700">
                       Contact an administrator to upgrade to Organizer
                     </p>
                   </div>
@@ -272,26 +268,26 @@ export default function SettingsPage() {
 
       {/* Account Details */}
       <FadeIn direction="up" delay={200}>
-        <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-          <CardHeader className="pt-4 pb-3">
+        <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+          <CardHeader className="border-b border-gray-200 bg-gray-50">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded flex items-center justify-center">
-                <Calendar className="w-3 h-3 text-white" />
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <div>
+                <CardTitle className="text-base font-semibold">Account Details</CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Information about your account
+                </CardDescription>
               </div>
-              <CardTitle className="text-sm">Account Details</CardTitle>
             </div>
-            <CardDescription className="text-[10px]">
-              Information about your account
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] text-gray-600 font-medium flex items-center gap-1">
-                  <Calendar className="w-2.5 h-2.5" />
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600 font-medium flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
                   Account Created
                 </Label>
-                <p className="font-semibold text-xs text-gray-900 tabular-nums">
+                <p className="font-semibold text-base text-gray-900">
                   {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -300,12 +296,12 @@ export default function SettingsPage() {
                 </p>
               </div>
               
-              <div className="space-y-1">
-                <Label className="text-[10px] text-gray-600 font-medium flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" />
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600 font-medium flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" />
                   Last Updated
                 </Label>
-                <p className="font-semibold text-xs text-gray-900 tabular-nums">
+                <p className="font-semibold text-base text-gray-900">
                   {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -314,24 +310,24 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[10px] text-gray-600 font-medium flex items-center gap-1">
-                  <Shield className="w-2.5 h-2.5" />
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600 font-medium flex items-center gap-1.5">
+                  <Shield className="w-4 h-4" />
                   Account Status
                 </Label>
-                <Badge variant="default" className="text-[10px] h-5 px-2">
-                  <CheckCircle className="w-2.5 h-2.5 mr-1" />
+                <Badge variant="default" className="text-sm bg-blue-600 hover:bg-blue-700">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                   Active
                 </Badge>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[10px] text-gray-600 font-medium flex items-center gap-1">
-                  <Mail className="w-2.5 h-2.5" />
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600 font-medium flex items-center gap-1.5">
+                  <Mail className="w-4 h-4" />
                   Email Status
                 </Label>
-                <Badge variant="default" className="text-[10px] h-5 px-2">
-                  <CheckCircle className="w-2.5 h-2.5 mr-1" />
+                <Badge variant="default" className="text-sm bg-blue-600 hover:bg-blue-700">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                   Verified
                 </Badge>
               </div>
@@ -342,61 +338,61 @@ export default function SettingsPage() {
 
       {/* Preferences */}
       <FadeIn direction="up" delay={250}>
-        <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-          <CardHeader className="pt-4 pb-3">
+        <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+          <CardHeader className="border-b border-gray-200 bg-gray-50">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded flex items-center justify-center">
-                <SettingsIcon className="w-3 h-3 text-white" />
+              <SettingsIcon className="w-5 h-5 text-blue-600" />
+              <div>
+                <CardTitle className="text-base font-semibold">Preferences</CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Customize your experience
+                </CardDescription>
               </div>
-              <CardTitle className="text-sm">Preferences</CardTitle>
             </div>
-            <CardDescription className="text-[10px]">
-              Customize your experience
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                    <Bell className="w-4 h-4 text-blue-600" />
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Bell className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-xs text-gray-900">Email Notifications</p>
-                    <p className="text-[10px] text-gray-600">Receive event updates via email</p>
+                    <p className="font-semibold text-sm text-gray-900">Email Notifications</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Receive event updates via email</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-[10px] h-5 px-2">
+                <Badge variant="secondary" className="text-xs">
                   Enabled
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-3 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
-                    <Eye className="w-4 h-4 text-purple-600" />
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Eye className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-xs text-gray-900">Profile Visibility</p>
-                    <p className="text-[10px] text-gray-600">Control who can see your profile</p>
+                    <p className="font-semibold text-sm text-gray-900">Profile Visibility</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Control who can see your profile</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-[10px] h-5 px-2">
+                <Badge variant="secondary" className="text-xs">
                   Public
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-3 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
-                    <Globe className="w-4 h-4 text-green-600" />
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-xs text-gray-900">Language</p>
-                    <p className="text-[10px] text-gray-600">Choose your preferred language</p>
+                    <p className="font-semibold text-sm text-gray-900">Language</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Choose your preferred language</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-[10px] h-5 px-2">
+                <Badge variant="secondary" className="text-xs">
                   English
                 </Badge>
               </div>
@@ -407,28 +403,28 @@ export default function SettingsPage() {
 
       {/* Danger Zone */}
       <FadeIn direction="up" delay={300}>
-        <Card className="border border-red-200/50 hover:border-red-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-red-50/30">
-          <CardHeader className="pt-4 pb-3">
+        <Card className="border-2 border-red-200 hover:shadow-lg transition-shadow duration-200 bg-red-50">
+          <CardHeader className="border-b border-red-200 bg-red-50">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-red-500 to-red-600 rounded flex items-center justify-center">
-                <AlertTriangle className="w-3 h-3 text-white" />
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div>
+                <CardTitle className="text-base font-semibold text-red-600">Danger Zone</CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Irreversible and destructive actions
+                </CardDescription>
               </div>
-              <CardTitle className="text-sm text-red-600">Danger Zone</CardTitle>
             </div>
-            <CardDescription className="text-[10px]">
-              Irreversible and destructive actions
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border border-red-200 rounded-lg bg-white/50">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-4 h-4 text-red-600" />
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-2 border-red-200 rounded-lg bg-white">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-xs text-red-600">Delete Account</p>
-                    <p className="text-[10px] text-gray-600">
+                    <p className="font-semibold text-sm text-red-600">Delete Account</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
                       Permanently delete your account and all data
                     </p>
                   </div>
@@ -436,16 +432,15 @@ export default function SettingsPage() {
                 <Button 
                   variant="destructive" 
                   disabled
-                  size="sm"
-                  className="h-7 text-xs px-3 w-full sm:w-auto"
+                  className="w-full sm:w-auto disabled:opacity-50"
                 >
                   Delete Account
                 </Button>
               </div>
               
-              <div className="flex items-start gap-2 p-2.5 bg-orange-50 border border-orange-200 rounded-lg">
-                <AlertTriangle className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
-                <p className="text-[10px] text-orange-800">
+              <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-orange-800">
                   Account deletion is currently disabled. Please contact support if you need assistance.
                 </p>
               </div>

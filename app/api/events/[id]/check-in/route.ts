@@ -11,10 +11,8 @@ interface RouteParams {
   }>
 }
 
-// Define metadata type
-interface RegistrationMetadata {
-  checkInNotes?: string
-  undoReason?: string
+// Define metadata type for check-in history
+interface CheckInMetadata {
   checkInHistory?: Array<{
     action: string
     timestamp: string
@@ -26,7 +24,17 @@ interface RegistrationMetadata {
   [key: string]: unknown
 }
 
-// GET /api/events/[id]/check-in - Get check-in statistics and history
+// Helper function to calculate total tickets for a registration
+function calculateRegistrationTickets(registration: {
+  ticketPurchases?: Array<{ quantity: number }>
+}) {
+  if (!registration.ticketPurchases || registration.ticketPurchases.length === 0) {
+    return 1 // Default to 1 for simple registrations
+  }
+  return registration.ticketPurchases.reduce((sum, tp) => sum + tp.quantity, 0)
+}
+
+// GET /api/events/[id]/check-in - Get check-in data for event
 export async function GET(
   req: NextRequest,
   { params }: RouteParams
@@ -34,7 +42,7 @@ export async function GET(
   try {
     const { id: eventId } = await params
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -50,16 +58,16 @@ export async function GET(
       )
     }
 
-    // Check if user is organizer or admin
+    // Get event and check permissions
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: {
         id: true,
         title: true,
-        organizerId: true,
         capacity: true,
         startDate: true,
         endDate: true,
+        organizerId: true,
       }
     })
 
@@ -73,14 +81,17 @@ export async function GET(
     // Check permissions
     if (event.organizerId !== user.id && user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'You do not have permission to view check-in data' },
+        { error: 'You do not have permission to access check-in data' },
         { status: 403 }
       )
     }
 
-    // Get all registrations with check-in data
+    // Get all registrations with ticket purchases
     const registrations = await prisma.registration.findMany({
-      where: { eventId },
+      where: {
+        eventId,
+        status: 'CONFIRMED',
+      },
       include: {
         user: {
           select: {
@@ -89,90 +100,141 @@ export async function GET(
             lastName: true,
             email: true,
             imageUrl: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
+            ticketType: {
+              select: {
+                name: true,
+              }
+            }
           }
-        }
+        },
       },
-      orderBy: {
-        checkedInAt: 'desc'
-      }
+      orderBy: [
+        { checkedIn: 'desc' },
+        { checkedInAt: 'desc' },
+        { createdAt: 'desc' }
+      ]
     })
 
     // Calculate statistics
     const totalRegistrations = registrations.length
-    const totalTickets = registrations.reduce((sum, reg) => sum + (reg.quantity || 1), 0)
+    const totalTickets = registrations.reduce((sum, reg) => {
+      return sum + calculateRegistrationTickets(reg)
+    }, 0)
+    
     const checkedInRegistrations = registrations.filter(r => r.checkedIn)
     const checkedInCount = checkedInRegistrations.length
-    const checkedInTickets = checkedInRegistrations.reduce((sum, reg) => sum + (reg.quantity || 1), 0)
+    const checkedInTickets = checkedInRegistrations.reduce((sum, reg) => {
+      return sum + calculateRegistrationTickets(reg)
+    }, 0)
     
-    // Group check-ins by hour for timeline
-    const checkInTimeline = checkedInRegistrations.reduce((acc, reg) => {
-      if (reg.checkedInAt) {
-        const hour = new Date(reg.checkedInAt).toISOString().slice(0, 13) + ':00:00'
-        acc[hour] = (acc[hour] || 0) + 1
+    const notCheckedInCount = totalRegistrations - checkedInCount
+    const notCheckedInTickets = totalTickets - checkedInTickets
+    const checkInRate = totalRegistrations > 0 
+      ? Math.round((checkedInCount / totalRegistrations) * 100) 
+      : 0
+    const ticketCheckInRate = totalTickets > 0 
+      ? Math.round((checkedInTickets / totalTickets) * 100) 
+      : 0
+
+    // Generate timeline data (last 7 days)
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    const checkInsByHour = await prisma.registration.groupBy({
+      by: ['checkedInAt'],
+      where: {
+        eventId,
+        checkedIn: true,
+        checkedInAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      _count: true,
+    })
+
+    // Create timeline buckets
+    const timeline = Array.from({ length: 24 }, (_, i) => ({
+      time: `${i.toString().padStart(2, '0')}:00`,
+      count: 0,
+    }))
+
+    checkInsByHour.forEach((item) => {
+      if (item.checkedInAt) {
+        const hour = new Date(item.checkedInAt).getHours()
+        timeline[hour].count += item._count
       }
-      return acc
-    }, {} as Record<string, number>)
+    })
 
     // Get recent check-ins (last 10)
-    const recentCheckIns = checkedInRegistrations
-      .slice(0, 10)
-      .map(reg => {
-        const metadata = (reg.metadata || {}) as RegistrationMetadata
-        return {
-          id: reg.id,
-          user: reg.user,
-          checkedInAt: reg.checkedInAt,
-          checkedInBy: reg.checkedInBy,
-          quantity: reg.quantity,
-          notes: metadata.checkInNotes || null
+    const recentCheckIns = await prisma.registration.findMany({
+      where: {
+        eventId,
+        checkedIn: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
+          }
         }
-      })
+      },
+      orderBy: {
+        checkedInAt: 'desc',
+      },
+      take: 10,
+    })
 
     return NextResponse.json({
-      event: {
-        id: event.id,
-        title: event.title,
-        capacity: event.capacity,
-        startDate: event.startDate,
-        endDate: event.endDate,
-      },
+      event,
       statistics: {
         totalRegistrations,
         totalTickets,
         checkedInCount,
         checkedInTickets,
-        notCheckedInCount: totalRegistrations - checkedInCount,
-        notCheckedInTickets: totalTickets - checkedInTickets,
-        checkInRate: totalRegistrations > 0 
-          ? Math.round((checkedInCount / totalRegistrations) * 100) 
-          : 0,
-        ticketCheckInRate: totalTickets > 0
-          ? Math.round((checkedInTickets / totalTickets) * 100)
-          : 0,
+        notCheckedInCount,
+        notCheckedInTickets,
+        checkInRate,
+        ticketCheckInRate,
       },
-      timeline: Object.entries(checkInTimeline).map(([time, count]) => ({
-        time,
-        count
-      })).sort((a, b) => a.time.localeCompare(b.time)),
-      recentCheckIns,
-      registrations: registrations.map(reg => {
-        const metadata = (reg.metadata || {}) as RegistrationMetadata
-        return {
-          id: reg.id,
-          user: reg.user,
-          status: reg.status,
-          quantity: reg.quantity,
-          checkedIn: reg.checkedIn,
-          checkedInAt: reg.checkedInAt,
-          checkedInBy: reg.checkedInBy,
-          checkInNotes: metadata.checkInNotes || null,
-          ticketNumber: reg.ticketNumber,
-          createdAt: reg.createdAt,
-        }
-      })
+      timeline,
+      recentCheckIns: recentCheckIns.map(reg => ({
+        id: reg.id,
+        user: reg.user,
+        checkedInAt: reg.checkedInAt,
+        checkedInBy: reg.checkedInBy,
+        quantity: calculateRegistrationTickets(reg),
+        notes: reg.checkInNotes || null,
+      })),
+      registrations: registrations.map(reg => ({
+        id: reg.id,
+        user: reg.user,
+        status: reg.status,
+        quantity: calculateRegistrationTickets(reg),
+        ticketTypes: reg.ticketPurchases?.map(tp => tp.ticketType.name).join(', ') || null,
+        checkedIn: reg.checkedIn,
+        checkedInAt: reg.checkedInAt,
+        checkedInBy: reg.checkedInBy,
+        checkInNotes: reg.checkInNotes || null,
+        ticketNumber: reg.ticketNumber,
+        createdAt: reg.createdAt,
+      })),
     })
   } catch (error) {
-    console.error('Error fetching check-in data:', error)
+    console.error('Check-in data fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch check-in data' },
       { status: 500 }
@@ -180,7 +242,7 @@ export async function GET(
   }
 }
 
-// POST /api/events/[id]/check-in - Perform check-in
+// POST /api/events/[id]/check-in - Check in a user
 export async function POST(
   req: NextRequest,
   { params }: RouteParams
@@ -188,7 +250,7 @@ export async function POST(
   try {
     const { id: eventId } = await params
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -205,12 +267,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { 
-      registrationId, 
-      qrData, 
-      notes,
-      forceCheckIn = false 
-    } = body
+    const { registrationId, qrData, notes, forceCheckIn = false } = body
 
     // Parse registration ID from QR data if provided
     let targetRegistrationId = registrationId
@@ -240,11 +297,29 @@ export async function POST(
       )
     }
 
-    // Get registration with event details
+    // Get event and check permissions
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+    })
+
+    if (!event) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      )
+    }
+
+    if (event.organizerId !== user.id && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'You do not have permission to check in attendees' },
+        { status: 403 }
+      )
+    }
+
+    // Get registration
     const registration = await prisma.registration.findUnique({
       where: { id: targetRegistrationId },
       include: {
-        event: true,
         user: {
           select: {
             id: true,
@@ -252,9 +327,20 @@ export async function POST(
             lastName: true,
             email: true,
             imageUrl: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
           }
         }
-      }
+      },
     })
 
     if (!registration) {
@@ -264,51 +350,52 @@ export async function POST(
       )
     }
 
-    // Verify this registration is for the correct event
     if (registration.eventId !== eventId) {
       return NextResponse.json(
-        { error: 'Registration is not for this event' },
+        { error: 'Registration does not belong to this event' },
         { status: 400 }
       )
     }
 
-    // Check permissions (organizer or admin can check-in)
-    if (registration.event.organizerId !== user.id && user.role !== 'ADMIN') {
+    if (registration.status !== 'CONFIRMED') {
       return NextResponse.json(
-        { error: 'You do not have permission to check-in attendees' },
-        { status: 403 }
+        { error: 'Only confirmed registrations can be checked in' },
+        { status: 400 }
       )
     }
 
     // Check if already checked in
     if (registration.checkedIn && !forceCheckIn) {
-      const history = await getCheckInHistory(registration.id)
-      return NextResponse.json({
-        success: true,
-        alreadyCheckedIn: true,
-        registration: {
-          ...registration,
-          checkInHistory: history
+      return NextResponse.json(
+        {
+          success: true,
+          alreadyCheckedIn: true,
+          registration,
+          message: 'Attendee was already checked in',
+          checkedInAt: registration.checkedInAt,
         },
-        message: `Already checked in at ${registration.checkedInAt}`
-      })
+        { status: 200 }
+      )
     }
 
-    // Prepare metadata with check-in notes
-    const existingMetadata = (registration.metadata || {}) as RegistrationMetadata
-    const updatedMetadata: RegistrationMetadata = {
-      ...existingMetadata,
-      checkInNotes: notes || existingMetadata.checkInNotes,
+    // Update check-in metadata with history
+    const currentMetadata = (registration.metadata as CheckInMetadata) || {}
+    const checkInHistory = Array.isArray(currentMetadata.checkInHistory) 
+      ? currentMetadata.checkInHistory 
+      : []
+
+    const updatedMetadata: CheckInMetadata = {
+      ...currentMetadata,
       checkInHistory: [
-        ...(existingMetadata.checkInHistory || []),
+        ...checkInHistory,
         {
           action: 'CHECK_IN',
           timestamp: new Date().toISOString(),
           userId: user.id,
           userName: `${user.firstName} ${user.lastName}`,
-          notes
-        }
-      ]
+          notes: notes || undefined,
+        },
+      ],
     }
 
     // Perform check-in
@@ -318,10 +405,10 @@ export async function POST(
         checkedIn: true,
         checkedInAt: new Date(),
         checkedInBy: user.id,
+        checkInNotes: notes || registration.checkInNotes || null,
         metadata: updatedMetadata as Prisma.InputJsonValue,
       },
       include: {
-        event: true,
         user: {
           select: {
             id: true,
@@ -329,36 +416,62 @@ export async function POST(
             lastName: true,
             email: true,
             imageUrl: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
           }
         }
-      }
+      },
+    })
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: 'CHECK_IN',
+        userId: user.id,
+        eventId: event.id,
+        metadata: {
+          registrationId: registration.id,
+          attendeeName: `${registration.user.firstName} ${registration.user.lastName}`,
+          attendeeEmail: registration.user.email,
+          quantity: calculateRegistrationTickets(registration),
+          notes: notes || null,
+        } as Prisma.InputJsonValue,
+      },
     })
 
     return NextResponse.json({
       success: true,
-      alreadyCheckedIn: false,
       registration: updatedRegistration,
-      message: 'Check-in successful'
+      message: 'Check-in successful',
+      checkedInAt: updatedRegistration.checkedInAt,
     })
-
   } catch (error) {
     console.error('Check-in error:', error)
     return NextResponse.json(
-      { error: 'Failed to process check-in' },
+      { error: 'Failed to check in attendee' },
       { status: 500 }
     )
   }
 }
 
-// PUT /api/events/[id]/check-in - Undo check-in
-export async function PUT(
+// DELETE /api/events/[id]/check-in - Undo check-in
+export async function DELETE(
   req: NextRequest,
   { params }: RouteParams
 ) {
   try {
     const { id: eventId } = await params
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -384,34 +497,49 @@ export async function PUT(
       )
     }
 
-    // Get registration with event details
+    // Get event and check permissions
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+    })
+
+    if (!event) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      )
+    }
+
+    if (event.organizerId !== user.id && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'You do not have permission to undo check-ins' },
+        { status: 403 }
+      )
+    }
+
+    // Get registration
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
       include: {
-        event: true,
         user: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
           }
         }
-      }
+      },
     })
 
     if (!registration) {
       return NextResponse.json(
         { error: 'Registration not found' },
         { status: 404 }
-      )
-    }
-
-    // Check permissions
-    if (registration.event.organizerId !== user.id && user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'You do not have permission to undo check-ins' },
-        { status: 403 }
       )
     }
 
@@ -422,21 +550,24 @@ export async function PUT(
       )
     }
 
-    // Update metadata with undo information
-    const existingMetadata = (registration.metadata || {}) as RegistrationMetadata
-    const updatedMetadata: RegistrationMetadata = {
-      ...existingMetadata,
-      undoReason: reason,
+    // Update metadata with undo history
+    const currentMetadata = (registration.metadata as CheckInMetadata) || {}
+    const checkInHistory = Array.isArray(currentMetadata.checkInHistory) 
+      ? currentMetadata.checkInHistory 
+      : []
+
+    const updatedMetadata: CheckInMetadata = {
+      ...currentMetadata,
       checkInHistory: [
-        ...(existingMetadata.checkInHistory || []),
+        ...checkInHistory,
         {
           action: 'CHECK_IN_UNDO',
           timestamp: new Date().toISOString(),
           userId: user.id,
           userName: `${user.firstName} ${user.lastName}`,
-          reason
-        }
-      ]
+          reason: reason || undefined,
+        },
+      ],
     }
 
     // Undo check-in
@@ -446,10 +577,10 @@ export async function PUT(
         checkedIn: false,
         checkedInAt: null,
         checkedInBy: null,
+        checkInNotes: null,
         metadata: updatedMetadata as Prisma.InputJsonValue,
       },
       include: {
-        event: true,
         user: {
           select: {
             id: true,
@@ -457,17 +588,37 @@ export async function PUT(
             lastName: true,
             email: true,
             imageUrl: true,
+          },
+        },
+        ticketPurchases: {
+          select: {
+            quantity: true,
           }
         }
-      }
+      },
+    })
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: 'CHECK_IN_UNDO',
+        userId: user.id,
+        eventId: event.id,
+        metadata: {
+          registrationId: registration.id,
+          attendeeName: `${registration.user.firstName} ${registration.user.lastName}`,
+          attendeeEmail: registration.user.email,
+          quantity: calculateRegistrationTickets(registration),
+          reason: reason || null,
+        } as Prisma.InputJsonValue,
+      },
     })
 
     return NextResponse.json({
       success: true,
       registration: updatedRegistration,
-      message: 'Check-in undone successfully'
+      message: 'Check-in undone successfully',
     })
-
   } catch (error) {
     console.error('Undo check-in error:', error)
     return NextResponse.json(
@@ -475,36 +626,4 @@ export async function PUT(
       { status: 500 }
     )
   }
-}
-
-// Helper function to get check-in history from metadata
-async function getCheckInHistory(registrationId: string) {
-  const registration = await prisma.registration.findUnique({
-    where: { id: registrationId },
-    select: {
-      metadata: true,
-      checkedInAt: true,
-      checkedInBy: true,
-      checkedIn: true,
-    }
-  })
-  
-  if (!registration) return []
-  
-  const metadata = (registration.metadata || {}) as RegistrationMetadata
-  const history = metadata.checkInHistory || []
-  
-  // Add current check-in to history if checked in
-  if (registration.checkedIn && registration.checkedInAt) {
-    return [
-      {
-        action: 'CURRENT_CHECK_IN',
-        timestamp: registration.checkedInAt.toISOString(),
-        userId: registration.checkedInBy || '',
-      },
-      ...history
-    ]
-  }
-  
-  return history
 }

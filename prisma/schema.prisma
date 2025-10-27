@@ -7,6 +7,148 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TicketTypeStatus {
+  ACTIVE
+  SOLD_OUT
+  INACTIVE
+}
+
+enum PromoCodeType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  EARLY_BIRD
+}
+
+model TicketType {
+  id          String            @id @default(uuid())
+  eventId     String
+  event       Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  name        String            // "General Admission", "VIP", "Student", "Group"
+  description String?
+  price       Float
+  quantity    Int               // Total tickets available for this type
+  quantitySold Int              @default(0) // Track sold tickets
+  
+  // Pricing tiers
+  earlyBirdPrice    Float?
+  earlyBirdEndDate  DateTime?
+  
+  // Limits
+  minQuantity Int              @default(1)  // Min tickets per purchase
+  maxQuantity Int              @default(10) // Max tickets per purchase
+  
+  // Features
+  features    Json?            // ["Access to VIP lounge", "Free drinks", etc.]
+  
+  // Status
+  status      TicketTypeStatus @default(ACTIVE)
+  
+  // Ordering
+  sortOrder   Int              @default(0)
+  
+  // Relations
+  ticketPurchases TicketPurchase[]
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@index([eventId])
+  @@index([status])
+}
+
+model TicketPurchase {
+  id              String       @id @default(uuid())
+  registrationId  String
+  registration    Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  
+  ticketTypeId    String
+  ticketType      TicketType   @relation(fields: [ticketTypeId], references: [id])
+  
+  quantity        Int          @default(1)
+  unitPrice       Float        // Price paid per ticket (may differ due to promo)
+  subtotal        Float        // quantity * unitPrice
+  
+  // Promo code usage
+  promoCodeId     String?
+  promoCode       PromoCode?   @relation(fields: [promoCodeId], references: [id])
+  discount        Float        @default(0)
+  
+  // Seat assignment (optional)
+  seatNumbers     String[]     // ["A1", "A2", "B5"]
+  
+  // Individual ticket identifiers
+  ticketNumbers   String[]     // Unique QR codes for each ticket
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([registrationId])
+  @@index([ticketTypeId])
+  @@index([promoCodeId])
+}
+
+model PromoCode {
+  id              String         @id @default(uuid())
+  code            String         @unique
+  eventId         String?        // null = applies to all events
+  event           Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  type            PromoCodeType
+  discountValue   Float          // percentage (0-100) or fixed amount
+  
+  // Limits
+  maxUses         Int?           // null = unlimited
+  usedCount       Int            @default(0)
+  maxUsesPerUser  Int            @default(1)
+  
+  // Validity
+  validFrom       DateTime?
+  validUntil      DateTime?
+  
+  // Restrictions
+  minPurchaseAmount Float?       // Minimum purchase to use code
+  applicableTicketTypes String[]  // Ticket type IDs this applies to
+  
+  // Status
+  isActive        Boolean        @default(true)
+  
+  // Relations
+  ticketPurchases TicketPurchase[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@index([code])
+  @@index([eventId])
+  @@index([isActive])
+}
+
+model Seat {
+  id          String   @id @default(uuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  section     String   // "Section A", "VIP Area"
+  row         String?  // "Row 1"
+  seatNumber  String   // "A1", "B2"
+  
+  // Status
+  isReserved  Boolean  @default(false)
+  reservedBy  String?  // Registration ID
+  reservedAt  DateTime?
+  
+  // Pricing (can override ticket type price for premium seats)
+  priceModifier Float? // +10 for front row, etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([eventId, section, seatNumber])
+  @@index([eventId])
+  @@index([isReserved])
+}
+
 enum UserRole {
   ADMIN
   ORGANIZER
@@ -61,6 +203,15 @@ model Event {
   
   registrations Registration[]
   activities Activity[]
+
+  ticketTypes TicketType[]
+  promoCodes  PromoCode[]
+  seats       Seat[]
+
+  requiresSeating Boolean @default(false)
+  allowGroupBooking Boolean @default(true)
+  groupDiscountPercentage Float? // e.g., 10 for 10% off groups of 5+
+  groupMinQuantity Int @default(5)
   
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -91,7 +242,7 @@ model Registration {
   
   metadata  Json?
   ticketNumber String?  @unique @default(cuid())
-  quantity  Int      @default(1)
+  
   totalAmount Float  @default(0)
   paymentStatus String? // PENDING, COMPLETED, FAILED
   paymentId String?
@@ -102,6 +253,17 @@ model Registration {
   checkedInBy String? // User ID of who checked them in
   checkInNotes String? @db.Text // Add this field for notes
   qrCode    String?  @unique // QR code data
+
+  // Promo code used (for tracking)
+  promoCodeUsed String?
+  finalAmount   Float @default(0) // After all discounts
+  
+  // Transfer tracking
+  transferredFrom String? // Registration ID if transferred
+  transferredTo   String? // User ID if transferred
+  transferredAt   DateTime?
+
+  ticketPurchases TicketPurchase[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

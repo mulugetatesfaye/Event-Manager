@@ -1,4 +1,4 @@
-// app/api/registrations/my-events/route.ts
+// app/api/events/my-events/route.ts
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
@@ -7,7 +7,7 @@ import { getOrCreateUser } from '@/lib/get-or-create-user'
 export async function GET() {
   try {
     const { userId } = await auth()
-
+    
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized - Please sign in' },
@@ -25,51 +25,50 @@ export async function GET() {
       )
     }
 
-    // Fetch registrations for all events organized by this user
-    const registrations = await prisma.registration.findMany({
+    // Fetch events organized by this user
+    const events = await prisma.event.findMany({
       where: {
-        event: {
-          organizerId: user.id,
-        },
+        organizerId: user.id,
       },
       include: {
-        event: {
-          include: {
-            category: true,
-            organizer: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-        user: {
+        category: true,
+        organizer: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
-            email: true,
             imageUrl: true,
           },
         },
-        ticketPurchases: {
-          include: {
-            ticketType: true,
-            promoCode: true,
+        ticketTypes: {
+          where: { status: 'ACTIVE' },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            quantity: true,
+            quantitySold: true,
+            earlyBirdPrice: true,
+            earlyBirdEndDate: true,
+          },
+        },
+        _count: {
+          select: {
+            registrations: true,
+            ticketTypes: true,
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
 
-    return NextResponse.json(registrations)
+    return NextResponse.json(events)
   } catch (error) {
-    console.error('Error fetching registrations for organizer:', error)
+    console.error('Error fetching user events:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch registrations' },
+      { error: 'Failed to fetch your events' },
       { status: 500 }
     )
   }

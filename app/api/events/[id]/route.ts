@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { getOrCreateUser } from '@/lib/get-or-create-user'
+import { RegistrationMetadata } from '@/types'
 
 const updateEventSchema = z.object({
   title: z.string().min(1).max(100).optional(),
@@ -25,6 +26,44 @@ interface RouteParams {
   }>
 }
 
+// Helper function to calculate total tickets sold for an event
+async function calculateEventTicketsSold(eventId: string): Promise<number> {
+  // Count tickets from ticket purchases (new system)
+  const ticketPurchasesCount = await prisma.ticketPurchase.aggregate({
+    where: {
+      registration: {
+        eventId: eventId,
+        status: 'CONFIRMED'
+      }
+    },
+    _sum: { quantity: true }
+  })
+
+  // Count legacy registrations (old system without ticket purchases)
+  const legacyRegistrations = await prisma.registration.findMany({
+    where: {
+      eventId: eventId,
+      status: 'CONFIRMED',
+      ticketPurchases: {
+        none: {}
+      }
+    },
+    select: {
+      metadata: true
+    }
+  })
+
+  // Sum up legacy quantities
+  let legacyCount = 0
+  for (const reg of legacyRegistrations) {
+    const metadata = reg.metadata as RegistrationMetadata | null
+    legacyCount += metadata?.quantity || 1
+  }
+
+  const newSystemCount = ticketPurchasesCount._sum.quantity || 0
+  return newSystemCount + legacyCount
+}
+
 // GET /api/events/[id] - Get single event
 export async function GET(
   req: NextRequest,
@@ -44,9 +83,16 @@ export async function GET(
             lastName: true,
             email: true,
             imageUrl: true,
+            role: true,
           },
         },
+        // IMPORTANT: Include ticket types - this was missing!
+        ticketTypes: {
+          where: { status: 'ACTIVE' },
+          orderBy: { sortOrder: 'asc' }
+        },
         registrations: {
+          where: { status: 'CONFIRMED' },
           include: {
             user: {
               select: {
@@ -57,10 +103,18 @@ export async function GET(
                 imageUrl: true,
               },
             },
+            ticketPurchases: {
+              include: {
+                ticketType: true
+              }
+            }
           },
         },
         _count: {
-          select: { registrations: true },
+          select: { 
+            registrations: true,
+            ticketTypes: true,
+          },
         },
       },
     })
@@ -72,11 +126,8 @@ export async function GET(
       )
     }
 
-    // Calculate total tickets sold from all registrations
-    const totalTicketsSold = event.registrations.reduce(
-      (sum, reg) => sum + (reg.quantity || 1),
-      0
-    )
+    // Calculate total tickets sold using the helper function
+    const totalTicketsSold = await calculateEventTicketsSold(event.id)
 
     // Add calculated fields to the response
     const eventWithCalculatedFields = {
@@ -182,23 +233,36 @@ export async function PUT(
             imageUrl: true,
           },
         },
+        // Include ticket types in update response too
+        ticketTypes: {
+          where: { status: 'ACTIVE' },
+          orderBy: { sortOrder: 'asc' }
+        },
         registrations: {
+          where: { status: 'CONFIRMED' },
           select: {
             id: true,
-            quantity: true,
+            metadata: true,
           },
+          include: {
+            ticketPurchases: {
+              select: {
+                quantity: true
+              }
+            }
+          }
         },
         _count: {
-          select: { registrations: true },
+          select: { 
+            registrations: true,
+            ticketTypes: true,
+          },
         },
       },
     })
 
-    // Calculate total tickets sold
-    const totalTicketsSold = updatedEvent.registrations.reduce(
-      (sum, reg) => sum + (reg.quantity || 1),
-      0
-    )
+    // Calculate total tickets sold using the helper function
+    const totalTicketsSold = await calculateEventTicketsSold(updatedEvent.id)
 
     // Remove registrations array and add calculated fields
     const { registrations, ...eventData } = updatedEvent

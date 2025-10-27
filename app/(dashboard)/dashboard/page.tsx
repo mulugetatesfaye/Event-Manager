@@ -1,3 +1,4 @@
+// app/(dashboard)/dashboard/page.tsx
 'use client'
 
 import { useCurrentUser, useMyEvents, useMyRegistrations } from '@/hooks'
@@ -18,23 +19,25 @@ import {
   BarChart3,
   CheckCircle2,
   MapPin,
-  Sparkles,
   Eye,
   Target,
   DollarSign,
-  UserCheck,
-  Star,
-  Zap,
+  Ticket,
   Award,
-  Rocket,
-  Globe,
-  Heart
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { DashboardEvent, DashboardRegistration } from '@/types'
+import { DashboardEvent, DashboardRegistration, EventWithRelations } from '@/types'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
+
+// Import utility functions
+import { 
+  calculateTotalTicketsSold, 
+  calculateEventRevenue,
+  usesTicketingSystem,
+  calculateFillPercentage 
+} from '@/lib/event-utils'
 
 export default function DashboardPage() {
   const { data: user, isLoading: userLoading } = useCurrentUser()
@@ -47,94 +50,98 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const totalEvents = myEvents?.length || 0
     const upcomingEvents = myEvents?.filter(
-      (event: DashboardEvent) => new Date(event.startDate) > new Date()
+      (event) => new Date(event.startDate) > new Date()
     ).length || 0
     
     const totalRegistrations = myRegistrations?.length || 0
     const upcomingRegistrations = myRegistrations?.filter(
-      (reg: DashboardRegistration) => new Date(reg.event.startDate) > new Date()
+      (reg) => new Date(reg.event.startDate) > new Date()
     ).length || 0
 
     // Organizer-specific stats
-    const totalAttendees = myEvents?.reduce(
-      (sum: number, event: DashboardEvent) => sum + (event._count?.registrations || 0), 
-      0
-    ) || 0
+    let totalTickets = 0
+    let totalRevenue = 0
+    let totalCapacity = 0
 
-    const totalRevenue = myEvents?.reduce(
-      (sum: number, event: DashboardEvent) => 
-        sum + (event.price * (event._count?.registrations || 0)), 
-      0
-    ) || 0
+    myEvents?.forEach((event) => {
+      const eventData = event as unknown as EventWithRelations
+      const ticketsSold = calculateTotalTicketsSold(eventData)
+      const revenue = calculateEventRevenue(eventData)
+      
+      totalTickets += ticketsSold
+      totalRevenue += revenue
+      totalCapacity += event.capacity
+    })
 
-    const avgAttendanceRate = totalEvents > 0 
-      ? myEvents?.reduce((sum: number, event: DashboardEvent) => {
-          const rate = ((event._count?.registrations || 0) / event.capacity) * 100
-          return sum + rate
-        }, 0) / totalEvents 
+    const avgFillRate = totalCapacity > 0 
+      ? Math.round((totalTickets / totalCapacity) * 100)
       : 0
 
     const publishedEvents = myEvents?.filter(
-      (event: DashboardEvent) => event.status === 'PUBLISHED'
+      (event) => event.status === 'PUBLISHED'
     ).length || 0
 
     const draftEvents = myEvents?.filter(
-      (event: DashboardEvent) => event.status === 'DRAFT'
+      (event) => event.status === 'DRAFT'
     ).length || 0
 
     const completedEvents = myEvents?.filter(
-      (event: DashboardEvent) => event.status === 'COMPLETED'
+      (event) => event.status === 'COMPLETED'
     ).length || 0
 
-    const completionRate = totalEvents > 0 
-      ? Math.round((completedEvents / totalEvents) * 100)
-      : 0
+    const eventsWithTicketTypes = myEvents?.filter(
+      (event) => usesTicketingSystem(event as unknown as EventWithRelations)
+    ).length || 0
 
     return {
       totalEvents,
       upcomingEvents,
       totalRegistrations,
       upcomingRegistrations,
-      totalAttendees,
+      totalTickets,
       totalRevenue,
-      avgAttendanceRate: Math.round(avgAttendanceRate),
+      avgFillRate,
       publishedEvents,
       draftEvents,
       completedEvents,
-      completionRate
+      eventsWithTicketTypes
     }
   }, [myEvents, myRegistrations])
 
   // Get next upcoming event for attendees
   const nextEvent = useMemo(() => {
+    if (!myRegistrations || myRegistrations.length === 0) return null
+    
     return myRegistrations
-      ?.filter((reg: DashboardRegistration) => new Date(reg.event.startDate) > new Date())
-      .sort((a: DashboardRegistration, b: DashboardRegistration) => 
+      .filter((reg) => new Date(reg.event.startDate) > new Date())
+      .sort((a, b) => 
         new Date(a.event.startDate).getTime() - new Date(b.event.startDate).getTime()
-      )[0]
+      )[0] || null
   }, [myRegistrations])
 
   // Get next upcoming event for organizers
   const nextOrganizerEvent = useMemo(() => {
+    if (!myEvents || myEvents.length === 0) return null
+    
     return myEvents
-      ?.filter((event: DashboardEvent) => new Date(event.startDate) > new Date())
-      .sort((a: DashboardEvent, b: DashboardEvent) => 
+      .filter((event) => new Date(event.startDate) > new Date())
+      .sort((a, b) => 
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-      )[0]
+      )[0] || null
   }, [myEvents])
 
   const isLoading = userLoading || eventsLoading || registrationsLoading
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-2" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -142,189 +149,169 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 pb-8">
+    <div className="space-y-8 pb-24 lg:pb-8">
       {/* Header Section */}
       <FadeIn direction="down">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-              <span className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                Welcome back, {user?.firstName || 'User'}!
-              </span>
-              <span className="ml-2">👋</span>
-            </h1>
-            <p className="text-xs md:text-sm text-gray-600 mt-0.5">
-              {isOrganizer 
-                ? "Here's an overview of your events and performance" 
-                : "Here's what's happening with your events today"}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm" className="h-7 text-xs border-gray-300 hover:border-gray-400">
-              <Link href="/events">
-                <Search className="w-3 h-3 mr-1.5" />
-                Browse Events
-              </Link>
-            </Button>
-            {isOrganizer && (
-              <Button 
-                asChild 
-                size="sm" 
-                className="h-7 text-xs shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all group relative overflow-hidden"
-              >
-                <Link href="/events/create">
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                  <Plus className="w-3 h-3 mr-1.5 relative" />
-                  <span className="relative">Create Event</span>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                Welcome back, {user?.firstName || 'User'}
+              </h1>
+              <p className="text-sm text-gray-600">
+                {isOrganizer 
+                  ? "Here's an overview of your events and performance" 
+                  : "Here's what's happening with your events"}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild variant="outline" className="border-gray-300 hover:bg-gray-50">
+                <Link href="/events">
+                  <Search className="w-4 h-4 mr-2" />
+                  Browse Events
                 </Link>
               </Button>
-            )}
+              {isOrganizer && (
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                  <Link href="/events/create">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Event
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </FadeIn>
 
-      {/* Stats Grid - Different for Organizers vs Attendees */}
+      {/* Stats Grid */}
       {isOrganizer ? (
         <>
           {/* Organizer Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <FadeIn direction="up" delay={100}>
-              <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4">
-                  <CardTitle className="text-xs font-medium text-gray-700">Total Events</CardTitle>
-                  <div className="h-7 w-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Calendar className="h-3.5 w-3.5 text-white" />
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Events</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-xl font-bold text-gray-900 tabular-nums">{stats.totalEvents}</div>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
-                    {stats.publishedEvents} published, {stats.draftEvents} drafts
-                  </p>
-                  <div className="mt-2">
-                    <Progress value={stats.completionRate} className="h-0.5" />
-                    <p className="text-[10px] text-gray-600 mt-0.5">
-                      {stats.completionRate}% completion rate
-                    </p>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalEvents}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <span>{stats.publishedEvents} published</span>
+                    <span className="text-gray-300">•</span>
+                    <span>{stats.draftEvents} drafts</span>
                   </div>
                 </CardContent>
               </Card>
             </FadeIn>
 
             <FadeIn direction="up" delay={200}>
-              <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4">
-                  <CardTitle className="text-xs font-medium text-gray-700">Total Attendees</CardTitle>
-                  <div className="h-7 w-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <UserCheck className="h-3.5 w-3.5 text-white" />
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Tickets Sold</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Ticket className="h-5 w-5 text-blue-600" />
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-xl font-bold text-gray-900 tabular-nums">{stats.totalAttendees}</div>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalTickets}</div>
+                  <p className="text-xs text-gray-600">
                     Across all your events
                   </p>
-                  {stats.upcomingEvents > 0 && (
-                    <Button asChild variant="link" className="px-0 h-auto mt-1.5 p-0" size="sm">
-                      <Link href="/dashboard/registrations" className="text-[10px] text-primary hover:text-primary/80">
-                        View registrations <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
-                      </Link>
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </FadeIn>
 
             <FadeIn direction="up" delay={300}>
-              <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4">
-                  <CardTitle className="text-xs font-medium text-gray-700">Total Revenue</CardTitle>
-                  <div className="h-7 w-7 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <DollarSign className="h-3.5 w-3.5 text-white" />
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-xl font-bold text-gray-900 tabular-nums">${stats.totalRevenue.toFixed(0)}</div>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(0)}</div>
+                  <p className="text-xs text-gray-600">
                     From ticket sales
                   </p>
-                  {stats.totalRevenue > 0 && (
-                    <Button asChild variant="link" className="px-0 h-auto mt-1.5 p-0" size="sm">
-                      <Link href="/dashboard/analytics" className="text-[10px] text-primary hover:text-primary/80">
-                        View analytics <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
-                      </Link>
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </FadeIn>
 
             <FadeIn direction="up" delay={400}>
-              <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4">
-                  <CardTitle className="text-xs font-medium text-gray-700">Avg Fill Rate</CardTitle>
-                  <div className="h-7 w-7 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Target className="h-3.5 w-3.5 text-white" />
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Avg Fill Rate</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Target className="h-5 w-5 text-blue-600" />
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-xl font-bold text-gray-900 tabular-nums">{stats.avgAttendanceRate}%</div>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
-                    Average event capacity
-                  </p>
-                  <div className="mt-2">
-                    <Progress value={stats.avgAttendanceRate} className="h-0.5" />
-                    <p className="text-[10px] text-gray-600 mt-0.5">
-                      Event performance
-                    </p>
-                  </div>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{stats.avgFillRate}%</div>
+                  <Progress value={stats.avgFillRate} className="h-2" />
                 </CardContent>
               </Card>
             </FadeIn>
           </div>
 
-          {/* Next Organizer Event Highlight */}
+          {/* Next Event Highlight */}
           {nextOrganizerEvent && (
             <FadeIn direction="up" delay={500}>
-              <Card className="bg-gradient-to-br from-primary/5 via-purple-500/5 to-background border-primary/20 hover:shadow-lg transition-all backdrop-blur-sm">
-                <CardHeader className="pb-3 pt-4">
+              <Card className="border-2 border-blue-100 bg-blue-50/30 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded flex items-center justify-center">
-                      <Sparkles className="w-3 h-3 text-white" />
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-white" />
                     </div>
-                    <CardTitle className="text-sm">Your Next Event</CardTitle>
+                    <div>
+                      <CardTitle className="text-base font-semibold">Your Next Event</CardTitle>
+                      <CardDescription className="text-xs mt-0.5">Upcoming event details</CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-[10px]">Upcoming event details</CardDescription>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <h3 className="text-base font-semibold text-gray-900">{nextOrganizerEvent.title}</h3>
-                      <div className="flex flex-wrap gap-3 text-[10px] text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                <CardContent>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-semibold text-gray-900">{nextOrganizerEvent.title}</h3>
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
                           <span>{format(new Date(nextOrganizerEvent.startDate), 'PPP')}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
                           <span>{format(new Date(nextOrganizerEvent.startDate), 'p')}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span>{nextOrganizerEvent._count?.registrations || 0} / {nextOrganizerEvent.capacity} registered</span>
+                        <div className="flex items-center gap-2">
+                          <Ticket className="w-4 h-4" />
+                          <span>
+                            {calculateTotalTicketsSold(nextOrganizerEvent as unknown as EventWithRelations)} / {nextOrganizerEvent.capacity}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button asChild size="sm" variant="outline" className="h-7 text-xs border-gray-300">
+                    <div className="flex gap-3">
+                      <Button asChild variant="outline" className="border-gray-300">
                         <Link href={`/events/${nextOrganizerEvent.id}`}>
-                          <Eye className="w-3 h-3 mr-1.5" />
+                          <Eye className="w-4 h-4 mr-2" />
                           View
                         </Link>
                       </Button>
-                      <Button asChild size="sm" className="h-7 text-xs">
-                        <Link href={`/events/${nextOrganizerEvent.id}/edit`}>
-                          Edit Event
+                      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Link href={`/events/${nextOrganizerEvent.id}/manage`}>
+                          Manage Event
                         </Link>
                       </Button>
                     </div>
@@ -337,65 +324,48 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* Attendee Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 title: 'My Registrations',
                 value: stats.totalRegistrations,
-                subtitle: "Events you're attending",
                 icon: Users,
-                color: 'from-green-500 to-green-600',
                 link: stats.totalRegistrations > 0 ? '/dashboard/registrations' : null,
-                linkText: 'Manage'
               },
               {
-                title: 'Upcoming Attendance',
+                title: 'Upcoming Events',
                 value: stats.upcomingRegistrations,
-                subtitle: 'Events to attend soon',
                 icon: TrendingUp,
-                color: 'from-orange-500 to-orange-600',
                 link: stats.upcomingRegistrations > 0 ? '/dashboard/registrations' : null,
-                linkText: 'View schedule'
               },
               {
                 title: 'Events Attended',
                 value: stats.totalRegistrations - stats.upcomingRegistrations,
-                subtitle: 'Past events completed',
                 icon: CheckCircle2,
-                color: 'from-blue-500 to-blue-600'
               },
               {
                 title: 'Discover More',
                 value: 'Browse',
-                subtitle: 'Find new events',
                 icon: Search,
-                color: 'from-purple-500 to-purple-600',
                 link: '/events',
-                linkText: 'Explore events'
               }
             ].map((stat, index) => (
               <FadeIn key={index} direction="up" delay={(index + 1) * 100}>
-                <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4">
-                    <CardTitle className="text-xs font-medium text-gray-700">{stat.title}</CardTitle>
-                    <div className={cn(
-                      "h-7 w-7 bg-gradient-to-br rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform",
-                      stat.color
-                    )}>
-                      <stat.icon className="h-3.5 w-3.5 text-white" />
+                <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                      <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <stat.icon className="h-5 w-5 text-blue-600" />
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pb-4">
-                    <div className="text-xl font-bold text-gray-900 tabular-nums">
-                      {typeof stat.value === 'number' ? stat.value : stat.value}
-                    </div>
-                    <p className="text-[10px] text-gray-600 mt-0.5">
-                      {stat.subtitle}
-                    </p>
+                  <CardContent className="space-y-3">
+                    <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
                     {stat.link && (
-                      <Button asChild variant="link" className="px-0 h-auto mt-1.5 p-0" size="sm">
-                        <Link href={stat.link} className="text-[10px] text-primary hover:text-primary/80">
-                          {stat.linkText} <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+                      <Button asChild variant="link" className="px-0 h-auto">
+                        <Link href={stat.link} className="text-sm text-blue-600 hover:text-blue-700">
+                          View details <ArrowRight className="w-4 h-4 ml-1" />
                         </Link>
                       </Button>
                     )}
@@ -405,42 +375,44 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Next Attendee Event Highlight */}
+          {/* Next Event for Attendees */}
           {nextEvent && (
             <FadeIn direction="up" delay={500}>
-              <Card className="bg-gradient-to-br from-primary/5 via-purple-500/5 to-background border-primary/20 hover:shadow-lg transition-all backdrop-blur-sm">
-                <CardHeader className="pb-3 pt-4">
+              <Card className="border-2 border-blue-100 bg-blue-50/30 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded flex items-center justify-center">
-                      <Sparkles className="w-3 h-3 text-white" />
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-white" />
                     </div>
-                    <CardTitle className="text-sm">Your Next Event</CardTitle>
+                    <div>
+                      <CardTitle className="text-base font-semibold">Your Next Event</CardTitle>
+                      <CardDescription className="text-xs mt-0.5">Coming up soon</CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-[10px]">Coming up soon</CardDescription>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <h3 className="text-base font-semibold text-gray-900">{nextEvent.event.title}</h3>
-                      <div className="flex flex-wrap gap-3 text-[10px] text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                <CardContent>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-semibold text-gray-900">{nextEvent.event.title}</h3>
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
                           <span>{format(new Date(nextEvent.event.startDate), 'PPP')}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
                           <span>{format(new Date(nextEvent.event.startDate), 'p')}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
                           <span>{nextEvent.event.location}</span>
                         </div>
                       </div>
                     </div>
-                    <Button asChild size="sm" className="h-7 text-xs">
+                    <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
                       <Link href={`/events/${nextEvent.event.id}`}>
                         View Details
-                        <ArrowRight className="w-3 h-3 ml-1.5" />
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </Link>
                     </Button>
                   </div>
@@ -451,83 +423,88 @@ export default function DashboardPage() {
         </>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-        {/* Recent Events for Organizers */}
+      {/* Recent Activity Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Events */}
         {isOrganizer && (
           <FadeIn direction="up" delay={600}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-              <CardHeader className="pb-3 pt-4">
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                        <BarChart3 className="w-3 h-3 text-white" />
-                      </div>
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-blue-600" />
                       Your Events
                     </CardTitle>
-                    <CardDescription className="mt-0.5 text-[10px]">
+                    <CardDescription className="mt-1 text-xs">
                       Recently created events
                     </CardDescription>
                   </div>
                   {myEvents && myEvents.length > 0 && (
-                    <Button asChild variant="ghost" size="sm" className="h-6 text-[10px] px-2">
-                      <Link href="/dashboard/my-events">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/dashboard/my-events" className="text-blue-600 hover:text-blue-700">
                         View all
-                        <ArrowRight className="w-2.5 h-2.5 ml-1" />
+                        <ArrowRight className="w-4 h-4 ml-1" />
                       </Link>
                     </Button>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="pb-4">
+              <CardContent>
                 {myEvents && myEvents.length > 0 ? (
-                  <div className="space-y-2">
-                    {myEvents.slice(0, 5).map((event: DashboardEvent) => (
-                      <div
-                        key={event.id}
-                        className="flex items-center justify-between p-2.5 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="font-medium text-xs truncate text-gray-900">{event.title}</h4>
-                            <Badge 
-                              variant={event.status === 'PUBLISHED' ? 'default' : 'secondary'}
-                              className="flex-shrink-0 text-[10px] h-4 px-1.5"
-                            >
-                              {event.status}
-                            </Badge>
+                  <div className="space-y-3">
+                    {myEvents.slice(0, 5).map((event) => {
+                      const eventData = event as unknown as EventWithRelations
+                      const ticketsSold = calculateTotalTicketsSold(eventData)
+                      const fillRate = calculateFillPercentage(eventData)
+                      
+                      return (
+                        <div
+                          key={event.id}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-sm truncate text-gray-900">{event.title}</h4>
+                              <Badge 
+                                variant={event.status === 'PUBLISHED' ? 'default' : 'secondary'}
+                                className="flex-shrink-0"
+                              >
+                                {event.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {format(new Date(event.startDate), 'MMM dd')}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Ticket className="w-3.5 h-3.5" />
+                                {ticketsSold} / {event.capacity}
+                              </span>
+                            </div>
+                            <Progress value={fillRate} className="h-1.5" />
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-2.5 h-2.5" />
-                              {format(new Date(event.startDate), 'MMM dd')}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Users className="w-2.5 h-2.5" />
-                              {event._count?.registrations || 0} / {event.capacity}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <TrendingUp className="w-2.5 h-2.5" />
-                              {Math.round(((event._count?.registrations || 0) / event.capacity) * 100)}%
-                            </span>
-                          </div>
+                          <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                            <Link href={`/events/${event.id}/manage`}>
+                              <Settings className="w-4 h-4" />
+                            </Link>
+                          </Button>
                         </div>
-                        <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
-                          <Link href={`/events/${event.id}`}>
-                            <Eye className="w-3 h-3" />
-                          </Link>
-                        </Button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
-                  <div className="text-center py-6">
-                    <Calendar className="w-8 h-8 mx-auto text-gray-300 mb-2" />
-                    <p className="text-xs text-gray-600 mb-2">No events yet</p>
-                    <Button asChild size="sm" className="h-6 text-[10px] px-3">
+                  <div className="text-center py-12 space-y-4">
+                    <Calendar className="w-12 h-12 mx-auto text-gray-300" />
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 font-medium">No events yet</p>
+                      <p className="text-xs text-gray-500">Create your first event to get started</p>
+                    </div>
+                    <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
                       <Link href="/events/create">
-                        <Plus className="w-3 h-3 mr-1" />
-                        Create Your First Event
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Event
                       </Link>
                     </Button>
                   </div>
@@ -537,78 +514,77 @@ export default function DashboardPage() {
           </FadeIn>
         )}
 
-        {/* Upcoming Registrations / Top Performing Events */}
+        {/* Upcoming Registrations */}
         <FadeIn direction="up" delay={isOrganizer ? 700 : 600}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-            <CardHeader className="pb-3 pt-4">
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <div className={cn(
-                      "w-6 h-6 bg-gradient-to-br rounded flex items-center justify-center",
-                      isOrganizer ? "from-purple-500 to-purple-600" : "from-green-500 to-green-600"
-                    )}>
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                    </div>
-                    {isOrganizer ? 'Top Performing Events' : 'Upcoming Events'}
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                    {isOrganizer ? 'Top Performing' : 'Upcoming Events'}
                   </CardTitle>
-                  <CardDescription className="mt-0.5 text-[10px]">
+                  <CardDescription className="mt-1 text-xs">
                     {isOrganizer 
-                      ? 'Events with highest registration rates'
-                      : 'Events you\'re registered for'}
+                      ? 'Events with highest fill rates'
+                      : "Events you're attending"}
                   </CardDescription>
                 </div>
                 {myRegistrations && myRegistrations.length > 0 && !isOrganizer && (
-                  <Button asChild variant="ghost" size="sm" className="h-6 text-[10px] px-2">
-                    <Link href="/dashboard/registrations">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/dashboard/registrations" className="text-blue-600 hover:text-blue-700">
                       View all
-                      <ArrowRight className="w-2.5 h-2.5 ml-1" />
+                      <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="pb-4">
+            <CardContent>
               {isOrganizer ? (
-                myEvents && myEvents.length > 0 ? (
-                  <div className="space-y-2">
+                myEvents && myEvents.filter(e => e.status === 'PUBLISHED').length > 0 ? (
+                  <div className="space-y-3">
                     {myEvents
-                      .filter((event: DashboardEvent) => event.status === 'PUBLISHED')
-                      .sort((a: DashboardEvent, b: DashboardEvent) => {
-                        const rateA = ((a._count?.registrations || 0) / a.capacity) * 100
-                        const rateB = ((b._count?.registrations || 0) / b.capacity) * 100
+                      .filter((event) => event.status === 'PUBLISHED')
+                      .sort((a, b) => {
+                        const rateA = calculateFillPercentage(a as unknown as EventWithRelations)
+                        const rateB = calculateFillPercentage(b as unknown as EventWithRelations)
                         return rateB - rateA
                       })
                       .slice(0, 5)
-                      .map((event: DashboardEvent) => {
-                        const fillRate = Math.round(((event._count?.registrations || 0) / event.capacity) * 100)
+                      .map((event) => {
+                        const eventData = event as unknown as EventWithRelations
+                        const ticketsSold = calculateTotalTicketsSold(eventData)
+                        const fillRate = calculateFillPercentage(eventData)
+                        const revenue = calculateEventRevenue(eventData)
+                        
                         return (
                           <div
                             key={event.id}
-                            className="flex items-center justify-between p-2.5 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors group"
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
                           >
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-xs truncate mb-0.5 text-gray-900">{event.title}</h4>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-3 text-[10px] text-gray-600">
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <h4 className="font-semibold text-sm truncate text-gray-900">{event.title}</h4>
+                              <div className="flex items-center gap-4 text-xs text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <Ticket className="w-3.5 h-3.5" />
+                                  {ticketsSold} / {event.capacity}
+                                </span>
+                                {revenue > 0 && (
                                   <span className="flex items-center gap-1">
-                                    <Users className="w-2.5 h-2.5" />
-                                    {event._count?.registrations || 0} / {event.capacity}
+                                    <DollarSign className="w-3.5 h-3.5" />
+                                    ${revenue.toFixed(0)}
                                   </span>
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-2.5 h-2.5" />
-                                    {format(new Date(event.startDate), 'MMM dd')}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Progress value={fillRate} className="h-0.5 flex-1" />
-                                  <span className="text-[10px] font-medium text-gray-700">{fillRate}%</span>
-                                </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Progress value={fillRate} className="h-1.5 flex-1" />
+                                <span className="text-xs font-semibold text-gray-700 min-w-[3rem] text-right">{fillRate.toFixed(0)}%</span>
                               </div>
                             </div>
-                            <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2">
-                              <Link href={`/events/${event.id}`}>
-                                <Eye className="w-3 h-3" />
+                            <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                              <Link href={`/events/${event.id}/manage`}>
+                                <Settings className="w-4 h-4" />
                               </Link>
                             </Button>
                           </div>
@@ -616,59 +592,57 @@ export default function DashboardPage() {
                       })}
                   </div>
                 ) : (
-                  <div className="text-center py-6">
-                    <BarChart3 className="w-8 h-8 mx-auto text-gray-300 mb-2" />
-                    <p className="text-xs text-gray-600 mb-2">No published events yet</p>
-                    <Button asChild size="sm" className="h-6 text-[10px] px-3">
-                      <Link href="/events/create">
-                        <Plus className="w-3 h-3 mr-1" />
-                        Create Event
-                      </Link>
-                    </Button>
+                  <div className="text-center py-12 space-y-4">
+                    <BarChart3 className="w-12 h-12 mx-auto text-gray-300" />
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 font-medium">No published events</p>
+                      <p className="text-xs text-gray-500">Publish an event to see performance</p>
+                    </div>
                   </div>
                 )
               ) : (
                 myRegistrations && 
-                myRegistrations.filter((reg: DashboardRegistration) => 
-                  new Date(reg.event.startDate) > new Date()
-                ).length > 0 ? (
-                  <div className="space-y-2">
+                myRegistrations.filter((reg) => new Date(reg.event.startDate) > new Date()).length > 0 ? (
+                  <div className="space-y-3">
                     {myRegistrations
-                      .filter((reg: DashboardRegistration) => new Date(reg.event.startDate) > new Date())
+                      .filter((reg) => new Date(reg.event.startDate) > new Date())
                       .slice(0, 5)
-                      .map((registration: DashboardRegistration) => (
+                      .map((registration) => (
                         <div
                           key={registration.id}
-                          className="flex items-center justify-between p-2.5 border border-gray-200/50 rounded-lg hover:bg-gray-50 transition-colors group"
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
                         >
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-xs truncate mb-0.5 text-gray-900">{registration.event.title}</h4>
-                            <div className="flex flex-wrap items-center gap-3 text-[10px] text-gray-600">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <h4 className="font-semibold text-sm truncate text-gray-900">{registration.event.title}</h4>
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
                               <span className="flex items-center gap-1">
-                                <Calendar className="w-2.5 h-2.5" />
+                                <Calendar className="w-3.5 h-3.5" />
                                 {format(new Date(registration.event.startDate), 'MMM dd, yyyy')}
                               </span>
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-2.5 h-2.5" />
+                                <MapPin className="w-3.5 h-3.5" />
                                 <span className="truncate">{registration.event.location}</span>
                               </span>
                             </div>
                           </div>
-                          <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
+                          <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
                             <Link href={`/events/${registration.event.id}`}>
-                              <Eye className="w-3 h-3" />
+                              <Eye className="w-4 h-4" />
                             </Link>
                           </Button>
                         </div>
                       ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6">
-                    <Users className="w-8 h-8 mx-auto text-gray-300 mb-2" />
-                    <p className="text-xs text-gray-600 mb-2">No upcoming events</p>
-                    <Button asChild size="sm" className="h-6 text-[10px] px-3">
+                  <div className="text-center py-12 space-y-4">
+                    <Users className="w-12 h-12 mx-auto text-gray-300" />
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 font-medium">No upcoming events</p>
+                      <p className="text-xs text-gray-500">Browse events to find something interesting</p>
+                    </div>
+                    <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
                       <Link href="/events">
-                        <Search className="w-3 h-3 mr-1" />
+                        <Search className="w-4 h-4 mr-2" />
                         Browse Events
                       </Link>
                     </Button>
@@ -680,94 +654,97 @@ export default function DashboardPage() {
         </FadeIn>
       </div>
 
-      {/* Performance Insights for Organizers */}
+      {/* Performance Insights - Organizers Only */}
       {isOrganizer && myEvents && myEvents.length > 0 && (
         <FadeIn direction="up" delay={800}>
-          <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-            <CardHeader className="pb-3 pt-4">
+          <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded flex items-center justify-center">
-                  <Award className="w-3 h-3 text-white" />
+                <Award className="w-5 h-5 text-blue-600" />
+                <div>
+                  <CardTitle className="text-base font-semibold">Performance Insights</CardTitle>
+                  <CardDescription className="mt-1 text-xs">Key metrics for your events</CardDescription>
                 </div>
-                <CardTitle className="text-sm">Performance Insights</CardTitle>
               </div>
-              <CardDescription className="text-[10px]">Key metrics for your events</CardDescription>
             </CardHeader>
-            <CardContent className="pb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Most Popular Event */}
-                <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg border border-blue-200/50">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                      <TrendingUp className="w-2.5 h-2.5 text-white" />
+                <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-white" />
                     </div>
-                    <h4 className="font-semibold text-xs text-blue-900">Most Popular</h4>
+                    <h4 className="font-semibold text-sm text-gray-900">Most Popular</h4>
                   </div>
                   {(() => {
                     const mostPopular = myEvents
-                      .filter((event: DashboardEvent) => event.status === 'PUBLISHED')
-                      .sort((a: DashboardEvent, b: DashboardEvent) => 
-                        (b._count?.registrations || 0) - (a._count?.registrations || 0)
+                      .filter((event) => event.status === 'PUBLISHED')
+                      .sort((a, b) => 
+                        calculateTotalTicketsSold(b as unknown as EventWithRelations) - 
+                        calculateTotalTicketsSold(a as unknown as EventWithRelations)
                       )[0]
                     
                     return mostPopular ? (
-                      <div>
-                        <p className="text-xs font-medium text-blue-900 truncate">{mostPopular.title}</p>
-                        <p className="text-[10px] text-blue-700 mt-0.5">
-                          {mostPopular._count?.registrations || 0} registrations
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{mostPopular.title}</p>
+                        <p className="text-xs text-gray-600">
+                          {calculateTotalTicketsSold(mostPopular as unknown as EventWithRelations)} tickets sold
                         </p>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-blue-700">No published events yet</p>
+                      <p className="text-xs text-gray-600">No published events</p>
                     )
                   })()}
                 </div>
 
                 {/* Highest Revenue */}
-                <div className="p-3 bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg border border-green-200/50">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded flex items-center justify-center">
-                      <DollarSign className="w-2.5 h-2.5 text-white" />
+                <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-white" />
                     </div>
-                    <h4 className="font-semibold text-xs text-green-900">Highest Revenue</h4>
+                    <h4 className="font-semibold text-sm text-gray-900">Highest Revenue</h4>
                   </div>
                   {(() => {
                     const highestRevenue = myEvents
-                      .filter((event: DashboardEvent) => event.price > 0)
-                      .sort((a: DashboardEvent, b: DashboardEvent) => 
-                        (b.price * (b._count?.registrations || 0)) - (a.price * (a._count?.registrations || 0))
+                      .sort((a, b) => 
+                        calculateEventRevenue(b as unknown as EventWithRelations) - 
+                        calculateEventRevenue(a as unknown as EventWithRelations)
                       )[0]
                     
-                    return highestRevenue ? (
-                      <div>
-                        <p className="text-xs font-medium text-green-900 truncate">{highestRevenue.title}</p>
-                        <p className="text-[10px] text-green-700 mt-0.5">
-                          ${(highestRevenue.price * (highestRevenue._count?.registrations || 0)).toFixed(0)} earned
+                    const revenue = highestRevenue ? calculateEventRevenue(highestRevenue as unknown as EventWithRelations) : 0
+                    
+                    return highestRevenue && revenue > 0 ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{highestRevenue.title}</p>
+                        <p className="text-xs text-gray-600">
+                          ${revenue.toFixed(0)} earned
                         </p>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-green-700">No paid events yet</p>
+                      <p className="text-xs text-gray-600">No paid events</p>
                     )
                   })()}
                 </div>
 
                 {/* Next Event */}
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg border border-purple-200/50">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-purple-600 rounded flex items-center justify-center">
-                      <Clock className="w-2.5 h-2.5 text-white" />
+                <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-white" />
                     </div>
-                    <h4 className="font-semibold text-xs text-purple-900">Coming Next</h4>
+                    <h4 className="font-semibold text-sm text-gray-900">Coming Next</h4>
                   </div>
                   {nextOrganizerEvent ? (
-                    <div>
-                      <p className="text-xs font-medium text-purple-900 truncate">{nextOrganizerEvent.title}</p>
-                      <p className="text-[10px] text-purple-700 mt-0.5">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{nextOrganizerEvent.title}</p>
+                      <p className="text-xs text-gray-600">
                         {format(new Date(nextOrganizerEvent.startDate), 'MMM dd, yyyy')}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-purple-700">No upcoming events</p>
+                    <p className="text-xs text-gray-600">No upcoming events</p>
                   )}
                 </div>
               </div>
@@ -778,57 +755,59 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <FadeIn direction="up" delay={900}>
-        <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50">
-          <CardHeader className="pb-3 pt-4">
+        <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+          <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center">
-                <Zap className="w-3 h-3 text-white" />
+              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Plus className="w-4 h-4 text-white" />
               </div>
-              <CardTitle className="text-sm">Quick Actions</CardTitle>
+              <div>
+                <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+                <CardDescription className="mt-1 text-xs">Common tasks and shortcuts</CardDescription>
+              </div>
             </div>
-            <CardDescription className="text-[10px]">Common tasks and shortcuts</CardDescription>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {isOrganizer && (
                 <>
-                  <Button asChild variant="outline" className="h-auto p-2.5 justify-start border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all group">
-                    <Link href="/events/create">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 bg-gradient-to-br from-primary/10 to-purple-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-primary group-hover:to-purple-600 transition-all">
-                          <Plus className="w-3.5 h-3.5 text-primary group-hover:text-white transition-colors" />
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/events/create" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <Plus className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="text-left">
-                          <div className="font-medium text-xs text-gray-900">Create Event</div>
-                          <div className="text-[10px] text-gray-600">Start a new event</div>
+                          <div className="font-semibold text-sm text-gray-900">Create Event</div>
+                          <div className="text-xs text-gray-600">Start a new event</div>
                         </div>
                       </div>
                     </Link>
                   </Button>
                   
-                  <Button asChild variant="outline" className="h-auto p-2.5 justify-start border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all group">
-                    <Link href="/dashboard/my-events">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-blue-500 group-hover:to-blue-600 transition-all">
-                          <Calendar className="w-3.5 h-3.5 text-blue-600 group-hover:text-white transition-colors" />
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/dashboard/my-events" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <Calendar className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="text-left">
-                          <div className="font-medium text-xs text-gray-900">My Events</div>
-                          <div className="text-[10px] text-gray-600">Manage your events</div>
+                          <div className="font-semibold text-sm text-gray-900">My Events</div>
+                          <div className="text-xs text-gray-600">Manage your events</div>
                         </div>
                       </div>
                     </Link>
                   </Button>
 
-                  <Button asChild variant="outline" className="h-auto p-2.5 justify-start border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all group">
-                    <Link href="/dashboard/analytics">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-orange-500 group-hover:to-orange-600 transition-all">
-                          <BarChart3 className="w-3.5 h-3.5 text-orange-600 group-hover:text-white transition-colors" />
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/dashboard/analytics" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <BarChart3 className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="text-left">
-                          <div className="font-medium text-xs text-gray-900">Analytics</div>
-                          <div className="text-[10px] text-gray-600">View insights</div>
+                          <div className="font-semibold text-sm text-gray-900">Analytics</div>
+                          <div className="text-xs text-gray-600">View insights</div>
                         </div>
                       </div>
                     </Link>
@@ -836,29 +815,29 @@ export default function DashboardPage() {
                 </>
               )}
               
-              <Button asChild variant="outline" className="h-auto p-2.5 justify-start border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all group">
-                <Link href="/events">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-green-500 group-hover:to-green-600 transition-all">
-                      <Search className="w-3.5 h-3.5 text-green-600 group-hover:text-white transition-colors" />
+              <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                <Link href="/events" className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                      <Search className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="text-left">
-                      <div className="font-medium text-xs text-gray-900">Browse Events</div>
-                      <div className="text-[10px] text-gray-600">Find events to join</div>
+                      <div className="font-semibold text-sm text-gray-900">Browse Events</div>
+                      <div className="text-xs text-gray-600">Find events to join</div>
                     </div>
                   </div>
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" className="h-auto p-2.5 justify-start border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all group">
-                <Link href="/dashboard/settings">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-purple-500 group-hover:to-pink-600 transition-all">
-                      <Settings className="w-3.5 h-3.5 text-purple-600 group-hover:text-white transition-colors" />
+              <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                <Link href="/dashboard/settings" className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                      <Settings className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="text-left">
-                      <div className="font-medium text-xs text-gray-900">Settings</div>
-                      <div className="text-[10px] text-gray-600">Manage account</div>
+                      <div className="font-semibold text-sm text-gray-900">Settings</div>
+                      <div className="text-xs text-gray-600">Manage account</div>
                     </div>
                   </div>
                 </Link>

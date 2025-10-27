@@ -1,13 +1,14 @@
 // app/events/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useEvents, useCategories } from '@/hooks'
 import { EventCard } from '@/components/events/event-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -15,366 +16,516 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { 
   Search, 
   Calendar, 
   SlidersHorizontal,
-  Sparkles,
-  TrendingUp,
-  Users,
   X,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  DollarSign,
+  Grid3x3,
+  List,
+  CalendarRange,
+  Eye,
+  Tag,
+  Plus,
+  TrendingUp
 } from 'lucide-react'
 import Navbar from '@/components/layout/navbar'
+import Footer from '@/components/layout/footer'
 import { EventWithRelations, CategoryWithCount } from '@/types'
 import { cn } from '@/lib/utils'
+import { FadeIn } from '@/components/ui/fade-in'
+import Link from 'next/link'
+import { useUser } from '@clerk/nextjs'
+import { useCurrentUser } from '@/hooks/use-user'
+
+// Custom hook for debouncing
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useState(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  })
+
+  return debouncedValue
+}
+
+// Loading skeleton grid
+const EventsGridSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {[...Array(8)].map((_, i) => (
+      <Card key={i} className="overflow-hidden">
+        <Skeleton className="h-48 w-full" />
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      </Card>
+    ))}
+  </div>
+)
+
+// Filter pills component
+interface FilterItem {
+  key: string
+  value: string
+  label: string
+}
+
+const FilterPills = ({ 
+  filters, 
+  onRemove 
+}: { 
+  filters: FilterItem[]
+  onRemove: (key: string) => void 
+}) => {
+  if (filters.length === 0) return null
+  
+  return (
+    <div className="flex flex-wrap gap-2 mb-6">
+      {filters.map((filter) => (
+        <Badge 
+          key={filter.key}
+          variant="secondary" 
+          className="px-3 py-1.5 text-sm"
+        >
+          {filter.label}
+          <button 
+            onClick={() => onRemove(filter.key)}
+            className="ml-2 hover:text-red-600 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </Badge>
+      ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => filters.forEach(f => onRemove(f.key))}
+        className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+      >
+        Clear all
+      </Button>
+    </div>
+  )
+}
 
 export default function EventsPage() {
+  const { isSignedIn } = useUser()
+  const { data: currentUser } = useCurrentUser()
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [category, setCategory] = useState('')
-  const [tempSearch, setTempSearch] = useState('')
+  const [sortBy, setSortBy] = useState('date')
+  const [priceFilter, setPriceFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  
+  const debouncedSearch = useDebounce(searchTerm, 500)
 
   const { data: eventsData, isLoading, error } = useEvents({
     page,
-    limit: 12,
-    search,
+    limit: viewMode === 'grid' ? 12 : 10,
+    search: debouncedSearch,
     category,
   })
 
   const { data: categories } = useCategories()
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSearch(tempSearch)
-    setPage(1)
-  }
 
   const handleCategoryChange = (value: string) => {
     setCategory(value === 'all' ? '' : value)
     setPage(1)
   }
 
-  const clearFilters = () => {
-    setSearch('')
-    setTempSearch('')
+  const clearFilters = useCallback(() => {
+    setSearchTerm('')
     setCategory('')
+    setPriceFilter('all')
+    setDateFilter('all')
+    setSortBy('date')
+    setPage(1)
+  }, [])
+
+  // Build active filters array
+  const activeFilters: FilterItem[] = []
+  if (debouncedSearch) activeFilters.push({ key: 'search', value: debouncedSearch, label: `Search: "${debouncedSearch}"` })
+  if (category) {
+    const cat = categories?.find((c: CategoryWithCount) => c.id === category)
+    if (cat) activeFilters.push({ key: 'category', value: category, label: cat.name })
+  }
+  if (priceFilter !== 'all') activeFilters.push({ key: 'price', value: priceFilter, label: priceFilter === 'free' ? 'Free Events' : 'Paid Events' })
+  if (dateFilter !== 'all') {
+    const labels: Record<string, string> = {
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      week: 'This Week',
+      month: 'This Month',
+      weekend: 'This Weekend'
+    }
+    activeFilters.push({ key: 'date', value: dateFilter, label: labels[dateFilter] || dateFilter })
+  }
+
+  const removeFilter = (key: string) => {
+    switch(key) {
+      case 'search':
+        setSearchTerm('')
+        break
+      case 'category':
+        setCategory('')
+        break
+      case 'price':
+        setPriceFilter('all')
+        break
+      case 'date':
+        setDateFilter('all')
+        break
+    }
     setPage(1)
   }
 
-  const hasActiveFilters = search || category
-
-  const selectedCategory = categories?.find((cat: CategoryWithCount) => cat.id === category)
-
+  const hasActiveFilters = activeFilters.length > 0
   const totalEvents = eventsData?.pagination?.total ?? 0
   const currentEvents = eventsData?.events?.length ?? 0
   const totalPages = eventsData?.pagination?.totalPages ?? 0
   const totalCategories = categories?.length ?? 0
+  
+  const canCreateEvent = isSignedIn && currentUser?.role !== 'ATTENDEE'
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-b from-gray-50/50 via-white to-white">
-        {/* Compact Hero Section */}
-        <div className="relative bg-gradient-to-br from-gray-50 via-white to-white border-b overflow-hidden">
-          {/* Dense Background Patterns */}
-          <div 
-            className="absolute inset-0 opacity-[0.025]"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, rgb(0, 0, 0) 1px, transparent 1px),
-                linear-gradient(to bottom, rgb(0, 0, 0) 1px, transparent 1px)
-              `,
-              backgroundSize: '1.5rem 1.5rem'
-            }}
-          />
-          
-          <div 
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: 'radial-gradient(circle, rgb(0, 0, 0) 1px, transparent 1px)',
-              backgroundSize: '1rem 1rem'
-            }}
-          />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <FadeIn direction="up">
+              <div className="text-center mb-8">
+                <Badge 
+                  variant="outline" 
+                  className="mb-4 border-gray-300"
+                >
+                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                  <span className="font-medium text-gray-700">
+                    {totalEvents} events available
+                  </span>
+                </Badge>
+                
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                  Discover Amazing Events
+                </h1>
+                
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Find and join events that match your interests across Ethiopia
+                </p>
+              </div>
+            </FadeIn>
 
-          {/* Animated mesh gradient - subtle */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-          </div>
+            {/* Search Bar */}
+            <FadeIn direction="up" delay={100}>
+              <div className="max-w-4xl mx-auto">
+                <div className="relative">
+                  <div className="relative flex items-center">
+                    <Search className="absolute left-4 text-gray-400 h-5 w-5" />
+                    <Input
+                      type="text"
+                      placeholder="Search events, venues, locations, or categories..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-32 h-14 text-base border-gray-300 focus:border-blue-600"
+                    />
+                    <div className="absolute right-2 flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <SlidersHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setPriceFilter('free')}>
+                            <DollarSign className="w-4 h-4 mr-2" />
+                            Free Events Only
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDateFilter('today')}>
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Today&apos;s Events
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDateFilter('week')}>
+                            <CalendarRange className="w-4 h-4 mr-2" />
+                            This Week
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSortBy('popular')}>
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Most Popular
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        <Search className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Search</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Radial gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 relative">
-            <div className="text-center mb-6">
-              <Badge variant="outline" className="mb-3 backdrop-blur-sm bg-white/80 border-gray-200/50 shadow-sm text-[10px] h-5">
-                <Sparkles className="w-2.5 h-2.5 mr-1 text-primary" />
-                <span className="font-medium text-gray-700">
-                  {totalEvents} events available
-                </span>
-              </Badge>
-              
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
-                <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Discover Events
-                </span>
-              </h1>
-              <p className="text-sm md:text-base text-gray-600 max-w-xl mx-auto">
-                Find and join events across Ethiopia
-              </p>
-            </div>
-
-            {/* Compact Search and Filters */}
-            <div className="max-w-3xl mx-auto space-y-2.5">
-              <form onSubmit={handleSearch} className="relative">
-                <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type="text"
-                    placeholder="Search events, venues, or locations..."
-                    value={tempSearch}
-                    onChange={(e) => setTempSearch(e.target.value)}
-                    className="pl-10 pr-20 h-9 text-sm border-gray-300 focus:border-primary shadow-sm bg-white/80 backdrop-blur-sm"
-                  />
-                  <Button 
-                    type="submit" 
-                    className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-6 text-xs px-3 shadow-sm"
+                {/* Category Filters */}
+                <div className="flex flex-wrap justify-center gap-2 mt-6">
+                  <Button
+                    variant={!category ? "default" : "outline"}
                     size="sm"
+                    onClick={() => handleCategoryChange('all')}
+                    className={cn(
+                      "rounded-full",
+                      !category && "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
                   >
-                    Search
+                    All Events
                   </Button>
-                </div>
-              </form>
-
-              {/* Active Filters - Compact */}
-              {hasActiveFilters && (
-                <div className="flex flex-wrap gap-1.5">
-                  {search && (
-                    <Badge variant="secondary" className="px-2 py-0.5 text-[10px] h-5 bg-gray-100 text-gray-700">
-                      Search: &quot;{search}&quot;
-                      <button 
-                        onClick={() => { setSearch(''); setTempSearch(''); }}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </Badge>
-                  )}
-                  {selectedCategory && (
-                    <Badge 
-                      variant="secondary" 
-                      className="px-2 py-0.5 text-[10px] h-5"
-                      style={{ 
-                        backgroundColor: (selectedCategory.color || '#6b7280') + '20',
-                        color: selectedCategory.color || '#6b7280',
-                        border: `1px solid ${(selectedCategory.color || '#6b7280')}40`
-                      }}
+                  {categories?.slice(0, 6).map((cat: CategoryWithCount) => (
+                    <Button
+                      key={cat.id}
+                      variant={category === cat.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleCategoryChange(cat.id)}
+                      className={cn(
+                        "rounded-full border-gray-300",
+                        category === cat.id && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                      )}
                     >
-                      {selectedCategory.name}
-                      <button 
-                        onClick={() => setCategory('')}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </Badge>
+                      <div 
+                        className="w-2 h-2 rounded-full mr-2" 
+                        style={{ backgroundColor: cat.color || '#6b7280' }}
+                      />
+                      {cat.name}
+                      {cat._count?.events > 0 && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {cat._count.events}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
+                  {categories && categories.length > 6 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="rounded-full border-gray-300">
+                          More Categories
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {categories.slice(6).map((cat: CategoryWithCount) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => handleCategoryChange(cat.id)}
+                          >
+                            <div 
+                              className="w-3 h-3 rounded-full mr-2" 
+                              style={{ backgroundColor: cat.color || '#6b7280' }}
+                            />
+                            {cat.name}
+                            {cat._count?.events > 0 && (
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {cat._count.events}
+                              </Badge>
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            </FadeIn>
           </div>
         </div>
 
-        {/* Compact Stats Bar - Centered and Padded */}
+        {/* Stats Bar */}
         {!isLoading && eventsData && (
-          <div className="bg-white border-b border-gray-100 relative">
-            {/* Subtle pattern */}
-            <div 
-              className="absolute inset-0 opacity-[0.015]"
-              style={{
-                backgroundImage: 'radial-gradient(circle, rgb(0, 0, 0) 0.5px, transparent 0.5px)',
-                backgroundSize: '1rem 1rem'
-              }}
-            />
-            
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative">
-              <div className="flex items-center justify-center">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="bg-white border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-8">
                   {[
-                    { icon: Calendar, value: totalEvents, label: 'Events', color: 'from-blue-500 to-blue-600' },
-                    { icon: TrendingUp, value: totalCategories, label: 'Categories', color: 'from-green-500 to-green-600' },
-                    { icon: Users, value: currentEvents, label: 'Showing', color: 'from-purple-500 to-purple-600' },
-                    { icon: Sparkles, value: totalPages, label: 'Pages', color: 'from-orange-500 to-orange-600' }
-                  ].map((stat, i) => (
-                    <div key={i} className="flex items-center gap-2 group">
-                      <div className={`w-7 h-7 bg-gradient-to-br ${stat.color} rounded-lg flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-                        <stat.icon className="w-3.5 h-3.5 text-white" />
+                    { icon: Calendar, value: totalEvents, label: 'Total Events' },
+                    { icon: Eye, value: currentEvents, label: 'Showing' },
+                    { icon: Tag, value: totalCategories, label: 'Categories' },
+                  ].map((stat, i) => {
+                    const Icon = stat.icon
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                          <Icon className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stat.value}
+                          </p>
+                          <p className="text-xs text-gray-600">{stat.label}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-base md:text-lg font-bold text-gray-900">{stat.value}</p>
-                        <p className="text-[10px] text-gray-600">{stat.label}</p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
+                </div>
+
+                {/* View Controls */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className={cn(
+                        "h-9 px-3",
+                        viewMode === 'grid' && "bg-blue-600 hover:bg-blue-700 text-white"
+                      )}
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className={cn(
+                        "h-9 px-3",
+                        viewMode === 'list' && "bg-blue-600 hover:bg-blue-700 text-white"
+                      )}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-[160px] border-gray-300">
+                      <ArrowUpDown className="w-4 h-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">By Date</SelectItem>
+                      <SelectItem value="popular">Most Popular</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {canCreateEvent && (
+                    <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                      <Link href="/events/create">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Event
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Events Grid - Updated for 4 columns */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {hasActiveFilters && (
+            <FilterPills filters={activeFilters} onRemove={removeFilter} />
+          )}
+
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="h-72 animate-pulse bg-gray-100 rounded-lg" />
-              ))}
-            </div>
+            <EventsGridSkeleton />
           ) : error ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-3">
-                <X className="w-6 h-6 text-red-600" />
+            <div className="text-center py-16">
+              <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <X className="w-10 h-10 text-red-600" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1.5">Error Loading Events</h3>
-              <p className="text-sm text-gray-600 mb-4">Something went wrong. Please try again.</p>
-              <Button onClick={() => window.location.reload()} size="sm" className="h-8 text-xs">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Error Loading Events</h3>
+              <p className="text-gray-600 mb-6">Something went wrong. Please try again.</p>
+              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
                 Retry
               </Button>
             </div>
           ) : !eventsData || eventsData.events.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-gray-100 rounded-full mb-4">
-                <Calendar className="w-7 h-7 text-gray-400" />
+            <div className="text-center py-16">
+              <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Calendar className="w-12 h-12 text-gray-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1.5">No events found</h3>
-              <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
-                We couldn&apos;t find any events matching your criteria. Try adjusting your filters.
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">No events found</h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                {hasActiveFilters 
+                  ? "We couldn't find any events matching your criteria. Try adjusting your filters."
+                  : "There are no events available at the moment. Check back later!"}
               </p>
-              {hasActiveFilters && (
-                <Button onClick={clearFilters} variant="outline" size="sm" className="h-8 text-xs">
-                  <X className="w-3 h-3 mr-1.5" />
-                  Clear Filters
-                </Button>
-              )}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                {hasActiveFilters && (
+                  <Button onClick={clearFilters} variant="outline" className="border-gray-300">
+                    <X className="w-4 h-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                )}
+                {canCreateEvent && !hasActiveFilters && (
+                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                    <Link href="/events/create">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create the First Event
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
-              {/* Results Header with Filters on Right */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                {/* Left - Title and Count */}
-                <div>
-                  <h2 className="text-base md:text-lg font-bold text-gray-900">
-                    {hasActiveFilters ? 'Search Results' : 'All Events'}
-                  </h2>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    {currentEvents} of {totalEvents} events
-                  </p>
-                </div>
-
-                {/* Right - Filters and Controls */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Category Filter */}
-                  <Select value={category || 'all'} onValueChange={handleCategoryChange}>
-                    <SelectTrigger className="w-[140px] md:w-[160px] h-7 text-xs bg-white border-gray-300 hover:border-primary transition-colors">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <Calendar className="w-3 h-3" />
-                          All Categories
-                        </div>
-                      </SelectItem>
-                      {categories?.map((cat: CategoryWithCount) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div 
-                              className="w-2 h-2 rounded-full" 
-                              style={{ backgroundColor: cat.color || '#6b7280' }}
-                            />
-                            {cat.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Sort (placeholder for future) */}
-                  <Select defaultValue="date">
-                    <SelectTrigger className="w-[100px] md:w-[120px] h-7 text-xs bg-white border-gray-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <ArrowUpDown className="w-3 h-3" />
-                          By Date
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="popular">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <TrendingUp className="w-3 h-3" />
-                          Popular
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="price">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <ArrowUpDown className="w-3 h-3" />
-                          By Price
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Clear Filters */}
-                  {hasActiveFilters && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={clearFilters}
-                      className="text-gray-600 hover:text-primary h-7 text-xs px-2"
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      Clear
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Events Grid - Updated to 4 columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className={cn(
+                viewMode === 'grid' 
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  : "space-y-4"
+              )}>
                 {eventsData.events.map((event: EventWithRelations) => (
-                  <EventCard key={event.id} event={event} />
+                  <div key={event.id}>
+                    <EventCard event={event} />
+                  </div>
                 ))}
               </div>
 
-              {/* Compact Pagination */}
               {totalPages > 1 && (
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="text-xs text-gray-600 order-2 sm:order-1">
-                    Page {page} of {totalPages}
+                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-sm text-gray-600 order-2 sm:order-1">
+                    Showing <span className="font-semibold">{(page - 1) * 12 + 1}</span> to{' '}
+                    <span className="font-semibold">
+                      {Math.min(page * 12, totalEvents)}
+                    </span>{' '}
+                    of <span className="font-semibold">{totalEvents}</span> events
                   </div>
                   
-                  <div className="flex items-center gap-1.5 order-1 sm:order-2">
+                  <div className="flex items-center gap-2 order-1 sm:order-2">
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         setPage(page - 1)
                         window.scrollTo({ top: 0, behavior: 'smooth' })
                       }}
                       disabled={page === 1}
-                      className="h-7 text-xs px-2 border-gray-300"
+                      className="border-gray-300"
                     >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline ml-1">Prev</span>
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      Previous
                     </Button>
 
-                    {/* Page Numbers - Compact */}
                     <div className="hidden sm:flex items-center gap-1">
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum
@@ -398,8 +549,8 @@ export default function EventsPage() {
                               window.scrollTo({ top: 0, behavior: 'smooth' })
                             }}
                             className={cn(
-                              "w-7 h-7 text-xs p-0",
-                              page === pageNum && "shadow-sm"
+                              "w-10 h-10",
+                              page === pageNum && "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                             )}
                           >
                             {pageNum}
@@ -408,30 +559,24 @@ export default function EventsPage() {
                       })}
                     </div>
 
-                    {/* Mobile Page Indicator - Compact */}
-                    <div className="flex sm:hidden items-center gap-1 px-2 text-xs">
-                      <span className="font-medium text-gray-900">{page}</span>
-                      <span className="text-gray-400">/</span>
-                      <span className="text-gray-600">{totalPages}</span>
+                    <div className="flex sm:hidden items-center gap-2 px-4">
+                      <span className="text-sm font-medium">
+                        Page {page} of {totalPages}
+                      </span>
                     </div>
 
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         setPage(page + 1)
                         window.scrollTo({ top: 0, behavior: 'smooth' })
                       }}
                       disabled={page === totalPages}
-                      className="h-7 text-xs px-2 border-gray-300"
+                      className="border-gray-300"
                     >
-                      <span className="hidden sm:inline mr-1">Next</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
-                  </div>
-
-                  <div className="text-xs text-gray-600 order-3">
-                    {totalEvents} total
                   </div>
                 </div>
               )}
@@ -439,6 +584,7 @@ export default function EventsPage() {
           )}
         </div>
       </div>
+      <Footer />
     </>
   )
 }

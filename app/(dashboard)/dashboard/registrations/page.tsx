@@ -30,16 +30,14 @@ import {
   Users, 
   Eye, 
   Mail, 
-  User, 
   X,
   CheckCircle2,
   Clock,
   Search,
-  Sparkles,
   DollarSign,
   ChevronRight,
-  FileText,
-  Download
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -52,14 +50,14 @@ export default function RegistrationsPage() {
 
   if (userLoading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-2" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-3">
+          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-4 bg-gray-200 rounded w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -123,14 +121,14 @@ function AttendeeView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-2" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-3">
+          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-4 bg-gray-200 rounded w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -138,29 +136,25 @@ function AttendeeView() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 pb-8">
+    <div className="space-y-8 pb-24 lg:pb-8">
       {/* Header */}
       <FadeIn direction="down">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-              <span className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                My Registrations
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              My Registrations
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+            <p className="text-sm text-gray-600">
               Events you&apos;re registered to attend
             </p>
           </div>
           <Button 
             asChild 
-            size="sm" 
-            className="h-7 text-xs shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all group relative overflow-hidden w-fit"
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
             <Link href="/events">
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <Search className="w-3 h-3 mr-1.5 relative" />
-              <span className="relative">Browse Events</span>
+              <Search className="w-4 h-4 mr-2" />
+              Browse Events
             </Link>
           </Button>
         </div>
@@ -168,45 +162,45 @@ function AttendeeView() {
 
       {/* Stats */}
       {stats.total > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-6">
           <FadeIn direction="up" delay={100}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Total</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Calendar className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.total}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={150}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Upcoming</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-green-500 to-green-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Clock className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Upcoming</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.upcoming}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.upcoming}</p>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={200}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Completed</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <CheckCircle2 className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Completed</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.past}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.past}</p>
               </CardContent>
             </Card>
           </FadeIn>
@@ -216,46 +210,36 @@ function AttendeeView() {
       {/* Events Tabs */}
       <FadeIn direction="up" delay={250}>
         <Tabs defaultValue="upcoming" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-9">
-            <TabsTrigger value="upcoming" className="text-xs">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="upcoming">
               Upcoming ({upcomingRegistrations.length})
             </TabsTrigger>
-            <TabsTrigger value="past" className="text-xs">
+            <TabsTrigger value="past">
               Past ({pastRegistrations.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="mt-4">
+          <TabsContent value="upcoming" className="mt-6">
             {upcomingRegistrations.length === 0 ? (
-              <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50 relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 opacity-[0.015]"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, rgb(0, 0, 0) 0.5px, transparent 0.5px)',
-                    backgroundSize: '1rem 1rem'
-                  }}
-                />
-                <CardContent className="flex flex-col items-center justify-center py-12 relative">
-                  <div className="relative mb-4">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-2xl blur-xl" />
-                    <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Calendar className="w-8 h-8 text-white" />
-                    </div>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="h-20 w-20 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                    <Calendar className="h-10 w-10 text-blue-600" />
                   </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-1">No upcoming events</h3>
-                  <p className="text-sm text-gray-600 mb-4 text-center max-w-sm">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">No upcoming events</h3>
+                  <p className="text-sm text-gray-600 mb-6 text-center max-w-md">
                     Discover and register for exciting events happening around you
                   </p>
-                  <Button asChild size="sm" className="h-8 text-xs">
+                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
                     <Link href="/events">
-                      <Search className="w-3.5 h-3.5 mr-1.5" />
+                      <Search className="w-4 h-4 mr-2" />
                       Browse Events
                     </Link>
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {upcomingRegistrations.map((registration: DashboardRegistration) => (
                   <EventRegistrationCard
                     key={registration.id}
@@ -268,16 +252,18 @@ function AttendeeView() {
             )}
           </TabsContent>
 
-          <TabsContent value="past" className="mt-4">
+          <TabsContent value="past" className="mt-6">
             {pastRegistrations.length === 0 ? (
-              <Card className="border border-gray-200/50 backdrop-blur-sm bg-white/50">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckCircle2 className="w-12 h-12 text-gray-300 mb-3" />
+              <Card className="border border-gray-200">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="h-20 w-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
+                    <CheckCircle2 className="h-10 w-10 text-gray-400" />
+                  </div>
                   <p className="text-sm text-gray-600">No past events</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pastRegistrations.map((registration: DashboardRegistration) => (
                   <EventRegistrationCard
                     key={registration.id}
@@ -294,23 +280,28 @@ function AttendeeView() {
 
       {/* Cancel Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent className="backdrop-blur-sm bg-white/95 border-gray-200/50">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                <X className="w-5 h-5 text-orange-600" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-12 w-12 bg-orange-50 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
               </div>
-              <AlertDialogTitle className="text-base">Cancel Registration?</AlertDialogTitle>
+              <div>
+                <AlertDialogTitle className="text-lg">Cancel Registration?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                  This action cannot be undone
+                </AlertDialogDescription>
+              </div>
             </div>
-            <AlertDialogDescription className="text-xs text-gray-600">
-              Are you sure you want to cancel your registration for <span className="font-semibold text-gray-900">{selectedEventTitle}</span>? This action cannot be undone.
+            <AlertDialogDescription className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              Are you sure you want to cancel your registration for <span className="font-semibold text-gray-900">{selectedEventTitle}</span>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-8 text-xs border-gray-300">Keep Registration</AlertDialogCancel>
+            <AlertDialogCancel className="border-gray-300">Keep Registration</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelConfirm}
-              className="h-8 text-xs bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Registration'}
             </AlertDialogAction>
@@ -332,13 +323,13 @@ function EventRegistrationCard({
   isUpcoming: boolean
 }) {
   return (
-    <Card className={`border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50 h-full ${!isUpcoming && 'opacity-75 hover:opacity-90'}`}>
-      <CardContent className="pt-5 pb-5">
+    <Card className={`border border-gray-200 hover:shadow-lg transition-shadow duration-200 h-full ${!isUpcoming && 'opacity-60 hover:opacity-80'}`}>
+      <CardContent className="p-6">
         {/* Event Category/Status */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           {registration.event.category && (
             <Badge 
-              className="text-[10px] h-5 px-2"
+              className="text-xs"
               style={{ backgroundColor: registration.event.category.color || '#6b7280' }}
             >
               {registration.event.category.name}
@@ -346,48 +337,48 @@ function EventRegistrationCard({
           )}
           <Badge 
             variant={isUpcoming ? (registration.status === 'CONFIRMED' ? 'default' : 'secondary') : 'outline'}
-            className="text-[10px] h-5 px-2"
+            className="text-xs"
           >
             {isUpcoming ? registration.status : 'COMPLETED'}
           </Badge>
         </div>
 
         {/* Event Title */}
-        <h3 className="font-semibold text-sm text-gray-900 mb-3 line-clamp-2 min-h-[2.5rem]">
+        <h3 className="font-semibold text-base text-gray-900 mb-4 line-clamp-2 min-h-[3rem]">
           {registration.event.title}
         </h3>
 
         {/* Event Details */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-start gap-2 text-[10px] text-gray-600">
-            <Calendar className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
+        <div className="space-y-3 mb-6">
+          <div className="flex items-start gap-2 text-sm text-gray-600">
+            <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <div>{format(new Date(registration.event.startDate), 'EEEE, MMM dd, yyyy')}</div>
-              <div className="text-gray-500">{format(new Date(registration.event.startDate), 'h:mm a')}</div>
+              <div className="font-medium">{format(new Date(registration.event.startDate), 'EEEE, MMM dd, yyyy')}</div>
+              <div className="text-xs text-gray-500">{format(new Date(registration.event.startDate), 'h:mm a')}</div>
             </div>
           </div>
-          <div className="flex items-start gap-2 text-[10px] text-gray-600">
-            <MapPin className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
-            <span className="line-clamp-1">{registration.event.location}</span>
+          <div className="flex items-start gap-2 text-sm text-gray-600">
+            <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <span className="line-clamp-2">{registration.event.location}</span>
           </div>
           {registration.event.price > 0 && (
-            <div className="flex items-center gap-2 text-[10px] text-gray-600">
-              <DollarSign className="w-3 h-3 text-gray-400 flex-shrink-0" />
-              <span>${registration.event.price.toFixed(2)}</span>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <DollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium">${registration.event.price.toFixed(2)}</span>
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button 
             asChild 
             size="sm" 
             variant={isUpcoming ? 'default' : 'outline'}
-            className="flex-1 h-7 text-xs"
+            className={`flex-1 ${isUpcoming ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-gray-300'}`}
           >
             <Link href={`/events/${registration.event.id}`}>
-              <Eye className="w-3 h-3 mr-1.5" />
+              <Eye className="w-4 h-4 mr-2" />
               View Event
             </Link>
           </Button>
@@ -395,10 +386,10 @@ function EventRegistrationCard({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs px-2 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200"
+              className="px-3 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200"
               onClick={() => onCancel(registration.event.id, registration.event.title)}
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
             </Button>
           )}
         </div>
@@ -465,21 +456,23 @@ function OrganizerView() {
         count: registrations.length,
         fillRate: Math.round((registrations.length / event.capacity) * 100)
       }
-    }).sort((a: { event: DashboardEvent }, b: { event: DashboardEvent }) => new Date(b.event.startDate).getTime() - new Date(a.event.startDate).getTime())
+    }).sort((a: { event: DashboardEvent }, b: { event: DashboardEvent}) => 
+      new Date(b.event.startDate).getTime() - new Date(a.event.startDate).getTime()
+    )
   }, [myEvents, allRegistrations])
 
   const isLoading = eventsLoading || registrationsLoading
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-2" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-3">
+          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-4 bg-gray-200 rounded w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -487,16 +480,14 @@ function OrganizerView() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 pb-8">
+    <div className="space-y-8 pb-24 lg:pb-8">
       {/* Header */}
       <FadeIn direction="down">
-        <div>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-            <span className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Event Registrations
-            </span>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Event Registrations
           </h1>
-          <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+          <p className="text-sm text-gray-600">
             View and manage registrations across all your events
           </p>
         </div>
@@ -504,59 +495,59 @@ function OrganizerView() {
 
       {/* Stats */}
       {stats.totalEvents > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <FadeIn direction="up" delay={100}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Total Events</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Calendar className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Total Events</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.totalEvents}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.totalEvents}</p>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={150}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Registrations</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-green-500 to-green-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Registrations</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Users className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.totalRegistrations}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.totalRegistrations}</p>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={200}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Upcoming</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Clock className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Upcoming</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">{stats.upcomingEvents}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.upcomingEvents}</p>
               </CardContent>
             </Card>
           </FadeIn>
 
           <FadeIn direction="up" delay={250}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-gray-600 font-medium">Revenue</p>
-                  <div className="h-6 w-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <DollarSign className="h-3 w-3 text-white" />
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-600">Revenue</p>
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">${stats.totalRevenue.toFixed(0)}</p>
+                <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(0)}</p>
               </CardContent>
             </Card>
           </FadeIn>
@@ -565,39 +556,27 @@ function OrganizerView() {
 
       {/* Events with Registrations */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-base font-bold text-gray-900">Event Registrations</h2>
-            <p className="text-[10px] text-gray-600 mt-0.5">
-              Click on an event to view registrant details
-            </p>
-          </div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Event Registrations</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Click on an event to view registrant details
+          </p>
         </div>
 
         {eventRegistrations.length === 0 ? (
           <FadeIn direction="up" delay={300}>
-            <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all backdrop-blur-sm bg-white/50 relative overflow-hidden">
-              <div 
-                className="absolute inset-0 opacity-[0.015]"
-                style={{
-                  backgroundImage: 'radial-gradient(circle, rgb(0, 0, 0) 0.5px, transparent 0.5px)',
-                  backgroundSize: '1rem 1rem'
-                }}
-              />
-              <CardContent className="flex flex-col items-center justify-center py-12 relative">
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-2xl blur-xl" />
-                  <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Calendar className="w-8 h-8 text-white" />
-                  </div>
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="h-20 w-20 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                  <Calendar className="h-10 w-10 text-blue-600" />
                 </div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">No events yet</h3>
-                <p className="text-sm text-gray-600 mb-4 text-center max-w-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No events yet</h3>
+                <p className="text-sm text-gray-600 mb-6 text-center max-w-md">
                   Create your first event to start receiving registrations
                 </p>
-                <Button asChild size="sm" className="h-8 text-xs">
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
                   <Link href="/events/create">
-                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    <Calendar className="w-4 h-4 mr-2" />
                     Create Event
                   </Link>
                 </Button>
@@ -605,7 +584,7 @@ function OrganizerView() {
             </Card>
           </FadeIn>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {eventRegistrations.map((item: { event: DashboardEvent; registrations: RegistrationWithRelations[]; count: number; fillRate: number }, index: number) => (
               <FadeIn key={item.event.id} direction="up" delay={300 + index * 50}>
                 <EventWithRegistrationsCard 
@@ -639,44 +618,44 @@ function EventWithRegistrationsCard({
   const isUpcoming = new Date(event.startDate) > new Date()
 
   return (
-    <Card className="border border-gray-200/50 hover:border-gray-300/50 hover:shadow-lg transition-all group backdrop-blur-sm bg-white/50">
-      <CardContent className="pt-4 pb-4">
+    <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+      <CardContent className="p-6">
         {/* Event Header */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-3 mb-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary/10 to-purple-600/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-primary group-hover:to-purple-600 transition-all">
-                <Calendar className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
+            <div className="flex items-start gap-4 mb-3">
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-6 h-6 text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h3 className="font-semibold text-sm text-gray-900 truncate">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h3 className="font-semibold text-lg text-gray-900 truncate">
                     {event.title}
                   </h3>
                   <Badge 
                     variant={event.status === 'PUBLISHED' ? 'default' : 'secondary'}
-                    className="text-[10px] h-5 px-2 flex-shrink-0"
+                    className="text-xs flex-shrink-0"
                   >
                     {event.status}
                   </Badge>
                   {!isUpcoming && (
-                    <Badge variant="outline" className="text-[10px] h-5 px-2 flex-shrink-0">
+                    <Badge variant="outline" className="text-xs flex-shrink-0">
                       Past
                     </Badge>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
                     {format(new Date(event.startDate), 'MMM dd, yyyy')}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
                     {format(new Date(event.startDate), 'h:mm a')}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate max-w-[150px]">{event.location}</span>
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate max-w-[200px]">{event.location}</span>
                   </span>
                 </div>
               </div>
@@ -684,21 +663,19 @@ function EventWithRegistrationsCard({
           </div>
 
           {/* Stats and Actions */}
-          <div className="flex items-center gap-4">
-            <div className="text-center min-w-[80px]">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <Users className="w-3.5 h-3.5 text-gray-400" />
-                <p className="text-lg font-bold text-gray-900 tabular-nums">
+          <div className="flex items-center gap-6">
+            <div className="text-center min-w-[120px]">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Users className="w-5 h-5 text-gray-400" />
+                <p className="text-2xl font-bold text-gray-900">
                   {count}
                 </p>
               </div>
-              <p className="text-[10px] text-gray-600">
+              <p className="text-sm text-gray-600 mb-3">
                 of {event.capacity}
               </p>
-              <div className="mt-1.5">
-                <Progress value={fillRate} className="h-1 w-full" />
-                <p className="text-[10px] text-gray-600 mt-0.5">{fillRate}% filled</p>
-              </div>
+              <Progress value={fillRate} className="h-2 w-full mb-1" />
+              <p className="text-xs text-gray-600">{fillRate}% filled</p>
             </div>
 
             <div className="flex gap-2">
@@ -706,11 +683,11 @@ function EventWithRegistrationsCard({
                 <Button 
                   variant="outline"
                   size="sm" 
-                  className="h-8 text-xs border-gray-300"
+                  className="border-gray-300"
                   onClick={() => setExpanded(!expanded)}
                 >
                   {expanded ? 'Hide' : 'Show'} ({count})
-                  <ChevronRight className={`w-3.5 h-3.5 ml-1 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 ml-1.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
                 </Button>
               )}
               
@@ -718,10 +695,10 @@ function EventWithRegistrationsCard({
                 asChild 
                 variant="outline"
                 size="sm" 
-                className="h-8 text-xs border-gray-300"
+                className="border-gray-300"
               >
                 <Link href={`/events/${event.id}`}>
-                  <Eye className="w-3 h-3 mr-1.5" />
+                  <Eye className="w-4 h-4 mr-2" />
                   View
                 </Link>
               </Button>
@@ -731,29 +708,29 @@ function EventWithRegistrationsCard({
 
         {/* Expanded Registrations List */}
         {expanded && count > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="space-y-2">
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="space-y-3">
               {registrations.map((registration: RegistrationWithRelations) => (
                 <div 
                   key={registration.id}
-                  className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Avatar className="w-8 h-8 border border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 border-2 border-gray-200">
                       <AvatarImage 
                         src={registration.user?.imageUrl || undefined} 
                         alt={`${registration.user?.firstName} ${registration.user?.lastName}`}
                       />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-[10px]">
+                      <AvatarFallback className="bg-blue-600 text-white text-sm">
                         {registration.user?.firstName?.[0]}{registration.user?.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-xs text-gray-900">
+                      <p className="font-semibold text-sm text-gray-900">
                         {registration.user?.firstName} {registration.user?.lastName}
                       </p>
-                      <p className="text-[10px] text-gray-600 flex items-center gap-1">
-                        <Mail className="w-2.5 h-2.5" />
+                      <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                        <Mail className="w-3 h-3" />
                         {registration.user?.email}
                       </p>
                     </div>
@@ -761,11 +738,11 @@ function EventWithRegistrationsCard({
                   <div className="text-right">
                     <Badge 
                       variant={registration.status === 'CONFIRMED' ? 'default' : 'secondary'}
-                      className="text-[10px] h-5 px-2"
+                      className="text-xs"
                     >
                       {registration.status}
                     </Badge>
-                    <p className="text-[10px] text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 mt-1">
                       {format(new Date(registration.createdAt), 'MMM dd')}
                     </p>
                   </div>

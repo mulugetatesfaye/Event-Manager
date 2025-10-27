@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
@@ -40,12 +41,21 @@ export default function RootLayout({
             </div>
             <Toaster 
               position="top-center"
+              closeButton
+              richColors
               toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#fff',
-                  color: '#000',
-                  border: '1px solid #e5e7eb',
+                duration: 4000,
+                classNames: {
+                  toast: 'border border-gray-200 shadow-lg',
+                  title: 'text-sm font-medium text-gray-900',
+                  description: 'text-sm text-gray-600',
+                  actionButton: 'bg-blue-600 text-white hover:bg-blue-700',
+                  cancelButton: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+                  closeButton: 'bg-white border border-gray-200 text-gray-500 hover:text-gray-900',
+                  success: 'border-green-200 bg-green-50',
+                  error: 'border-red-200 bg-red-50',
+                  warning: 'border-yellow-200 bg-yellow-50',
+                  info: 'border-blue-200 bg-blue-50',
                 },
               }}
             />

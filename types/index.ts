@@ -5,7 +5,13 @@ import {
   Category, 
   Registration, 
   UserRole, 
-  EventStatus 
+  EventStatus,
+  TicketType,
+  TicketPurchase,
+  PromoCode,
+  Seat,
+  TicketTypeStatus,
+  PromoCodeType
 } from '@prisma/client'
 
 // ============================================================================
@@ -17,7 +23,13 @@ export type {
   Category, 
   Registration, 
   UserRole, 
-  EventStatus 
+  EventStatus,
+  TicketType,
+  TicketPurchase,
+  PromoCode,
+  Seat,
+  TicketTypeStatus,
+  PromoCodeType
 }
 
 // ============================================================================
@@ -43,32 +55,37 @@ export interface UserWithCounts extends User {
 }
 
 // ============================================================================
-// Event Types
+// Ticket Types
 // ============================================================================
 
-// Event with all relations
-export interface EventWithRelations extends Event {
-  category?: Category | null
-  organizer?: User | null
-  creator?: User | null
-  registrations?: RegistrationWithRelations[]
+// Ticket Type with relations - FIXED
+export interface TicketTypeWithRelations extends TicketType {
+  event?: Event
+  ticketPurchases?: TicketPurchase[]
   _count?: {
-    registrations: number
+    ticketPurchases: number
   }
-  // Server-calculated fields for ticket availability
-  totalTicketsSold?: number
-  availableSpots?: number
+  // Computed fields (these are optional as they're calculated)
+  available?: number
+  isSoldOut?: boolean
+  isEarlyBird?: boolean
+  currentPrice?: number
 }
 
-// Event for dashboard (minimal)
-export interface DashboardEvent extends Event {
-  category?: Category | null
-  organizer?: UserBasic | null
+// Ticket Purchase with relations
+export interface TicketPurchaseWithRelations extends TicketPurchase {
+  registration?: Registration
+  ticketType?: TicketType
+  promoCode?: PromoCode | null
+}
+
+// Promo Code with relations
+export interface PromoCodeWithRelations extends PromoCode {
+  event?: Event | null
+  ticketPurchases?: TicketPurchase[]
   _count?: {
-    registrations: number
+    ticketPurchases: number
   }
-  totalTicketsSold?: number
-  availableSpots?: number
 }
 
 // ============================================================================
@@ -79,6 +96,7 @@ export interface DashboardEvent extends Event {
 export interface RegistrationWithRelations extends Registration {
   event?: EventWithRelations
   user?: User
+  ticketPurchases?: TicketPurchaseWithRelations[]
 }
 
 // Registration for dashboard views
@@ -87,12 +105,49 @@ export interface DashboardRegistration extends Registration {
     category?: Category | null
     organizer?: UserBasic | null
   }
+  ticketPurchases?: TicketPurchaseWithRelations[]
 }
 
 // Registration with full user details (for organizer views)
 export interface RegistrationWithUser extends Registration {
   user: UserBasic
   event?: Event
+  ticketPurchases?: TicketPurchaseWithRelations[]
+}
+
+// ============================================================================
+// Event Types
+// ============================================================================
+
+// Event with all relations
+export interface EventWithRelations extends Event {
+  category?: Category | null
+  organizer?: User | null
+  creator?: User | null
+  registrations?: RegistrationWithRelations[]
+  ticketTypes?: TicketTypeWithRelations[]
+  promoCodes?: PromoCode[]
+  seats?: Seat[]
+  _count?: {
+    registrations: number
+    ticketTypes: number
+  }
+  // Server-calculated fields for ticket availability
+  totalTicketsSold?: number
+  availableSpots?: number
+}
+
+// Event for dashboard (minimal)
+export interface DashboardEvent extends Event {
+  category?: Category | null
+  organizer?: UserBasic | null
+  ticketTypes?: TicketTypeWithRelations[]
+  _count?: {
+    registrations: number
+    ticketTypes: number
+  }
+  totalTicketsSold?: number
+  availableSpots?: number
 }
 
 // ============================================================================
@@ -153,6 +208,10 @@ export interface EventFormData {
   imageUrl?: string
   status: EventStatus
   categoryId?: string
+  requiresSeating?: boolean
+  allowGroupBooking?: boolean
+  groupDiscountPercentage?: number | null  // Changed: Added | null
+  groupMinQuantity?: number
 }
 
 export interface CategoryFormData {
@@ -165,6 +224,72 @@ export interface CategoryFormData {
 export interface RegistrationFormData {
   eventId: string
   metadata?: Record<string, unknown>
+}
+
+// Form data for creating ticket types
+export interface TicketTypeFormData {
+  name: string
+  description?: string
+  price: number
+  quantity: number
+  earlyBirdPrice?: number
+  earlyBirdEndDate?: string
+  minQuantity?: number
+  maxQuantity?: number
+  features?: string[]
+  status?: TicketTypeStatus
+  sortOrder?: number
+}
+
+// Form data for creating promo codes
+export interface PromoCodeFormData {
+  code: string
+  eventId?: string
+  type: PromoCodeType
+  discountValue: number
+  maxUses?: number
+  maxUsesPerUser?: number
+  validFrom?: string
+  validUntil?: string
+  minPurchaseAmount?: number
+  applicableTicketTypes?: string[]
+  isActive?: boolean
+}
+
+// Registration request with ticket purchases
+export interface TicketRegistrationRequest {
+  ticketSelections: Array<{
+    ticketTypeId: string
+    quantity: number
+  }>
+  promoCode?: string
+  seatSelections?: Array<{
+    ticketTypeId: string
+    seatNumbers: string[]
+  }>
+  // User info
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  organization?: string
+  dietaryRequirements?: string
+  specialRequirements?: string
+  marketingEmails?: boolean
+  termsAccepted: boolean
+}
+
+// Ticket availability info
+export interface TicketAvailability {
+  ticketTypeId: string
+  name: string
+  price: number
+  available: number
+  total: number
+  isSoldOut: boolean
+  isEarlyBird: boolean
+  earlyBirdPrice?: number
+  currentPrice: number
 }
 
 // ============================================================================
@@ -208,6 +333,12 @@ export interface EventsApiResponse {
 export interface RegistrationApiResponse {
   registration: RegistrationWithRelations
   message: string
+  summary?: {
+    subtotal: number
+    discount: number
+    total: number
+    ticketCount: number
+  }
 }
 
 // Generic API error
@@ -326,19 +457,20 @@ export interface MobileScanResult {
   error?: string
 }
 
-// ============================================================================
-// Type Guards
-// ============================================================================
-
-export function isEventWithRelations(event: Event | EventWithRelations): event is EventWithRelations {
-  return 'category' in event || 'organizer' in event || 'registrations' in event
+export interface RegistrationMetadata {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  organization?: string
+  dietaryRequirements?: string
+  specialRequirements?: string
+  marketingEmails?: boolean
+  termsAccepted?: boolean
+  registeredAt?: string
+  quantity?: number // Legacy field for old registrations
+  [key: string]: unknown // Allow additional fields
 }
-
-export function isRegistrationWithRelations(reg: Registration | RegistrationWithRelations): reg is RegistrationWithRelations {
-  return 'event' in reg || 'user' in reg
-}
-
-// types/index.ts - Add these new types to your existing file
 
 // ============================================================================
 // Activity & Check-in Types
@@ -429,6 +561,18 @@ export interface BulkCheckInResult {
 }
 
 // ============================================================================
+// Type Guards
+// ============================================================================
+
+export function isEventWithRelations(event: Event | EventWithRelations): event is EventWithRelations {
+  return 'category' in event || 'organizer' in event || 'registrations' in event
+}
+
+export function isRegistrationWithRelations(reg: Registration | RegistrationWithRelations): reg is RegistrationWithRelations {
+  return 'event' in reg || 'user' in reg
+}
+
+// ============================================================================
 // Constants
 // ============================================================================
 
@@ -455,4 +599,16 @@ export const PAYMENT_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Pending', value: 'PENDING' },
   { label: 'Completed', value: 'COMPLETED' },
   { label: 'Failed', value: 'FAILED' }
+]
+
+export const TICKET_TYPE_STATUS_OPTIONS: SelectOption[] = [
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Sold Out', value: 'SOLD_OUT' },
+  { label: 'Inactive', value: 'INACTIVE' }
+]
+
+export const PROMO_CODE_TYPE_OPTIONS: SelectOption[] = [
+  { label: 'Percentage Discount', value: 'PERCENTAGE' },
+  { label: 'Fixed Amount', value: 'FIXED_AMOUNT' },
+  { label: 'Early Bird', value: 'EARLY_BIRD' }
 ]

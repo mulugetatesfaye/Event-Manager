@@ -4,7 +4,6 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { EventForm } from '@/components/events/event-form'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Navbar from '@/components/layout/navbar'
 import { useCurrentUser } from '@/hooks/use-user'
 import { toast } from 'sonner'
@@ -45,18 +44,7 @@ export default function CreateEventPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Create New Event</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EventForm />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <EventForm />
     </>
   )
 }

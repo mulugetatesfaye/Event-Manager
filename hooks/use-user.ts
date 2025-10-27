@@ -1,3 +1,4 @@
+// hooks/use-user.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { User, UserRole, UserWithCounts } from '@/types'
@@ -63,33 +64,5 @@ export function useUpdateUserRole() {
     onError: (error: Error) => {
       toast.error(error.message)
     },
-  })
-}
-
-export function useMyRegistrations() {
-  const { isSignedIn } = useAuth()
-  
-  return useQuery({
-    queryKey: ['my-registrations'],
-    queryFn: async () => {
-      const response = await fetch('/api/users/me/registrations')
-      if (!response.ok) throw new Error('Failed to fetch registrations')
-      return response.json()
-    },
-    enabled: isSignedIn,
-  })
-}
-
-export function useMyEvents() {
-  const { isSignedIn } = useAuth()
-  
-  return useQuery({
-    queryKey: ['my-events'],
-    queryFn: async () => {
-      const response = await fetch('/api/users/me/events')
-      if (!response.ok) throw new Error('Failed to fetch your events')
-      return response.json()
-    },
-    enabled: isSignedIn,
   })
 }
