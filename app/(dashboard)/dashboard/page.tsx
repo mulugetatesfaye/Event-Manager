@@ -2,6 +2,7 @@
 'use client'
 
 import { useCurrentUser, useMyEvents, useMyRegistrations } from '@/hooks'
+import { useAdminStats, useAdminEvents } from '@/hooks/use-admin'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,12 +25,14 @@ import {
   DollarSign,
   Ticket,
   Award,
+  UserCog,
+  Activity,
+  Globe,
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { DashboardEvent, DashboardRegistration, EventWithRelations } from '@/types'
 import { useMemo } from 'react'
-import { cn } from '@/lib/utils'
 
 // Import utility functions
 import { 
@@ -39,15 +42,58 @@ import {
   calculateFillPercentage 
 } from '@/lib/event-utils'
 
+// Helper function to format currency
+const formatCurrency = (amount: number): string => {
+  return `Br ${amount.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  })}`
+}
+
+// Helper function to format numbers
+const formatNumber = (num: number): string => {
+  return num.toLocaleString('en-US')
+}
+
 export default function DashboardPage() {
   const { data: user, isLoading: userLoading } = useCurrentUser()
+  
+  // Fetch admin data if user is admin
+  const { data: adminStats, isLoading: adminStatsLoading } = useAdminStats()
+  const { data: adminEvents, isLoading: adminEventsLoading } = useAdminEvents(10)
+  
+  // Fetch regular user data
   const { data: myEvents, isLoading: eventsLoading } = useMyEvents()
   const { data: myRegistrations, isLoading: registrationsLoading } = useMyRegistrations()
 
-  const isOrganizer = user?.role !== 'ATTENDEE'
+  const isAdmin = user?.role === 'ADMIN'
+  const isOrganizer = user?.role === 'ORGANIZER' || isAdmin
 
-  // Calculate comprehensive stats
+  // Calculate stats based on role
   const stats = useMemo(() => {
+    if (isAdmin && adminStats) {
+      // Admin sees system-wide stats
+      return {
+        totalEvents: adminStats.totalEvents,
+        upcomingEvents: adminStats.upcomingEvents,
+        totalRegistrations: 0,
+        upcomingRegistrations: 0,
+        totalTickets: adminStats.totalTicketsSold,
+        totalRevenue: adminStats.totalRevenue,
+        avgFillRate: adminStats.avgFillRate,
+        publishedEvents: adminStats.publishedEvents,
+        draftEvents: adminStats.draftEvents,
+        completedEvents: adminStats.completedEvents,
+        eventsWithTicketTypes: adminStats.eventsWithTicketing,
+        totalUsers: adminStats.totalUsers,
+        totalOrganizers: adminStats.totalOrganizers,
+        totalCheckIns: adminStats.totalCheckIns,
+        recentRegistrations: adminStats.recentRegistrations,
+        checkInRate: adminStats.checkInRate,
+      }
+    }
+
+    // Organizer/Attendee stats
     const totalEvents = myEvents?.length || 0
     const upcomingEvents = myEvents?.filter(
       (event) => new Date(event.startDate) > new Date()
@@ -58,7 +104,6 @@ export default function DashboardPage() {
       (reg) => new Date(reg.event.startDate) > new Date()
     ).length || 0
 
-    // Organizer-specific stats
     let totalTickets = 0
     let totalRevenue = 0
     let totalCapacity = 0
@@ -106,10 +151,11 @@ export default function DashboardPage() {
       completedEvents,
       eventsWithTicketTypes
     }
-  }, [myEvents, myRegistrations])
+  }, [myEvents, myRegistrations, isAdmin, adminStats])
 
   // Get next upcoming event for attendees
   const nextEvent = useMemo(() => {
+    if (isAdmin) return null
     if (!myRegistrations || myRegistrations.length === 0) return null
     
     return myRegistrations
@@ -117,20 +163,22 @@ export default function DashboardPage() {
       .sort((a, b) => 
         new Date(a.event.startDate).getTime() - new Date(b.event.startDate).getTime()
       )[0] || null
-  }, [myRegistrations])
+  }, [myRegistrations, isAdmin])
 
-  // Get next upcoming event for organizers
+  // Get next upcoming event for organizers/admins
   const nextOrganizerEvent = useMemo(() => {
-    if (!myEvents || myEvents.length === 0) return null
+    const events = isAdmin ? adminEvents : myEvents
+    if (!events || events.length === 0) return null
     
-    return myEvents
+    return events
       .filter((event) => new Date(event.startDate) > new Date())
       .sort((a, b) => 
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
       )[0] || null
-  }, [myEvents])
+  }, [myEvents, adminEvents, isAdmin])
 
-  const isLoading = userLoading || eventsLoading || registrationsLoading
+  const isLoading = userLoading || 
+    (isAdmin ? (adminStatsLoading || adminEventsLoading) : (eventsLoading || registrationsLoading))
 
   if (isLoading) {
     return (
@@ -159,12 +207,22 @@ export default function DashboardPage() {
                 Welcome back, {user?.firstName || 'User'}
               </h1>
               <p className="text-sm text-gray-600">
-                {isOrganizer 
-                  ? "Here's an overview of your events and performance" 
+                {isAdmin 
+                  ? "System-wide overview and analytics" 
+                  : isOrganizer
+                  ? "Here's an overview of your events and performance"
                   : "Here's what's happening with your events"}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              {isAdmin && (
+                <Button asChild variant="outline" className="border-gray-300 hover:bg-gray-50">
+                  <Link href="/dashboard/users">
+                    <UserCog className="w-4 h-4 mr-2" />
+                    Manage Users
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline" className="border-gray-300 hover:bg-gray-50">
                 <Link href="/events">
                   <Search className="w-4 h-4 mr-2" />
@@ -184,10 +242,287 @@ export default function DashboardPage() {
         </div>
       </FadeIn>
 
-      {/* Stats Grid */}
-      {isOrganizer ? (
+      {/* Stats Grid - ADMIN VIEW */}
+      {isAdmin ? (
         <>
-          {/* Organizer Stats */}
+          {/* Admin Main Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <FadeIn direction="up" delay={100}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Events</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Globe className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{formatNumber(stats.totalEvents)}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <span>{formatNumber(stats.publishedEvents)} published</span>
+                    <span className="text-gray-300">•</span>
+                    <span>{formatNumber(stats.upcomingEvents)} upcoming</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={200}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{formatNumber(stats.totalUsers || 0)}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <span>{formatNumber(stats.totalOrganizers || 0)} organizers</span>
+                    <span className="text-gray-300">•</span>
+                    <span>{formatNumber(stats.recentRegistrations || 0)} recent</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={300}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue || 0)}</div>
+                  <p className="text-xs text-gray-600">
+                    From {formatNumber(stats.totalTickets || 0)} tickets sold
+                  </p>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={400}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Check-in Rate</CardTitle>
+                    <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-3xl font-bold text-gray-900">{stats.checkInRate || 0}%</div>
+                  <Progress value={stats.checkInRate || 0} className="h-2" />
+                </CardContent>
+              </Card>
+            </FadeIn>
+          </div>
+
+          {/* Admin System Activity */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FadeIn direction="up" delay={500}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Avg Fill Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{stats.avgFillRate}%</div>
+                  <Progress value={stats.avgFillRate} className="h-2 mt-3" />
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={600}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <Ticket className="w-4 h-4" />
+                    Check-ins
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{formatNumber(stats.totalCheckIns || 0)}</div>
+                  <p className="text-xs text-gray-600 mt-2">Total attendees checked in</p>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={700}>
+              <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{formatNumber(stats.recentRegistrations || 0)}</div>
+                  <p className="text-xs text-gray-600 mt-2">Registrations (last 7 days)</p>
+                </CardContent>
+              </Card>
+            </FadeIn>
+          </div>
+
+          {/* Admin Recent Events List */}
+          <FadeIn direction="up" delay={800}>
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-blue-600" />
+                      Recent Events
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs">
+                      Latest events in the system
+                    </CardDescription>
+                  </div>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/events" className="text-blue-600 hover:text-blue-700">
+                      View all
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {adminEvents && adminEvents.length > 0 ? (
+                  <div className="space-y-3">
+                    {adminEvents.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-sm truncate text-gray-900">{event.title}</h4>
+                            <Badge 
+                              variant={event.status === 'PUBLISHED' ? 'default' : 'secondary'}
+                              className="flex-shrink-0"
+                            >
+                              {event.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5" />
+                              {event.organizer.firstName} {event.organizer.lastName}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Ticket className="w-3.5 h-3.5" />
+                              {formatNumber(event.totalTicketsSold)} / {formatNumber(event.capacity)}
+                            </span>
+                            {event.totalRevenue > 0 && (
+                              <span className="flex items-center gap-1">
+                                {formatCurrency(event.totalRevenue)}
+                              </span>
+                            )}
+                          </div>
+                          <Progress value={event.fillRate} className="h-1.5" />
+                        </div>
+                        <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                          <Link href={`/events/${event.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Globe className="w-12 h-12 mx-auto text-gray-300" />
+                    <p className="text-sm text-gray-600 mt-4">No events in the system</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          {/* Admin Top Performing Events */}
+          <FadeIn direction="up" delay={900}>
+            <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Award className="w-5 h-5 text-blue-600" />
+                      Top Performing Events
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs">
+                      Events with highest fill rates
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {adminEvents && adminEvents.filter(e => e.status === 'PUBLISHED').length > 0 ? (
+                  <div className="space-y-3">
+                    {adminEvents
+                      .filter((event) => event.status === 'PUBLISHED')
+                      .sort((a, b) => b.fillRate - a.fillRate)
+                      .slice(0, 5)
+                      .map((event) => (
+                        <div
+                          key={event.id}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <h4 className="font-semibold text-sm truncate text-gray-900">{event.title}</h4>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                {event.organizer.firstName} {event.organizer.lastName}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Ticket className="w-3.5 h-3.5" />
+                                {formatNumber(event.totalTicketsSold)} / {formatNumber(event.capacity)}
+                              </span>
+                              {event.totalRevenue > 0 && (
+                                <span className="flex items-center gap-1">
+                                  {formatCurrency(event.totalRevenue)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Progress value={event.fillRate} className="h-1.5 flex-1" />
+                              <span className="text-xs font-semibold text-gray-700 min-w-[3rem] text-right">{event.fillRate}%</span>
+                            </div>
+                          </div>
+                          <Button asChild size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                            <Link href={`/events/${event.id}`}>
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 space-y-4">
+                    <BarChart3 className="w-12 h-12 mx-auto text-gray-300" />
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 font-medium">No published events</p>
+                      <p className="text-xs text-gray-500">Events will appear here once published</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </>
+      ) : isOrganizer ? (
+        <>
+          {/* ORGANIZER VIEW - Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <FadeIn direction="up" delay={100}>
               <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
@@ -200,11 +535,11 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-3xl font-bold text-gray-900">{stats.totalEvents}</div>
+                  <div className="text-3xl font-bold text-gray-900">{formatNumber(stats.totalEvents)}</div>
                   <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <span>{stats.publishedEvents} published</span>
+                    <span>{formatNumber(stats.publishedEvents)} published</span>
                     <span className="text-gray-300">•</span>
-                    <span>{stats.draftEvents} drafts</span>
+                    <span>{formatNumber(stats.draftEvents)} drafts</span>
                   </div>
                 </CardContent>
               </Card>
@@ -221,7 +556,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-3xl font-bold text-gray-900">{stats.totalTickets}</div>
+                  <div className="text-3xl font-bold text-gray-900">{formatNumber(stats.totalTickets)}</div>
                   <p className="text-xs text-gray-600">
                     Across all your events
                   </p>
@@ -240,7 +575,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(0)}</div>
+                  <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue)}</div>
                   <p className="text-xs text-gray-600">
                     From ticket sales
                   </p>
@@ -266,14 +601,14 @@ export default function DashboardPage() {
             </FadeIn>
           </div>
 
-          {/* Next Event Highlight */}
+          {/* Next Event Highlight - Organizer */}
           {nextOrganizerEvent && (
             <FadeIn direction="up" delay={500}>
               <Card className="border-2 border-blue-100 bg-blue-50/30 hover:shadow-lg transition-shadow duration-200">
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-white" />
+                      <Calendar className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <CardTitle className="text-base font-semibold">Your Next Event</CardTitle>
@@ -297,7 +632,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2">
                           <Ticket className="w-4 h-4" />
                           <span>
-                            {calculateTotalTicketsSold(nextOrganizerEvent as unknown as EventWithRelations)} / {nextOrganizerEvent.capacity}
+                            {formatNumber(calculateTotalTicketsSold(nextOrganizerEvent as unknown as EventWithRelations))} / {formatNumber(nextOrganizerEvent.capacity)}
                           </span>
                         </div>
                       </div>
@@ -323,7 +658,7 @@ export default function DashboardPage() {
         </>
       ) : (
         <>
-          {/* Attendee Stats */}
+          {/* ATTENDEE VIEW - Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
@@ -361,7 +696,9 @@ export default function DashboardPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
+                    <div className="text-3xl font-bold text-gray-900">
+                      {typeof stat.value === 'number' ? formatNumber(stat.value) : stat.value}
+                    </div>
                     {stat.link && (
                       <Button asChild variant="link" className="px-0 h-auto">
                         <Link href={stat.link} className="text-sm text-blue-600 hover:text-blue-700">
@@ -382,7 +719,7 @@ export default function DashboardPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-white" />
+                      <Calendar className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <CardTitle className="text-base font-semibold">Your Next Event</CardTitle>
@@ -426,7 +763,7 @@ export default function DashboardPage() {
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Events */}
-        {isOrganizer && (
+        {isOrganizer && !isAdmin && (
           <FadeIn direction="up" delay={600}>
             <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="pb-4">
@@ -480,7 +817,7 @@ export default function DashboardPage() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Ticket className="w-3.5 h-3.5" />
-                                {ticketsSold} / {event.capacity}
+                                {formatNumber(ticketsSold)} / {formatNumber(event.capacity)}
                               </span>
                             </div>
                             <Progress value={fillRate} className="h-1.5" />
@@ -514,18 +851,18 @@ export default function DashboardPage() {
           </FadeIn>
         )}
 
-        {/* Upcoming Registrations */}
-        <FadeIn direction="up" delay={isOrganizer ? 700 : 600}>
+        {/* Upcoming Registrations / Top Performing */}
+        <FadeIn direction="up" delay={isOrganizer && !isAdmin ? 700 : 600}>
           <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                    {isOrganizer ? 'Top Performing' : 'Upcoming Events'}
+                    {isOrganizer && !isAdmin ? 'Top Performing' : 'Upcoming Events'}
                   </CardTitle>
                   <CardDescription className="mt-1 text-xs">
-                    {isOrganizer 
+                    {isOrganizer && !isAdmin
                       ? 'Events with highest fill rates'
                       : "Events you're attending"}
                   </CardDescription>
@@ -541,7 +878,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {isOrganizer ? (
+              {isOrganizer && !isAdmin ? (
                 myEvents && myEvents.filter(e => e.status === 'PUBLISHED').length > 0 ? (
                   <div className="space-y-3">
                     {myEvents
@@ -568,12 +905,11 @@ export default function DashboardPage() {
                               <div className="flex items-center gap-4 text-xs text-gray-600">
                                 <span className="flex items-center gap-1">
                                   <Ticket className="w-3.5 h-3.5" />
-                                  {ticketsSold} / {event.capacity}
+                                  {formatNumber(ticketsSold)} / {formatNumber(event.capacity)}
                                 </span>
                                 {revenue > 0 && (
                                   <span className="flex items-center gap-1">
-                                    <DollarSign className="w-3.5 h-3.5" />
-                                    ${revenue.toFixed(0)}
+                                    {formatCurrency(revenue)}
                                   </span>
                                 )}
                               </div>
@@ -655,7 +991,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Performance Insights - Organizers Only */}
-      {isOrganizer && myEvents && myEvents.length > 0 && (
+      {isOrganizer && !isAdmin && myEvents && myEvents.length > 0 && (
         <FadeIn direction="up" delay={800}>
           <Card className="border border-gray-200 hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-4">
@@ -689,7 +1025,7 @@ export default function DashboardPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{mostPopular.title}</p>
                         <p className="text-xs text-gray-600">
-                          {calculateTotalTicketsSold(mostPopular as unknown as EventWithRelations)} tickets sold
+                          {formatNumber(calculateTotalTicketsSold(mostPopular as unknown as EventWithRelations))} tickets sold
                         </p>
                       </div>
                     ) : (
@@ -719,7 +1055,7 @@ export default function DashboardPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{highestRevenue.title}</p>
                         <p className="text-xs text-gray-600">
-                          ${revenue.toFixed(0)} earned
+                          {formatCurrency(revenue)} earned
                         </p>
                       </div>
                     ) : (
@@ -769,7 +1105,53 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {isOrganizer && (
+              {isAdmin && (
+                <>
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/dashboard/users" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <UserCog className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-sm text-gray-900">Manage Users</div>
+                          <div className="text-xs text-gray-600">View all users</div>
+                        </div>
+                      </div>
+                    </Link>
+                  </Button>
+                  
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/dashboard/categories" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <Settings className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-sm text-gray-900">Categories</div>
+                          <div className="text-xs text-gray-600">Manage categories</div>
+                        </div>
+                      </div>
+                    </Link>
+                  </Button>
+
+                  <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
+                    <Link href="/events/create" className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                          <Plus className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-sm text-gray-900">Create Event</div>
+                          <div className="text-xs text-gray-600">Start a new event</div>
+                        </div>
+                      </div>
+                    </Link>
+                  </Button>
+                </>
+              )}
+              
+              {isOrganizer && !isAdmin && (
                 <>
                   <Button asChild variant="outline" className="h-auto p-6 justify-start border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all group">
                     <Link href="/events/create" className="space-y-2">

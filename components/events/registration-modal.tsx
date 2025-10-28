@@ -1,10 +1,11 @@
 // components/events/registration-modal.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import NextImage from 'next/image'
 import {
   Dialog,
   DialogContent,
@@ -30,12 +31,13 @@ import {
   Loader2,
   Download,
   Ticket,
-  QrCode,
   Minus,
   Plus,
   Clock,
   Info,
   AlertCircle,
+  Tag,
+  X,
 } from 'lucide-react'
 import { 
   EventWithRelations, 
@@ -56,7 +58,6 @@ interface RegistrationModalProps {
   currentUser: UserType
 }
 
-// Type for the validated promo code response
 interface ValidatedPromoCode {
   id: string
   code: string
@@ -72,13 +73,11 @@ interface ValidatedPromoCode {
   isActive: boolean
 }
 
-// Type for ticket selection in request
 interface TicketSelectionRequest {
   ticketTypeId: string
   quantity: number
 }
 
-// Type for the registration request body
 interface RegistrationRequestBody {
   firstName: string
   lastName: string
@@ -94,7 +93,6 @@ interface RegistrationRequestBody {
   promoCode?: string
 }
 
-// Registration schema - removed organization
 const registrationSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
@@ -106,14 +104,12 @@ const registrationSchema = z.object({
 
 type RegistrationFormData = z.infer<typeof registrationSchema>
 
-// Steps for events with ticket types
 const STEPS_WITH_TICKETS = [
   { id: 1, name: 'Select Tickets', icon: Ticket },
   { id: 2, name: 'Your Information', icon: User },
   { id: 3, name: 'Review & Confirm', icon: CheckCircle2 },
 ]
 
-// Steps for simple events
 const SIMPLE_STEPS = [
   { id: 1, name: 'Your Information', icon: User },
   { id: 2, name: 'Review & Confirm', icon: CheckCircle2 },
@@ -142,7 +138,7 @@ async function downloadTicketAsImage(
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.fillStyle = '#6366F1'
+    ctx.fillStyle = '#2563EB'
     ctx.fillRect(0, 0, canvas.width, 80)
 
     ctx.fillStyle = '#FFFFFF'
@@ -155,7 +151,7 @@ async function downloadTicketAsImage(
     const eventTitle = event.title.length > 30 ? event.title.substring(0, 30) + '...' : event.title
     ctx.fillText(eventTitle, canvas.width / 2, 120)
 
-    const img = new Image()
+    const img = new window.Image()
     img.onload = () => {
       ctx.drawImage(img, 100, 150, 200, 200)
 
@@ -206,7 +202,6 @@ export function RegistrationModal({
   onClose,
   currentUser,
 }: RegistrationModalProps) {
-  // Check if event has ticket types
   const hasTicketTypes = !!(event.ticketTypes && event.ticketTypes.length > 0)
   const steps = hasTicketTypes ? STEPS_WITH_TICKETS : SIMPLE_STEPS
   
@@ -214,26 +209,30 @@ export function RegistrationModal({
   const [isProcessing, setIsProcessing] = useState(false)
   const [registrationData, setRegistrationData] = useState<RegistrationWithRelations | null>(null)
   const [qrCodeImage, setQrCodeImage] = useState<string>('')
+  const [isSuccess, setIsSuccess] = useState(false)
   const queryClient = useQueryClient()
   
-  // Ticket selection state
   const [ticketSelections, setTicketSelections] = useState<Map<string, number>>(new Map())
   const [promoCode, setPromoCode] = useState('')
   const [appliedPromo, setAppliedPromo] = useState<ValidatedPromoCode | null>(null)
   const [isValidatingPromo, setIsValidatingPromo] = useState(false)
 
-  // Initialize ticket selection
+  // Track if modal is open to prevent showing success after close
+  const isModalOpenRef = useRef(isOpen)
+
+  // Update ref when modal open state changes
+  useEffect(() => {
+    isModalOpenRef.current = isOpen
+  }, [isOpen])
+
   useEffect(() => {
     if (!hasTicketTypes && ticketSelections.size === 0) {
-      // For simple events without ticket types
       setTicketSelections(new Map([['simple', 1]]))
     }
   }, [hasTicketTypes, ticketSelections.size])
 
-  // Get available ticket types from event
   const availableTickets = hasTicketTypes ? (event.ticketTypes || []).filter(t => t.status === 'ACTIVE') : []
 
-  // Calculate totals
   const calculateTotals = () => {
     let subtotal = 0
     let totalTickets = 0
@@ -242,7 +241,6 @@ export function RegistrationModal({
       ticketSelections.forEach((quantity, ticketTypeId) => {
         const ticket = availableTickets.find(t => t.id === ticketTypeId)
         if (ticket) {
-          // Check for early bird pricing
           const now = new Date()
           const isEarlyBird = ticket.earlyBirdEndDate 
             ? new Date(ticket.earlyBirdEndDate) > now
@@ -257,7 +255,6 @@ export function RegistrationModal({
         }
       })
     } else {
-      // Simple ticketing
       const quantity = ticketSelections.get('simple') || 1
       subtotal = event.price * quantity
       totalTickets = quantity
@@ -282,7 +279,6 @@ export function RegistrationModal({
 
   const totals = calculateTotals()
 
-  // Get selected ticket types for summary
   const getSelectedTicketTypes = (): Array<{ id: string; name: string; quantity: number; price: number }> => {
     const selected: Array<{ id: string; name: string; quantity: number; price: number }> = []
     
@@ -314,7 +310,6 @@ export function RegistrationModal({
     return selected
   }
 
-  // Validate promo code
   const validatePromoCode = async () => {
     if (!promoCode) return
 
@@ -343,7 +338,6 @@ export function RegistrationModal({
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegistrationFormData) => {
-      // Build the request body
       const requestBody: RegistrationRequestBody = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -354,7 +348,6 @@ export function RegistrationModal({
       }
 
       if (hasTicketTypes) {
-        // For events with ticket types, send ticketSelections
         const ticketSelectionsArray: TicketSelectionRequest[] = Array.from(ticketSelections.entries())
           .filter(([_, quantity]) => quantity > 0)
           .map(([ticketTypeId, quantity]) => ({
@@ -363,19 +356,13 @@ export function RegistrationModal({
           }))
 
         requestBody.ticketSelections = ticketSelectionsArray
-        
-        console.log('Sending ticket selections:', ticketSelectionsArray)
       } else {
-        // For simple events, send quantity
         requestBody.quantity = ticketSelections.get('simple') || 1
       }
 
-      // Add promo code if applied
       if (appliedPromo?.code) {
         requestBody.promoCode = appliedPromo.code
       }
-
-      console.log('Final registration request:', requestBody)
 
       const response = await fetch(`/api/events/${event.id}/register`, {
         method: 'POST',
@@ -392,9 +379,12 @@ export function RegistrationModal({
       return result
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event', event.id] })
-      queryClient.invalidateQueries({ queryKey: ['registrations'] })
-      queryClient.invalidateQueries({ queryKey: ['user-registrations'] })
+      // Only invalidate queries if modal is still open
+      if (isModalOpenRef.current) {
+        queryClient.invalidateQueries({ queryKey: ['event', event.id] })
+        queryClient.invalidateQueries({ queryKey: ['registrations'] })
+        queryClient.invalidateQueries({ queryKey: ['user-registrations'] })
+      }
     },
   })
 
@@ -413,12 +403,11 @@ export function RegistrationModal({
   const progressPercentage = (currentStep / steps.length) * 100
 
   useEffect(() => {
-    const isSuccessStep = hasTicketTypes ? currentStep === 4 : currentStep === 3
-    if (registrationData && isSuccessStep) {
+    if (registrationData && isSuccess && isModalOpenRef.current) {
       const qrContent = generateUserFriendlyQRContent(registrationData, event)
       
       QRCode.toDataURL(qrContent, {
-        width: 200,
+        width: 256,
         margin: 2,
         color: {
           dark: '#000000',
@@ -428,11 +417,10 @@ export function RegistrationModal({
       .then(setQrCodeImage)
       .catch(console.error)
     }
-  }, [registrationData, currentStep, event, hasTicketTypes])
+  }, [registrationData, isSuccess, event])
 
   const handleNext = async () => {
     if (hasTicketTypes && currentStep === 1) {
-      // Validate ticket selection
       if (totals.totalTickets === 0) {
         toast.error('Please select at least one ticket')
         return
@@ -468,7 +456,6 @@ export function RegistrationModal({
       return
     }
 
-    // Check if tickets are selected for events with ticket types
     if (hasTicketTypes && totals.totalTickets === 0) {
       toast.error('Please select at least one ticket')
       return
@@ -479,12 +466,18 @@ export function RegistrationModal({
       
       const response = await registerMutation.mutateAsync(data)
       
-      setRegistrationData(response.registration)
-      setCurrentStep(hasTicketTypes ? 4 : 3) // Success step
-      toast.success('Successfully registered for the event!')
+      // Only show success if modal is still open
+      if (isModalOpenRef.current) {
+        setRegistrationData(response.registration)
+        setIsSuccess(true)
+        toast.success('Successfully registered for the event!')
+      }
       
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to register. Please try again.')
+      // Only show error if modal is still open
+      if (isModalOpenRef.current) {
+        toast.error(error instanceof Error ? error.message : 'Failed to register. Please try again.')
+      }
       console.error('Registration error:', error)
     } finally {
       setIsProcessing(false)
@@ -502,7 +495,6 @@ export function RegistrationModal({
       lastName: form.getValues('lastName')
     }
     
-    // Get all selected ticket type names
     const ticketTypeNames = registrationData.ticketPurchases?.map(
       purchase => (purchase.ticketType as { name?: string }).name || ''
     ).filter(Boolean) || []
@@ -514,12 +506,20 @@ export function RegistrationModal({
   }
 
   const handleClose = () => {
+    // If currently processing, don't allow close
+    if (isProcessing) {
+      return
+    }
+
+    // Reset all state completely
     setCurrentStep(1)
+    setIsSuccess(false)
     setRegistrationData(null)
     setQrCodeImage('')
     setTicketSelections(new Map())
     setPromoCode('')
     setAppliedPromo(null)
+    setIsProcessing(false)
     form.reset()
     onClose()
   }
@@ -527,269 +527,279 @@ export function RegistrationModal({
   const { watch, register, setValue, formState: { errors } } = form
 
   const renderStepContent = () => {
-    const isSuccessStep = hasTicketTypes ? currentStep === 4 : currentStep === 3
-    
-    if (isSuccessStep) {
+    if (isSuccess && registrationData) {
       return (
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+        <div className="space-y-6">
+          <div className="text-center py-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="text-lg font-bold mb-1">Registration Successful!</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Registration Successful!</h3>
             <p className="text-sm text-gray-600">
-              You have successfully registered for {event.title}
+              You&apos;re all set for {event.title}
             </p>
           </div>
 
-          {qrCodeImage && registrationData && (
-            <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 rounded-lg p-4 border">
-              <div className="flex items-center gap-2 mb-3">
-                <QrCode className="w-4 h-4 text-primary" />
-                <h4 className="font-semibold text-sm">Your Event Ticket</h4>
-              </div>
-              
-              <div className="bg-white rounded-lg p-4 border shadow-sm">
-                <div className="flex flex-col items-center mb-4">
-                  <div className="p-3 bg-white rounded-lg border-2 border-gray-200">
-                    <img 
+          {qrCodeImage && (
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex flex-col items-center mb-6">
+                  <div className="p-4 bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+                    <NextImage 
                       src={qrCodeImage} 
                       alt="Event QR Code" 
-                      className="w-32 h-32"
+                      width={192}
+                      height={192}
+                      className="w-48 h-48"
+                      unoptimized={true}
+                      priority={true}
                     />
                   </div>
-                  <p className="text-xs text-gray-600 mt-2">
-                    Ticket #{registrationData.ticketNumber || registrationData.id.slice(-8)}
-                  </p>
+                  <div className="mt-4 text-center">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Ticket Number</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      #{registrationData.ticketNumber || registrationData.id.slice(-8)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1.5 text-xs border-t pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Event:</span>
-                    <span className="font-medium text-right">{event.title}</span>
+                <div className="space-y-3 border-t border-gray-100 pt-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm text-gray-600">Event</span>
+                    <span className="text-sm font-medium text-gray-900 text-right">{event.title}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Date:</span>
-                    <span className="font-medium">
-                      {format(new Date(event.startDate), 'PP')}
+                    <span className="text-sm text-gray-600">Date</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {format(new Date(event.startDate), 'PPP')}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Time:</span>
-                    <span className="font-medium">
+                    <span className="text-sm text-gray-600">Time</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {format(new Date(event.startDate), 'p')}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Location:</span>
-                    <span className="font-medium text-right">{event.location}</span>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm text-gray-600">Location</span>
+                    <span className="text-sm font-medium text-gray-900 text-right">{event.location}</span>
                   </div>
                   {totals.total > 0 && (
-                    <div className="flex items-center justify-between pt-1 border-t">
-                      <span className="text-gray-600">Amount Paid:</span>
-                      <span className="font-bold text-primary">${totals.total.toFixed(2)}</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className="text-sm text-gray-600">Amount Paid</span>
+                      <span className="text-base font-bold text-blue-600">
+                        ${totals.total.toFixed(2)}
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-800">
-                  <strong>Important:</strong> Save this QR code for event check-in
-                </p>
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-medium mb-1">Important Information</p>
+                    <p className="text-blue-800">
+                      Save or screenshot this QR code. You&apos;ll need it for event check-in.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               type="button"
               onClick={handleDownloadTicket}
               variant="outline"
-              size="sm"
-              className="flex-1"
+              className="flex-1 h-11"
               disabled={!qrCodeImage}
             >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
+              <Download className="w-4 h-4 mr-2" />
               Download Ticket
             </Button>
             <Button
               type="button"
               onClick={handleClose}
-              size="sm"
-              className="flex-1"
+              className="flex-1 h-11 bg-blue-600 hover:bg-blue-700"
             >
-              <Ticket className="w-3.5 h-3.5 mr-1.5" />
-              Close
+              Done
             </Button>
           </div>
 
-          <p className="text-xs text-center text-gray-500">
-            Confirmation email sent to {watch('email')}
+          <p className="text-xs text-center text-gray-500 pt-2">
+            A confirmation email has been sent to <span className="font-medium text-gray-700">{watch('email')}</span>
           </p>
         </div>
       )
     }
 
-    // Ticket selection step (only for events with ticket types)
     if (hasTicketTypes && currentStep === 1) {
       return (
-        <div className="space-y-4">
-          {availableTickets.length > 0 ? (
-            <>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
-                  <div className="text-xs text-amber-800">
-                    <p className="font-medium">Select Your Tickets</p>
-                    <p className="mt-0.5">Choose the ticket type and quantity you want to purchase</p>
-                  </div>
-                </div>
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Ticket className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 mb-1">Select Your Tickets</p>
+                <p className="text-xs text-blue-800">Choose the ticket types and quantities you&apos;d like to purchase</p>
               </div>
+            </div>
+          </div>
 
-              <div className="space-y-3">
-                {availableTickets.map((ticket) => {
-                  const now = new Date()
-                  const isEarlyBird = ticket.earlyBirdEndDate 
-                    ? new Date(ticket.earlyBirdEndDate) > now
-                    : false
-                  
-                  const currentPrice = isEarlyBird && ticket.earlyBirdPrice 
-                    ? ticket.earlyBirdPrice 
-                    : ticket.price
+          <div className="space-y-4">
+            {availableTickets.length > 0 ? (
+              availableTickets.map((ticket) => {
+                const now = new Date()
+                const isEarlyBird = ticket.earlyBirdEndDate 
+                  ? new Date(ticket.earlyBirdEndDate) > now
+                  : false
+                
+                const currentPrice = isEarlyBird && ticket.earlyBirdPrice 
+                  ? ticket.earlyBirdPrice 
+                  : ticket.price
 
-                  const available = ticket.quantity - (ticket.quantitySold || 0)
-                  const isSoldOut = available <= 0
+                const available = ticket.quantity - (ticket.quantitySold || 0)
+                const isSoldOut = available <= 0
+                const isSelected = (ticketSelections.get(ticket.id) || 0) > 0
 
-                  return (
-                    <div
-                      key={ticket.id}
-                      className={cn(
-                        "border rounded-lg p-4 transition-all",
-                        isSoldOut
-                          ? "bg-gray-50 opacity-60 cursor-not-allowed" 
-                          : "hover:border-primary/50 hover:shadow-sm",
-                        ticketSelections.get(ticket.id) && ticketSelections.get(ticket.id)! > 0
-                          ? "border-primary bg-primary/5"
-                          : ""
-                      )}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-sm">{ticket.name}</h4>
-                            {isEarlyBird && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Early Bird
-                              </Badge>
-                            )}
-                            {isSoldOut && (
-                              <Badge variant="destructive" className="text-xs px-1.5 py-0">
-                                Sold Out
-                              </Badge>
-                            )}
-                          </div>
-                          {ticket.description && (
-                            <p className="text-xs text-gray-600 mb-2">{ticket.description}</p>
+                return (
+                  <div
+                    key={ticket.id}
+                    className={cn(
+                      "border-2 rounded-xl p-5 transition-all",
+                      isSoldOut
+                        ? "bg-gray-50 opacity-60 cursor-not-allowed border-gray-200" 
+                        : isSelected
+                        ? "border-blue-500 bg-blue-50 shadow-sm"
+                        : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-base text-gray-900">{ticket.name}</h4>
+                          {isEarlyBird && (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Early Bird
+                            </Badge>
                           )}
-                          <div className="flex items-center gap-3 text-xs">
-                            <span className="font-bold text-primary">
+                          {isSoldOut && (
+                            <Badge variant="destructive">
+                              Sold Out
+                            </Badge>
+                          )}
+                        </div>
+
+                        {ticket.description && (
+                          <p className="text-sm text-gray-600 mb-3">{ticket.description}</p>
+                        )}
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-bold text-gray-900">
                               ${currentPrice.toFixed(2)}
                             </span>
                             {isEarlyBird && ticket.price !== currentPrice && (
-                              <span className="text-gray-400 line-through">
+                              <span className="text-sm text-gray-400 line-through">
                                 ${ticket.price.toFixed(2)}
                               </span>
                             )}
-                            <span className="text-gray-500">
-                              • {available} available
-                            </span>
                           </div>
+                          <Separator orientation="vertical" className="h-4" />
+                          <span className="text-sm text-gray-600">
+                            {available} available
+                          </span>
                         </div>
-                        
-                        {!isSoldOut && (
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => {
-                                const current = ticketSelections.get(ticket.id) || 0
-                                if (current > 0) {
-                                  const newSelections = new Map(ticketSelections)
-                                  newSelections.set(ticket.id, current - 1)
-                                  setTicketSelections(newSelections)
-                                }
-                              }}
-                              disabled={!ticketSelections.get(ticket.id) || ticketSelections.get(ticket.id) === 0}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="w-8 text-center font-medium text-sm">
-                              {ticketSelections.get(ticket.id) || 0}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => {
-                                const current = ticketSelections.get(ticket.id) || 0
-                                const maxQuantity = Math.min(ticket.maxQuantity, available)
-                                if (current < maxQuantity) {
-                                  const newSelections = new Map(ticketSelections)
-                                  newSelections.set(ticket.id, current + 1)
-                                  setTicketSelections(newSelections)
-                                }
-                              }}
-                              disabled={
-                                (ticketSelections.get(ticket.id) || 0) >= Math.min(ticket.maxQuantity, available)
-                              }
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
+                      
+                      {!isSoldOut && (
+                        <div className="flex items-center gap-3 bg-white rounded-lg border border-gray-200 p-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 w-9 p-0 hover:bg-gray-100"
+                            onClick={() => {
+                              const current = ticketSelections.get(ticket.id) || 0
+                              if (current > 0) {
+                                const newSelections = new Map(ticketSelections)
+                                newSelections.set(ticket.id, current - 1)
+                                setTicketSelections(newSelections)
+                              }
+                            }}
+                            disabled={!ticketSelections.get(ticket.id) || ticketSelections.get(ticket.id) === 0}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="w-10 text-center font-semibold text-base">
+                            {ticketSelections.get(ticket.id) || 0}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 w-9 p-0 hover:bg-gray-100"
+                            onClick={() => {
+                              const current = ticketSelections.get(ticket.id) || 0
+                              const maxQuantity = Math.min(ticket.maxQuantity, available)
+                              if (current < maxQuantity) {
+                                const newSelections = new Map(ticketSelections)
+                                newSelections.set(ticket.id, current + 1)
+                                setTicketSelections(newSelections)
+                              }
+                            }}
+                            disabled={
+                              (ticketSelections.get(ticket.id) || 0) >= Math.min(ticket.maxQuantity, available)
+                            }
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )
-                })}
+                  </div>
+                )
+              })
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Ticket className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="font-medium text-gray-900 mb-1">No tickets available</p>
+                <p className="text-sm">Please check back later</p>
               </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Ticket className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm font-medium">No ticket types available</p>
-              <p className="text-xs mt-1">Please check back later</p>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Promo code section */}
           {availableTickets.length > 0 && (
-            <div className="border-t pt-4">
-              <Label htmlFor="promoCode" className="text-xs mb-2 block">Have a promo code?</Label>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <Label htmlFor="promoCode" className="text-sm font-medium mb-3 block">
+                Have a promo code?
+              </Label>
               <div className="flex gap-2">
-                <Input
-                  id="promoCode"
-                  placeholder="Enter promo code"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  className="h-9 text-sm"
-                  disabled={!!appliedPromo}
-                />
+                <div className="relative flex-1">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="promoCode"
+                    placeholder="Enter code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    className="pl-10 h-10"
+                    disabled={!!appliedPromo}
+                  />
+                </div>
                 {!appliedPromo ? (
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={validatePromoCode}
                     disabled={!promoCode || isValidatingPromo}
-                    className="h-9"
+                    className="h-10 px-6"
                   >
                     {isValidatingPromo ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       'Apply'
                     )}
@@ -797,21 +807,20 @@ export function RegistrationModal({
                 ) : (
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
                     onClick={() => {
                       setAppliedPromo(null)
                       setPromoCode('')
                     }}
-                    className="h-9"
+                    className="h-10"
                   >
-                    Remove
+                    <X className="w-4 h-4" />
                   </Button>
                 )}
               </div>
               {appliedPromo && (
-                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
+                <p className="text-sm text-green-600 mt-2 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
                   {appliedPromo.type === 'PERCENTAGE' 
                     ? `${appliedPromo.discountValue}% discount applied`
                     : `$${appliedPromo.discountValue} discount applied`}
@@ -820,25 +829,24 @@ export function RegistrationModal({
             </div>
           )}
 
-          {/* Order summary */}
           {totals.totalTickets > 0 && (
-            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-              <h4 className="font-semibold text-sm">Order Summary</h4>
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal ({totals.totalTickets} {totals.totalTickets === 1 ? 'ticket' : 'tickets'})</span>
-                  <span>${totals.subtotal.toFixed(2)}</span>
+            <div className="bg-gray-900 text-white rounded-xl p-5">
+              <h4 className="font-semibold text-base mb-4">Order Summary</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-gray-300">
+                  <span>Subtotal ({totals.totalTickets} {totals.totalTickets === 1 ? 'ticket' : 'tickets'})</span>
+                  <span className="font-medium text-white">${totals.subtotal.toFixed(2)}</span>
                 </div>
                 {appliedPromo && totals.discount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-${totals.discount.toFixed(2)}</span>
+                  <div className="flex justify-between text-green-400">
+                    <span>Discount ({appliedPromo.code})</span>
+                    <span className="font-medium">-${totals.discount.toFixed(2)}</span>
                   </div>
                 )}
-                <Separator className="my-1" />
-                <div className="flex justify-between font-bold text-sm">
+                <Separator className="my-3 bg-gray-700" />
+                <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">${totals.total.toFixed(2)}</span>
+                  <span>${totals.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -847,127 +855,147 @@ export function RegistrationModal({
       )
     }
 
-    // Adjust step numbers for non-ticketed events
     const adjustedStep = hasTicketTypes ? currentStep - 1 : currentStep
 
     switch (adjustedStep) {
-      case 1: // Your Information step
+      case 1:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {!hasTicketTypes && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-blue-600 mt-0.5" />
-                  <div className="text-xs text-blue-800">
-                    <p className="font-medium mb-1">Event Registration</p>
-                    <p>Price: {event.price === 0 ? 'Free' : `$${event.price.toFixed(2)}`}</p>
-                    {event.price > 0 && (
-                      <div className="mt-2">
-                        <Label htmlFor="simpleQuantity" className="text-xs">Number of tickets:</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={() => {
-                              const current = ticketSelections.get('simple') || 1
-                              if (current > 1) {
-                                const newSelections = new Map(ticketSelections)
-                                newSelections.set('simple', current - 1)
-                                setTicketSelections(newSelections)
-                              }
-                            }}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <span className="w-8 text-center font-medium text-sm">
-                            {ticketSelections.get('simple') || 1}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={() => {
-                              const current = ticketSelections.get('simple') || 1
-                              if (current < 10) {
-                                const newSelections = new Map(ticketSelections)
-                                newSelections.set('simple', current + 1)
-                                setTicketSelections(newSelections)
-                              }
-                            }}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                          <span className="text-xs text-gray-600 ml-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Event Details</p>
+                    <div className="space-y-1 text-sm text-blue-800">
+                      <p>Price: {event.price === 0 ? 'Free' : `$${event.price.toFixed(2)}`}</p>
+                      {event.price > 0 && (
+                        <div className="mt-3">
+                          <Label htmlFor="simpleQuantity" className="text-sm font-medium text-blue-900 mb-2 block">
+                            Number of tickets
+                          </Label>
+                          <div className="flex items-center gap-3 bg-white rounded-lg border border-blue-200 p-1 w-fit">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 w-9 p-0"
+                              onClick={() => {
+                                const current = ticketSelections.get('simple') || 1
+                                if (current > 1) {
+                                  const newSelections = new Map(ticketSelections)
+                                  newSelections.set('simple', current - 1)
+                                  setTicketSelections(newSelections)
+                                }
+                              }}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="w-10 text-center font-semibold">
+                              {ticketSelections.get('simple') || 1}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 w-9 p-0"
+                              onClick={() => {
+                                const current = ticketSelections.get('simple') || 1
+                                if (current < 10) {
+                                  const newSelections = new Map(ticketSelections)
+                                  newSelections.set('simple', current + 1)
+                                  setTicketSelections(newSelections)
+                                }
+                              }}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <p className="text-sm font-medium text-blue-900 mt-2">
                             Total: ${(event.price * (ticketSelections.get('simple') || 1)).toFixed(2)}
-                          </span>
+                          </p>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="firstName" className="text-xs">First Name *</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm font-medium">
+                  First Name <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="firstName"
                   placeholder="John"
-                  className="h-9 text-sm"
+                  className="h-10"
                   {...register('firstName')}
                 />
                 {errors.firstName && (
-                  <p className="text-xs text-red-500">{errors.firstName.message}</p>
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.firstName.message}
+                  </p>
                 )}
               </div>
               
-              <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-xs">Last Name *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm font-medium">
+                  Last Name <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  className="h-9 text-sm"
+                  className="h-10"
                   {...register('lastName')}
                 />
                 {errors.lastName && (
-                  <p className="text-xs text-red-500">{errors.lastName.message}</p>
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
             
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs">Email Address *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email Address <span className="text-red-500">*</span>
+              </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="john@example.com"
-                  className="pl-9 h-9 text-sm"
+                  className="pl-10 h-10"
                   {...register('email')}
                 />
               </div>
               <p className="text-xs text-gray-500">
-                We&apos;ll send your registration confirmation and QR code here
+                Confirmation and QR code will be sent here
               </p>
               {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.email.message}
+                </p>
               )}
             </div>
             
-            <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-xs">Phone Number *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="+1 (555) 000-0000"
-                  className="pl-9 h-9 text-sm"
+                  className="pl-10 h-10"
                   {...register('phone')}
                 />
               </div>
@@ -975,55 +1003,58 @@ export function RegistrationModal({
                 For event updates and emergencies
               </p>
               {errors.phone && (
-                <p className="text-xs text-red-500">{errors.phone.message}</p>
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.phone.message}
+                </p>
               )}
             </div>
           </div>
         )
 
-      case 2: // Review & Confirm step
+      case 2:
         return (
-          <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <h4 className="font-semibold text-sm flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                Registration Summary
-              </h4>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-base text-gray-900">Registration Summary</h4>
+              </div>
               
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Event:</span>
-                  <span className="font-medium text-right">{event.title}</span>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Event</span>
+                  <span className="font-medium text-gray-900 text-right">{event.title}</span>
                 </div>
                 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Name:</span>
-                  <span className="font-medium">
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Name</span>
+                  <span className="font-medium text-gray-900">
                     {watch('firstName')} {watch('lastName')}
                   </span>
                 </div>
                 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{watch('email')}</span>
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Email</span>
+                  <span className="font-medium text-gray-900">{watch('email')}</span>
                 </div>
                 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phone:</span>
-                  <span className="font-medium">{watch('phone')}</span>
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Phone</span>
+                  <span className="font-medium text-gray-900">{watch('phone')}</span>
                 </div>
                 
-                <Separator className="my-2" />
+                <Separator className="my-3" />
                 
                 {hasTicketTypes ? (
                   <>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {getSelectedTicketTypes().map((ticket) => (
-                        <div key={ticket.id} className="flex justify-between">
+                        <div key={ticket.id} className="flex justify-between py-1">
                           <span className="text-gray-600">
-                            {ticket.name} x{ticket.quantity}
+                            {ticket.name} ×{ticket.quantity}
                           </span>
-                          <span className="font-medium">
+                          <span className="font-medium text-gray-900">
                             ${(ticket.price * ticket.quantity).toFixed(2)}
                           </span>
                         </div>
@@ -1031,29 +1062,29 @@ export function RegistrationModal({
                     </div>
                     
                     {appliedPromo && totals.discount > 0 && (
-                      <div className="flex justify-between text-green-600">
+                      <div className="flex justify-between py-1 text-green-600">
                         <span>Discount ({appliedPromo.code})</span>
-                        <span>-${totals.discount.toFixed(2)}</span>
+                        <span className="font-medium">-${totals.discount.toFixed(2)}</span>
                       </div>
                     )}
                     
-                    <div className="flex justify-between text-sm font-bold">
-                      <span>Total Amount:</span>
-                      <span className="text-primary">
+                    <div className="flex justify-between text-base font-bold pt-3 border-t border-gray-300">
+                      <span className="text-gray-900">Total Amount</span>
+                      <span className="text-blue-600">
                         ${totals.total.toFixed(2)}
                       </span>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tickets:</span>
-                      <span className="font-medium">{ticketSelections.get('simple') || 1}</span>
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-600">Tickets</span>
+                      <span className="font-medium text-gray-900">{ticketSelections.get('simple') || 1}</span>
                     </div>
                     
-                    <div className="flex justify-between text-sm font-bold">
-                      <span>Total Amount:</span>
-                      <span className="text-primary">
+                    <div className="flex justify-between text-base font-bold pt-3 border-t border-gray-300">
+                      <span className="text-gray-900">Total Amount</span>
+                      <span className="text-blue-600">
                         {event.price === 0 ? 'Free' : `$${(event.price * (ticketSelections.get('simple') || 1)).toFixed(2)}`}
                       </span>
                     </div>
@@ -1062,54 +1093,59 @@ export function RegistrationModal({
               </div>
             </div>
             
-            <div className="space-y-3">
-              <div className="flex items-start space-x-2">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <Checkbox
                   id="terms"
                   checked={watch('termsAccepted')}
                   onCheckedChange={(checked) => setValue('termsAccepted', !!checked)}
                   className="mt-0.5"
                 />
-                <div className="space-y-0.5 leading-none">
+                <div className="flex-1">
                   <label
                     htmlFor="terms"
-                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    className="text-sm font-medium text-gray-900 cursor-pointer block mb-1"
                   >
-                    I accept the terms and conditions *
+                    I accept the terms and conditions <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-muted-foreground">
-                    By registering, you agree to our event policies
+                  <p className="text-xs text-gray-600">
+                    By registering, you agree to our event policies and guidelines
                   </p>
                   {errors.termsAccepted && (
-                    <p className="text-xs text-red-500">{errors.termsAccepted.message}</p>
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.termsAccepted.message}
+                    </p>
                   )}
                 </div>
               </div>
               
-              <div className="flex items-start space-x-2">
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <Checkbox
                   id="marketing"
                   checked={watch('marketingEmails')}
                   onCheckedChange={(checked) => setValue('marketingEmails', !!checked)}
                   className="mt-0.5"
                 />
-                <div className="space-y-0.5 leading-none">
+                <div className="flex-1">
                   <label
                     htmlFor="marketing"
-                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    className="text-sm font-medium text-gray-900 cursor-pointer block mb-1"
                   >
-                    Send me updates about future events
+                    Keep me updated about future events
                   </label>
-                  <p className="text-xs text-muted-foreground">
-                    You can unsubscribe at any time
+                  <p className="text-xs text-gray-600">
+                    Receive notifications about similar events (you can unsubscribe anytime)
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-100 rounded-lg p-2">
-              <Shield className="w-3.5 h-3.5" />
-              <span>Your information is secure and will not be shared</span>
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <p className="text-xs text-green-800">
+                Your information is encrypted and will not be shared with third parties
+              </p>
             </div>
           </div>
         )
@@ -1120,45 +1156,73 @@ export function RegistrationModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-        {currentStep <= steps.length && (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-lg">Register for Event</DialogTitle>
-              <DialogDescription className="text-xs">
-                Complete your registration for {event.title}
-              </DialogDescription>
-            </DialogHeader>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose()
+        }
+      }}
+    >
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto p-0"
+        onPointerDownOutside={(e) => {
+          // Prevent closing if currently processing
+          if (isProcessing) {
+            e.preventDefault()
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing if currently processing
+          if (isProcessing) {
+            e.preventDefault()
+          }
+        }}
+      >
+        <div className="sticky top-0 bg-white z-10 border-b border-gray-200 px-6 pt-6 pb-4">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              {isSuccess ? 'Registration Complete' : 'Event Registration'}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600">
+              {isSuccess 
+                ? 'Your ticket is ready!' 
+                : `Register for ${event.title}`}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="mb-4">
-              <Progress value={progressPercentage} className="h-1.5 mb-3" />
+          {!isSuccess && currentStep <= steps.length && (
+            <div className="mt-6">
+              <Progress value={progressPercentage} className="h-2 mb-4" />
               <div className="flex justify-between">
                 {steps.map((step) => {
                   const Icon = step.icon
+                  const isActive = currentStep >= step.id
+                  const isComplete = currentStep > step.id
+                  
                   return (
                     <div
                       key={step.id}
                       className={cn(
-                        "flex flex-col items-center gap-1",
-                        currentStep >= step.id ? "text-primary" : "text-gray-400"
+                        "flex flex-col items-center gap-2 flex-1",
+                        isActive ? "text-blue-600" : "text-gray-400"
                       )}
                     >
                       <div
                         className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors",
-                          currentStep >= step.id
-                            ? "bg-primary border-primary text-white"
-                            : "bg-white border-gray-300"
+                          "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
+                          isActive
+                            ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                            : "bg-white border-gray-300 text-gray-400"
                         )}
                       >
-                        {currentStep > step.id ? (
-                          <CheckCircle2 className="w-4 h-4" />
+                        {isComplete ? (
+                          <CheckCircle2 className="w-5 h-5" />
                         ) : (
-                          <Icon className="w-4 h-4" />
+                          <Icon className="w-5 h-5" />
                         )}
                       </div>
-                      <span className="text-xs font-medium hidden sm:block">
+                      <span className="text-xs font-medium text-center hidden sm:block">
                         {step.name}
                       </span>
                     </div>
@@ -1166,62 +1230,68 @@ export function RegistrationModal({
                 })}
               </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          {renderStepContent()}
+        <div className="px-6 pb-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6">
+            {renderStepContent()}
 
-          {currentStep <= steps.length && (
-            <div className="flex justify-between mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={currentStep === 1 ? handleClose : handleBack}
-                disabled={isProcessing}
-              >
-                {currentStep === 1 ? 'Cancel' : (
-                  <>
-                    <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
-                    Back
-                  </>
-                )}
-              </Button>
-
-              {currentStep < steps.length ? (
+            {!isSuccess && currentStep <= steps.length && (
+              <div className="flex justify-between gap-3 mt-8 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
-                  size="sm"
-                  onClick={handleNext}
-                  disabled={isProcessing || (hasTicketTypes && currentStep === 1 && totals.totalTickets === 0)}
+                  variant="outline"
+                  onClick={currentStep === 1 ? handleClose : handleBack}
+                  disabled={isProcessing}
+                  className="h-11 px-6"
                 >
-                  Next
-                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isProcessing || !watch('termsAccepted')}
-                  className="min-w-[120px]"
-                >
-                  {isProcessing ? (
+                  {currentStep === 1 ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                      Processing...
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                      Complete Registration
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
                     </>
                   )}
                 </Button>
-              )}
-            </div>
-          )}
-        </form>
+
+                {currentStep < steps.length ? (
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isProcessing || (hasTicketTypes && currentStep === 1 && totals.totalTickets === 0)}
+                    className="h-11 px-8 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={isProcessing || !watch('termsAccepted')}
+                    className="h-11 px-8 bg-blue-600 hover:bg-blue-700 min-w-[160px]"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Complete Registration
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

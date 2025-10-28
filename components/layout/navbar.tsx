@@ -26,7 +26,11 @@ import {
   FolderOpen,
   Search,
   LogIn,
-  UserPlus
+  UserPlus,
+  Users,
+  Tag,
+  Shield,
+  UserCheck
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useCurrentUser } from '@/hooks/use-user'
@@ -40,6 +44,9 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
 
+  const isAdmin = currentUser?.role === 'ADMIN'
+  const isOrganizer = currentUser?.role === 'ORGANIZER' || isAdmin
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -50,9 +57,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Close mobile menu on route change - FIXED
+  // Close mobile menu on route change
   useEffect(() => {
-    // Only update state if menu is actually open
     if (mobileMenuOpen) {
       setMobileMenuOpen(false)
     }
@@ -127,7 +133,52 @@ export default function Navbar() {
                       Dashboard
                     </Link>
 
-                    {currentUser && currentUser.role !== 'ATTENDEE' && (
+                    {/* Admin Menu */}
+                    {isAdmin && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
+                            <Shield className="w-4 h-4" />
+                            Admin
+                            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          <DropdownMenuLabel className="text-xs text-gray-500">
+                            System Management
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/users" className="cursor-pointer">
+                              <Users className="w-4 h-4 mr-2 text-gray-400" />
+                              Manage Users
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/categories" className="cursor-pointer">
+                              <Tag className="w-4 h-4 mr-2 text-gray-400" />
+                              Categories
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/check-ins" className="cursor-pointer">
+                              <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
+                              Check-ins
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href="/events" className="cursor-pointer">
+                              <Search className="w-4 h-4 mr-2 text-gray-400" />
+                              All Events
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
+                    {/* Events Menu - Organizers & Admins */}
+                    {isOrganizer && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
@@ -150,6 +201,12 @@ export default function Navbar() {
                             <Link href="/dashboard/analytics" className="cursor-pointer">
                               <BarChart3 className="w-4 h-4 mr-2 text-gray-400" />
                               Analytics
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/check-ins" className="cursor-pointer">
+                              <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
+                              Check-ins
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -187,7 +244,14 @@ export default function Navbar() {
                   {currentUser && (
                     <Badge 
                       variant="outline" 
-                      className="capitalize font-medium text-xs border-gray-300"
+                      className={cn(
+                        "capitalize font-medium text-xs",
+                        currentUser.role === 'ADMIN' 
+                          ? 'border-red-200 bg-red-50 text-red-700'
+                          : currentUser.role === 'ORGANIZER'
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : 'border-green-200 bg-green-50 text-green-700'
+                      )}
                     >
                       <div className={cn(
                         "w-2 h-2 rounded-full mr-1.5",
@@ -200,7 +264,7 @@ export default function Navbar() {
                   )}
 
                   {/* Create Event Button */}
-                  {currentUser && currentUser.role !== 'ATTENDEE' && (
+                  {isOrganizer && (
                     <Button 
                       asChild 
                       size="sm" 
@@ -214,20 +278,16 @@ export default function Navbar() {
                   )}
 
                   {/* User Profile */}
-                  <div className="flex items-center ml-1">
-                    <div className="w-9 h-9 rounded-full ring-2 ring-gray-100 hover:ring-gray-200 transition-all">
-                      <UserButton 
-                        afterSignOutUrl="/"
-                        appearance={{
-                          elements: {
-                            avatarBox: "w-9 h-9",
-                            userButtonPopoverCard: "shadow-lg",
-                            userButtonPopoverFooter: "hidden"
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-9 h-9 rounded-full ring-2 ring-gray-200 hover:ring-gray-300 transition-all",
+                        userButtonPopoverCard: "shadow-lg",
+                        userButtonPopoverFooter: "hidden"
+                      }
+                    }}
+                  />
                 </>
               ) : (
                 <div className="flex items-center gap-2">
@@ -326,6 +386,56 @@ export default function Navbar() {
                   <span>Dashboard</span>
                 </Link>
 
+                {/* Admin Section */}
+                {isAdmin && (
+                  <>
+                    <div className="px-4 pt-4 pb-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                        <Shield className="w-3 h-3" />
+                        Admin Tools
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/dashboard/users"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        isActive('/dashboard/users')
+                          ? "text-blue-600 bg-blue-50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Users className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <span>Manage Users</span>
+                    </Link>
+
+                    <Link
+                      href="/dashboard/categories"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        isActive('/dashboard/categories')
+                          ? "text-blue-600 bg-blue-50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Tag className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <span>Categories</span>
+                    </Link>
+
+                    <div className="px-4 pt-4 pb-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Event Management
+                      </p>
+                    </div>
+                  </>
+                )}
+
                 {/* Registrations */}
                 <Link
                   href="/dashboard/registrations"
@@ -344,7 +454,7 @@ export default function Navbar() {
                 </Link>
 
                 {/* Organizer/Admin Only */}
-                {currentUser && currentUser.role !== 'ATTENDEE' && (
+                {isOrganizer && (
                   <>
                     {/* My Events */}
                     <Link
@@ -378,6 +488,23 @@ export default function Navbar() {
                         <BarChart3 className="w-4 h-4 text-gray-600" />
                       </div>
                       <span>Analytics</span>
+                    </Link>
+
+                    {/* Check-ins */}
+                    <Link
+                      href="/dashboard/check-ins"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        isActive('/dashboard/check-ins')
+                          ? "text-blue-600 bg-blue-50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <UserCheck className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <span>Check-ins</span>
                     </Link>
 
                     {/* Create Event - Highlighted */}
@@ -441,8 +568,17 @@ export default function Navbar() {
             <div className="px-4 py-6 border-t border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
+                  <div className={cn(
+                    "h-10 w-10 rounded-lg flex items-center justify-center",
+                    currentUser.role === 'ADMIN' ? 'bg-red-600' :
+                    currentUser.role === 'ORGANIZER' ? 'bg-blue-600' :
+                    'bg-green-600'
+                  )}>
+                    {currentUser.role === 'ADMIN' ? (
+                      <Shield className="w-5 h-5 text-white" />
+                    ) : (
+                      <User className="w-5 h-5 text-white" />
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">
@@ -450,7 +586,14 @@ export default function Navbar() {
                     </p>
                     <Badge 
                       variant="outline" 
-                      className="capitalize text-xs mt-1 border-gray-300"
+                      className={cn(
+                        "capitalize text-xs mt-1",
+                        currentUser.role === 'ADMIN' 
+                          ? 'border-red-200 bg-red-50 text-red-700'
+                          : currentUser.role === 'ORGANIZER'
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : 'border-green-200 bg-green-50 text-green-700'
+                      )}
                     >
                       <div className={cn(
                         "w-2 h-2 rounded-full mr-1.5",
@@ -462,24 +605,21 @@ export default function Navbar() {
                     </Badge>
                   </div>
                 </div>
-                <div className="w-9 h-9 rounded-full ring-2 ring-gray-200">
-                  <UserButton 
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: "w-9 h-9"
-                      }
-                    }}
-                  />
-                </div>
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-9 h-9 rounded-full ring-2 ring-gray-300 transition-all"
+                    }
+                  }}
+                />
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Spacer to prevent content jump */}
-      <div className="h-16" />
+      
     </>
   )
 }

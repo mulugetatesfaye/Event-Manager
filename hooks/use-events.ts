@@ -33,6 +33,48 @@ interface EventsParams {
 }
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Check if registration can be cancelled
+ * Returns true if cancellation is allowed, false if within 24 hours of event start
+ */
+export function canCancelRegistration(eventStartDate: Date | string): boolean {
+  const start = new Date(eventStartDate)
+  const now = new Date()
+  const hoursUntilEvent = (start.getTime() - now.getTime()) / (1000 * 60 * 60)
+  return hoursUntilEvent > 24
+}
+
+/**
+ * Get hours remaining until cancellation deadline
+ */
+export function getHoursUntilCancellationDeadline(eventStartDate: Date | string): number {
+  const start = new Date(eventStartDate)
+  const now = new Date()
+  const hoursUntilEvent = (start.getTime() - now.getTime()) / (1000 * 60 * 60)
+  return Math.max(0, hoursUntilEvent)
+}
+
+/**
+ * Get user-friendly cancellation policy message
+ */
+export function getCancellationPolicyMessage(eventStartDate: Date | string): string {
+  const hoursRemaining = getHoursUntilCancellationDeadline(eventStartDate)
+  
+  if (hoursRemaining > 24) {
+    return `You can cancel until 24 hours before the event`
+  } else if (hoursRemaining > 0) {
+    const hours = Math.floor(hoursRemaining)
+    const minutes = Math.floor((hoursRemaining - hours) * 60)
+    return `Cancellation not allowed (event starts in ${hours}h ${minutes}m)`
+  } else {
+    return 'Event has started - cancellation not allowed'
+  }
+}
+
+// ============================================================================
 // Query Hooks
 // ============================================================================
 
@@ -280,7 +322,12 @@ export function useCancelRegistration(eventId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (eventStartDate?: Date | string) => {
+      // Client-side validation before making the request
+      if (eventStartDate && !canCancelRegistration(eventStartDate)) {
+        throw new Error('Cannot cancel registration within 24 hours of event start')
+      }
+
       const response = await fetch(`/api/events/${eventId}/register`, {
         method: 'DELETE',
       })
@@ -299,7 +346,13 @@ export function useCancelRegistration(eventId: string) {
       toast.success('Registration cancelled successfully')
     },
     onError: (error: Error) => {
-      toast.error(error.message)
+      // Provide more user-friendly error messages
+      const message = error.message.includes('within 24 hours')
+        ? 'Cancellations are not allowed within 24 hours of the event start time'
+        : error.message
+      toast.error(message, {
+        description: 'If you need assistance, please contact support',
+      })
     },
   })
 }

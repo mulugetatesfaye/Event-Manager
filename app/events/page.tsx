@@ -1,7 +1,7 @@
 // app/events/page.tsx
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useEvents, useCategories } from '@/hooks'
 import { EventCard } from '@/components/events/event-card'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -16,36 +19,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { 
   Search, 
   Calendar, 
-  SlidersHorizontal,
   X,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-  DollarSign,
   Grid3x3,
   List,
-  CalendarRange,
   Eye,
-  Tag,
   Plus,
-  TrendingUp
+  Filter,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/footer'
 import { EventWithRelations, CategoryWithCount } from '@/types'
 import { cn } from '@/lib/utils'
-import { FadeIn } from '@/components/ui/fade-in'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useCurrentUser } from '@/hooks/use-user'
@@ -54,7 +46,7 @@ import { useCurrentUser } from '@/hooks/use-user'
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
-  useState(() => {
+  useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value)
     }, delay)
@@ -62,18 +54,18 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => {
       clearTimeout(handler)
     }
-  })
+  }, [value, delay])
 
   return debouncedValue
 }
 
 // Loading skeleton grid
 const EventsGridSkeleton = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    {[...Array(8)].map((_, i) => (
-      <Card key={i} className="overflow-hidden">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[...Array(6)].map((_, i) => (
+      <Card key={i} className="overflow-hidden border-gray-200">
         <Skeleton className="h-48 w-full" />
-        <div className="p-4 space-y-3">
+        <div className="p-5 space-y-3">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-1/2" />
@@ -83,47 +75,249 @@ const EventsGridSkeleton = () => (
   </div>
 )
 
-// Filter pills component
-interface FilterItem {
-  key: string
-  value: string
-  label: string
+// Sidebar Filter Component - Moved outside of main component
+interface FilterSidebarProps {
+  className?: string
+  searchTerm: string
+  setSearchTerm: (value: string) => void
+  category: string
+  handleCategoryChange: (value: string) => void
+  priceFilter: string
+  setPriceFilter: (value: string) => void
+  dateFilter: string
+  setDateFilter: (value: string) => void
+  categories: CategoryWithCount[] | undefined
+  hasActiveFilters: boolean
+  clearFilters: () => void
 }
 
-const FilterPills = ({ 
-  filters, 
-  onRemove 
-}: { 
-  filters: FilterItem[]
-  onRemove: (key: string) => void 
-}) => {
-  if (filters.length === 0) return null
-  
+const FilterSidebar = ({
+  className,
+  searchTerm,
+  setSearchTerm,
+  category,
+  handleCategoryChange,
+  priceFilter,
+  setPriceFilter,
+  dateFilter,
+  setDateFilter,
+  categories,
+  hasActiveFilters,
+  clearFilters,
+}: FilterSidebarProps) => {
+  const [expandedSections, setExpandedSections] = useState({
+    categories: true,
+    price: true,
+    date: true,
+  })
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
-      {filters.map((filter) => (
-        <Badge 
-          key={filter.key}
-          variant="secondary" 
-          className="px-3 py-1.5 text-sm"
+    <div className={cn("space-y-6", className)}>
+      {/* Search */}
+      <div>
+        <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+          Search Events
+        </Label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search events..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-11 border-gray-300 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Categories */}
+      <div>
+        <button
+          onClick={() => toggleSection('categories')}
+          className="flex items-center justify-between w-full mb-3"
         >
-          {filter.label}
-          <button 
-            onClick={() => onRemove(filter.key)}
-            className="ml-2 hover:text-red-600 transition-colors"
+          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+            Categories
+          </Label>
+          {expandedSections.categories ? (
+            <ChevronUp className="w-4 h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          )}
+        </button>
+        
+        {expandedSections.categories && (
+          <div className="space-y-2">
+            <button
+              onClick={() => handleCategoryChange('')}
+              className={cn(
+                "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                !category 
+                  ? "bg-blue-50 text-blue-700 font-medium" 
+                  : "text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              All Events
+            </button>
+            {categories?.map((cat: CategoryWithCount) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={cn(
+                  "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between",
+                  category === cat.id 
+                    ? "bg-blue-50 text-blue-700 font-medium" 
+                    : "text-gray-700 hover:bg-gray-50"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-2 h-2 rounded-full" 
+                    style={{ backgroundColor: cat.color || '#6b7280' }}
+                  />
+                  <span>{cat.name}</span>
+                </div>
+                {cat._count?.events > 0 && (
+                  <Badge variant="secondary" className="text-xs h-5 px-2">
+                    {cat._count.events}
+                  </Badge>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Price Filter */}
+      <div>
+        <button
+          onClick={() => toggleSection('price')}
+          className="flex items-center justify-between w-full mb-3"
+        >
+          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+            Price
+          </Label>
+          {expandedSections.price ? (
+            <ChevronUp className="w-4 h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          )}
+        </button>
+        
+        {expandedSections.price && (
+          <RadioGroup value={priceFilter} onValueChange={setPriceFilter}>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="price-all" />
+                <Label htmlFor="price-all" className="text-sm text-gray-700 cursor-pointer">
+                  All Events
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="free" id="price-free" />
+                <Label htmlFor="price-free" className="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
+                  Free Events
+                  <Badge variant="secondary" className="text-xs">Popular</Badge>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="paid" id="price-paid" />
+                <Label htmlFor="price-paid" className="text-sm text-gray-700 cursor-pointer">
+                  Paid Events
+                </Label>
+              </div>
+            </div>
+          </RadioGroup>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Date Filter */}
+      <div>
+        <button
+          onClick={() => toggleSection('date')}
+          className="flex items-center justify-between w-full mb-3"
+        >
+          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+            Date
+          </Label>
+          {expandedSections.date ? (
+            <ChevronUp className="w-4 h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          )}
+        </button>
+        
+        {expandedSections.date && (
+          <RadioGroup value={dateFilter} onValueChange={setDateFilter}>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="date-all" />
+                <Label htmlFor="date-all" className="text-sm text-gray-700 cursor-pointer">
+                  Any Date
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="today" id="date-today" />
+                <Label htmlFor="date-today" className="text-sm text-gray-700 cursor-pointer">
+                  Today
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="tomorrow" id="date-tomorrow" />
+                <Label htmlFor="date-tomorrow" className="text-sm text-gray-700 cursor-pointer">
+                  Tomorrow
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="week" id="date-week" />
+                <Label htmlFor="date-week" className="text-sm text-gray-700 cursor-pointer">
+                  This Week
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="weekend" id="date-weekend" />
+                <Label htmlFor="date-weekend" className="text-sm text-gray-700 cursor-pointer">
+                  This Weekend
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="month" id="date-month" />
+                <Label htmlFor="date-month" className="text-sm text-gray-700 cursor-pointer">
+                  This Month
+                </Label>
+              </div>
+            </div>
+          </RadioGroup>
+        )}
+      </div>
+
+      {/* Clear Filters */}
+      {hasActiveFilters && (
+        <>
+          <Separator />
+          <Button
+            variant="outline"
+            onClick={clearFilters}
+            className="w-full border-gray-300 hover:bg-gray-50"
           >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </Badge>
-      ))}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => filters.forEach(f => onRemove(f.key))}
-        className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
-      >
-        Clear all
-      </Button>
+            <X className="w-4 h-4 mr-2" />
+            Clear All Filters
+          </Button>
+        </>
+      )}
     </div>
   )
 }
@@ -138,6 +332,7 @@ export default function EventsPage() {
   const [priceFilter, setPriceFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   
   const debouncedSearch = useDebounce(searchTerm, 500)
 
@@ -151,7 +346,7 @@ export default function EventsPage() {
   const { data: categories } = useCategories()
 
   const handleCategoryChange = (value: string) => {
-    setCategory(value === 'all' ? '' : value)
+    setCategory(value === category ? '' : value)
     setPage(1)
   }
 
@@ -160,52 +355,14 @@ export default function EventsPage() {
     setCategory('')
     setPriceFilter('all')
     setDateFilter('all')
-    setSortBy('date')
     setPage(1)
   }, [])
 
-  // Build active filters array
-  const activeFilters: FilterItem[] = []
-  if (debouncedSearch) activeFilters.push({ key: 'search', value: debouncedSearch, label: `Search: "${debouncedSearch}"` })
-  if (category) {
-    const cat = categories?.find((c: CategoryWithCount) => c.id === category)
-    if (cat) activeFilters.push({ key: 'category', value: category, label: cat.name })
-  }
-  if (priceFilter !== 'all') activeFilters.push({ key: 'price', value: priceFilter, label: priceFilter === 'free' ? 'Free Events' : 'Paid Events' })
-  if (dateFilter !== 'all') {
-    const labels: Record<string, string> = {
-      today: 'Today',
-      tomorrow: 'Tomorrow',
-      week: 'This Week',
-      month: 'This Month',
-      weekend: 'This Weekend'
-    }
-    activeFilters.push({ key: 'date', value: dateFilter, label: labels[dateFilter] || dateFilter })
-  }
+  const hasActiveFilters = Boolean(category || priceFilter !== 'all' || dateFilter !== 'all' || debouncedSearch)
 
-  const removeFilter = (key: string) => {
-    switch(key) {
-      case 'search':
-        setSearchTerm('')
-        break
-      case 'category':
-        setCategory('')
-        break
-      case 'price':
-        setPriceFilter('all')
-        break
-      case 'date':
-        setDateFilter('all')
-        break
-    }
-    setPage(1)
-  }
-
-  const hasActiveFilters = activeFilters.length > 0
   const totalEvents = eventsData?.pagination?.total ?? 0
   const currentEvents = eventsData?.events?.length ?? 0
   const totalPages = eventsData?.pagination?.totalPages ?? 0
-  const totalCategories = categories?.length ?? 0
   
   const canCreateEvent = isSignedIn && currentUser?.role !== 'ATTENDEE'
 
@@ -213,375 +370,328 @@ export default function EventsPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
+        {/* Header */}
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <FadeIn direction="up">
-              <div className="text-center mb-8">
-                <Badge 
-                  variant="outline" 
-                  className="mb-4 border-gray-300"
-                >
-                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
-                  <span className="font-medium text-gray-700">
-                    {totalEvents} events available
-                  </span>
-                </Badge>
-                
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-                  Discover Amazing Events
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Discover Events
                 </h1>
-                
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  Find and join events that match your interests across Ethiopia
+                <p className="text-gray-600">
+                  Find and join events that match your interests
                 </p>
               </div>
-            </FadeIn>
-
-            {/* Search Bar */}
-            <FadeIn direction="up" delay={100}>
-              <div className="max-w-4xl mx-auto">
-                <div className="relative">
-                  <div className="relative flex items-center">
-                    <Search className="absolute left-4 text-gray-400 h-5 w-5" />
-                    <Input
-                      type="text"
-                      placeholder="Search events, venues, locations, or categories..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12 pr-32 h-14 text-base border-gray-300 focus:border-blue-600"
-                    />
-                    <div className="absolute right-2 flex items-center gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <SlidersHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setPriceFilter('free')}>
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Free Events Only
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDateFilter('today')}>
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Today&apos;s Events
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDateFilter('week')}>
-                            <CalendarRange className="w-4 h-4 mr-2" />
-                            This Week
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setSortBy('popular')}>
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            Most Popular
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <Button className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                        <Search className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Search</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Filters */}
-                <div className="flex flex-wrap justify-center gap-2 mt-6">
-                  <Button
-                    variant={!category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleCategoryChange('all')}
-                    className={cn(
-                      "rounded-full",
-                      !category && "bg-blue-600 hover:bg-blue-700 text-white"
-                    )}
-                  >
-                    All Events
-                  </Button>
-                  {categories?.slice(0, 6).map((cat: CategoryWithCount) => (
-                    <Button
-                      key={cat.id}
-                      variant={category === cat.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleCategoryChange(cat.id)}
-                      className={cn(
-                        "rounded-full border-gray-300",
-                        category === cat.id && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                      )}
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full mr-2" 
-                        style={{ backgroundColor: cat.color || '#6b7280' }}
-                      />
-                      {cat.name}
-                      {cat._count?.events > 0 && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {cat._count.events}
-                        </Badge>
-                      )}
-                    </Button>
-                  ))}
-                  {categories && categories.length > 6 && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="rounded-full border-gray-300">
-                          More Categories
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {categories.slice(6).map((cat: CategoryWithCount) => (
-                          <DropdownMenuItem
-                            key={cat.id}
-                            onClick={() => handleCategoryChange(cat.id)}
-                          >
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2" 
-                              style={{ backgroundColor: cat.color || '#6b7280' }}
-                            />
-                            {cat.name}
-                            {cat._count?.events > 0 && (
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                {cat._count.events}
-                              </Badge>
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
-            </FadeIn>
+              
+              {canCreateEvent && (
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white hidden md:flex">
+                  <Link href="/events/create">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Event
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Stats Bar */}
-        {!isLoading && eventsData && (
-          <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-8">
-                  {[
-                    { icon: Calendar, value: totalEvents, label: 'Total Events' },
-                    { icon: Eye, value: currentEvents, label: 'Showing' },
-                    { icon: Tag, value: totalCategories, label: 'Categories' },
-                  ].map((stat, i) => {
-                    const Icon = stat.icon
-                    return (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                          <Icon className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {stat.value}
-                          </p>
-                          <p className="text-xs text-gray-600">{stat.label}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* View Controls */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className={cn(
-                        "h-9 px-3",
-                        viewMode === 'grid' && "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <Grid3x3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className={cn(
-                        "h-9 px-3",
-                        viewMode === 'list' && "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-[160px] border-gray-300">
-                      <ArrowUpDown className="w-4 h-4 mr-2" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">By Date</SelectItem>
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {canCreateEvent && (
-                    <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                      <Link href="/events/create">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Event
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {hasActiveFilters && (
-            <FilterPills filters={activeFilters} onRemove={removeFilter} />
-          )}
-
-          {isLoading ? (
-            <EventsGridSkeleton />
-          ) : error ? (
-            <div className="text-center py-16">
-              <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <X className="w-10 h-10 text-red-600" />
+          <div className="flex gap-8">
+            {/* Left Sidebar - Desktop */}
+            <aside className="hidden lg:block w-64 flex-shrink-0">
+              <div className="sticky top-24 bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filters
+                  </h2>
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </div>
+                <FilterSidebar
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  category={category}
+                  handleCategoryChange={handleCategoryChange}
+                  priceFilter={priceFilter}
+                  setPriceFilter={setPriceFilter}
+                  dateFilter={dateFilter}
+                  setDateFilter={setDateFilter}
+                  categories={categories}
+                  hasActiveFilters={hasActiveFilters}
+                  clearFilters={clearFilters}
+                />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Error Loading Events</h3>
-              <p className="text-gray-600 mb-6">Something went wrong. Please try again.</p>
-              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Retry
+            </aside>
+
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden fixed bottom-4 right-4 z-40">
+              <Button
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg h-12 px-6"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="ml-2 bg-white text-blue-600">
+                    Active
+                  </Badge>
+                )}
               </Button>
             </div>
-          ) : !eventsData || eventsData.events.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">No events found</h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {hasActiveFilters 
-                  ? "We couldn't find any events matching your criteria. Try adjusting your filters."
-                  : "There are no events available at the moment. Check back later!"}
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                {hasActiveFilters && (
-                  <Button onClick={clearFilters} variant="outline" className="border-gray-300">
-                    <X className="w-4 h-4 mr-2" />
-                    Clear Filters
-                  </Button>
-                )}
-                {canCreateEvent && !hasActiveFilters && (
-                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                    <Link href="/events/create">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create the First Event
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className={cn(
-                viewMode === 'grid' 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                  : "space-y-4"
-              )}>
-                {eventsData.events.map((event: EventWithRelations) => (
-                  <div key={event.id}>
-                    <EventCard event={event} />
+
+            {/* Mobile Filter Drawer */}
+            {showMobileFilters && (
+              <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setShowMobileFilters(false)}>
+                <div 
+                  className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="font-semibold text-gray-900 text-lg">Filters</h2>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowMobileFilters(false)}
+                      >
+                        <X className="w-5 h-5" />
+                      </Button>
+                    </div>
+                    <FilterSidebar
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      category={category}
+                      handleCategoryChange={handleCategoryChange}
+                      priceFilter={priceFilter}
+                      setPriceFilter={setPriceFilter}
+                      dateFilter={dateFilter}
+                      setDateFilter={setDateFilter}
+                      categories={categories}
+                      hasActiveFilters={hasActiveFilters}
+                      clearFilters={clearFilters}
+                    />
                   </div>
-                ))}
+                </div>
               </div>
+            )}
 
-              {totalPages > 1 && (
-                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-sm text-gray-600 order-2 sm:order-1">
-                    Showing <span className="font-semibold">{(page - 1) * 12 + 1}</span> to{' '}
-                    <span className="font-semibold">
-                      {Math.min(page * 12, totalEvents)}
-                    </span>{' '}
-                    of <span className="font-semibold">{totalEvents}</span> events
-                  </div>
-                  
-                  <div className="flex items-center gap-2 order-1 sm:order-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setPage(page - 1)
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }}
-                      disabled={page === 1}
-                      className="border-gray-300"
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-2" />
-                      Previous
-                    </Button>
-
-                    <div className="hidden sm:flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum
-                        if (totalPages <= 5) {
-                          pageNum = i + 1
-                        } else if (page <= 3) {
-                          pageNum = i + 1
-                        } else if (page >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i
-                        } else {
-                          pageNum = page - 2 + i
-                        }
-
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={page === pageNum ? "default" : "ghost"}
-                            size="sm"
-                            onClick={() => {
-                              setPage(pageNum)
-                              window.scrollTo({ top: 0, behavior: 'smooth' })
-                            }}
-                            className={cn(
-                              "w-10 h-10",
-                              page === pageNum && "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                            )}
-                          >
-                            {pageNum}
-                          </Button>
-                        )
-                      })}
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              {/* Stats & Controls Bar */}
+              {!isLoading && eventsData && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    {/* Stats */}
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span><span className="font-semibold text-gray-900">{totalEvents}</span> total</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Eye className="w-4 h-4 text-gray-400" />
+                        <span>Showing <span className="font-semibold text-gray-900">{currentEvents}</span></span>
+                      </div>
                     </div>
 
-                    <div className="flex sm:hidden items-center gap-2 px-4">
-                      <span className="text-sm font-medium">
-                        Page {page} of {totalPages}
-                      </span>
-                    </div>
+                    {/* View Controls */}
+                    <div className="flex items-center gap-3">
+                      {/* View Mode Toggle */}
+                      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('grid')}
+                          className={cn(
+                            "h-8 px-3",
+                            viewMode === 'grid' && "bg-white shadow-sm"
+                          )}
+                        >
+                          <Grid3x3 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('list')}
+                          className={cn(
+                            "h-8 px-3",
+                            viewMode === 'list' && "bg-white shadow-sm"
+                          )}
+                        >
+                          <List className="w-4 h-4" />
+                        </Button>
+                      </div>
 
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setPage(page + 1)
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }}
-                      disabled={page === totalPages}
-                      className="border-gray-300"
-                    >
-                      Next
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+                      {/* Sort */}
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="w-[140px] h-9 border-gray-300">
+                          <ArrowUpDown className="w-4 h-4 mr-2" />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="date">By Date</SelectItem>
+                          <SelectItem value="popular">Popular</SelectItem>
+                          <SelectItem value="price-low">Price: Low</SelectItem>
+                          <SelectItem value="price-high">Price: High</SelectItem>
+                          <SelectItem value="newest">Newest</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}
-            </>
-          )}
+
+              {/* Events Grid/List */}
+              {isLoading ? (
+                <EventsGridSkeleton />
+              ) : error ? (
+                <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
+                  <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <X className="w-10 h-10 text-red-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Error Loading Events</h3>
+                  <p className="text-gray-600 mb-6">Something went wrong. Please try again.</p>
+                  <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Retry
+                  </Button>
+                </div>
+              ) : !eventsData || eventsData.events.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
+                  <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No events found</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    {hasActiveFilters 
+                      ? "We couldn't find any events matching your criteria. Try adjusting your filters."
+                      : "There are no events available at the moment. Check back later!"}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    {hasActiveFilters && (
+                      <Button onClick={clearFilters} variant="outline" className="border-gray-300">
+                        <X className="w-4 h-4 mr-2" />
+                        Clear Filters
+                      </Button>
+                    )}
+                    {canCreateEvent && !hasActiveFilters && (
+                      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Link href="/events/create">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create First Event
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className={cn(
+                    viewMode === 'grid' 
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "space-y-4"
+                  )}>
+                    {eventsData.events.map((event: EventWithRelations) => (
+                      <EventCard key={event.id} event={event} />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="text-sm text-gray-600 order-2 sm:order-1">
+                        Showing{' '}
+                        <span className="font-semibold text-gray-900">
+                          {(page - 1) * 12 + 1}
+                        </span>
+                        {' '}to{' '}
+                        <span className="font-semibold text-gray-900">
+                          {Math.min(page * 12, totalEvents)}
+                        </span>
+                        {' '}of{' '}
+                        <span className="font-semibold text-gray-900">
+                          {totalEvents}
+                        </span>
+                        {' '}events
+                      </div>
+                      
+                      <div className="flex items-center gap-2 order-1 sm:order-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setPage(page - 1)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                          }}
+                          disabled={page === 1}
+                          className="border-gray-300"
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-2" />
+                          Previous
+                        </Button>
+
+                        {/* Page Numbers - Desktop */}
+                        <div className="hidden sm:flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum
+                            if (totalPages <= 5) {
+                              pageNum = i + 1
+                            } else if (page <= 3) {
+                              pageNum = i + 1
+                            } else if (page >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i
+                            } else {
+                              pageNum = page - 2 + i
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={page === pageNum ? "default" : "ghost"}
+                                size="sm"
+                                onClick={() => {
+                                  setPage(pageNum)
+                                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                                }}
+                                className={cn(
+                                  "w-10 h-10",
+                                  page === pageNum && "bg-blue-600 hover:bg-blue-700 text-white"
+                                )}
+                              >
+                                {pageNum}
+                              </Button>
+                            )
+                          })}
+                        </div>
+
+                        {/* Page Indicator - Mobile */}
+                        <div className="flex sm:hidden items-center gap-2 px-4">
+                          <span className="text-sm font-medium text-gray-700">
+                            Page {page} of {totalPages}
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setPage(page + 1)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                          }}
+                          disabled={page === totalPages}
+                          className="border-gray-300"
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       <Footer />
