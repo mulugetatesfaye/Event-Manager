@@ -1,4 +1,3 @@
-// app/events/[id]/page.tsx
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -9,7 +8,6 @@ import { useCurrentUser } from '@/hooks/use-user'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { FadeIn } from '@/components/ui/fade-in'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -26,30 +24,26 @@ import {
   ArrowLeft,
   Edit,
   Mail,
-  TrendingUp,
   ArrowRight,
-  Ticket,
   Settings,
   AlertCircle,
   Building2,
   Loader2,
   MessageSquare,
   Bookmark,
-  Eye,
   Navigation,
   Calendar,
   Trophy,
   Wifi,
   Coffee,
   Award,
-  Info,
 } from 'lucide-react'
 import { format, isPast, isToday, isTomorrow } from 'date-fns'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/footer'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { RegistrationWithRelations, EventWithRelations } from '@/types'
+import { RegistrationWithRelations } from '@/types'
 import { RegistrationModal } from '@/components/events/registration-modal'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -137,7 +131,8 @@ export default function EventDetailsPage() {
     if (!confirm('Are you sure you want to cancel your registration?')) return
     
     try {
-      await cancelMutation.mutateAsync()
+      // FIX: Pass eventId to mutateAsync
+      await cancelMutation.mutateAsync(eventId)
       toast.success('Registration cancelled successfully')
     } catch (error) {
       toast.error('Failed to cancel registration')
@@ -168,8 +163,8 @@ export default function EventDetailsPage() {
           text: `Check out this event: ${event?.title}`,
           url: window.location.href,
         })
-      } catch (err) {
-        // User cancelled share
+      } catch {
+        // User cancelled share - do nothing
       }
     } else {
       await navigator.clipboard.writeText(window.location.href)
