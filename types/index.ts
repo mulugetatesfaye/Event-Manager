@@ -36,17 +36,14 @@ export type {
 // User Types
 // ============================================================================
 
-// User with limited fields for display
 export type UserBasic = Pick<User, 'id' | 'firstName' | 'lastName' | 'imageUrl' | 'email'>
 
-// User with relations
 export interface UserWithRelations extends User {
   organizedEvents?: Event[]
   registrations?: Registration[]
   createdEvents?: Event[]
 }
 
-// User with counts for admin dashboard
 export interface UserWithCounts extends User {
   _count: {
     organizedEvents: number
@@ -58,28 +55,24 @@ export interface UserWithCounts extends User {
 // Ticket Types
 // ============================================================================
 
-// Ticket Type with relations - FIXED
 export interface TicketTypeWithRelations extends TicketType {
   event?: Event
   ticketPurchases?: TicketPurchase[]
   _count?: {
     ticketPurchases: number
   }
-  // Computed fields (these are optional as they're calculated)
   available?: number
   isSoldOut?: boolean
   isEarlyBird?: boolean
   currentPrice?: number
 }
 
-// Ticket Purchase with relations
 export interface TicketPurchaseWithRelations extends TicketPurchase {
   registration?: Registration
   ticketType?: TicketType
   promoCode?: PromoCode | null
 }
 
-// Promo Code with relations
 export interface PromoCodeWithRelations extends PromoCode {
   event?: Event | null
   ticketPurchases?: TicketPurchase[]
@@ -92,14 +85,12 @@ export interface PromoCodeWithRelations extends PromoCode {
 // Registration Types
 // ============================================================================
 
-// Full registration with relations
 export interface RegistrationWithRelations extends Registration {
   event?: EventWithRelations
   user?: User
   ticketPurchases?: TicketPurchaseWithRelations[]
 }
 
-// Registration for dashboard views
 export interface DashboardRegistration extends Registration {
   event: Event & {
     category?: Category | null
@@ -108,7 +99,6 @@ export interface DashboardRegistration extends Registration {
   ticketPurchases?: TicketPurchaseWithRelations[]
 }
 
-// Registration with full user details (for organizer views)
 export interface RegistrationWithUser extends Registration {
   user: UserBasic
   event?: Event
@@ -119,7 +109,6 @@ export interface RegistrationWithUser extends Registration {
 // Event Types
 // ============================================================================
 
-// Event with all relations
 export interface EventWithRelations extends Event {
   category?: Category | null
   organizer?: User | null
@@ -132,12 +121,10 @@ export interface EventWithRelations extends Event {
     registrations: number
     ticketTypes: number
   }
-  // Server-calculated fields for ticket availability
   totalTicketsSold?: number
   availableSpots?: number
 }
 
-// Event for dashboard (minimal)
 export interface DashboardEvent extends Event {
   category?: Category | null
   organizer?: UserBasic | null
@@ -150,11 +137,24 @@ export interface DashboardEvent extends Event {
   availableSpots?: number
 }
 
+// Admin Event - same as Event but with calculated fields
+export interface AdminEvent extends Event {
+  category?: Category | null
+  organizer: UserBasic
+  totalTicketsSold?: number
+  totalRevenue?: number
+  fillRate?: number
+  checkInCount?: number
+  _count?: {
+    registrations: number
+    ticketTypes: number
+  }
+}
+
 // ============================================================================
 // Category Types
 // ============================================================================
 
-// Category with event count
 export interface CategoryWithCount extends Category {
   _count: {
     events: number
@@ -165,7 +165,6 @@ export interface CategoryWithCount extends Category {
 // QR Code & Check-in Types
 // ============================================================================
 
-// QR Code data structure
 export interface QRCodeData {
   registrationId: string
   eventId: string
@@ -175,7 +174,6 @@ export interface QRCodeData {
   timestamp: number
 }
 
-// Check-in response from API
 export interface CheckInResponse {
   success: boolean
   alreadyCheckedIn?: boolean
@@ -184,7 +182,6 @@ export interface CheckInResponse {
   checkedInAt?: Date | string | null
 }
 
-// Check-in statistics
 export interface CheckInStats {
   totalRegistrations: number
   checkedInCount: number
@@ -193,7 +190,7 @@ export interface CheckInStats {
 }
 
 // ============================================================================
-// Form Data Types (for forms, we use undefined instead of null)
+// Form Data Types
 // ============================================================================
 
 export interface EventFormData {
@@ -210,7 +207,7 @@ export interface EventFormData {
   categoryId?: string
   requiresSeating?: boolean
   allowGroupBooking?: boolean
-  groupDiscountPercentage?: number | null  // Changed: Added | null
+  groupDiscountPercentage?: number | null
   groupMinQuantity?: number
 }
 
@@ -226,7 +223,6 @@ export interface RegistrationFormData {
   metadata?: Record<string, unknown>
 }
 
-// Form data for creating ticket types
 export interface TicketTypeFormData {
   name: string
   description?: string
@@ -241,7 +237,6 @@ export interface TicketTypeFormData {
   sortOrder?: number
 }
 
-// Form data for creating promo codes
 export interface PromoCodeFormData {
   code: string
   eventId?: string
@@ -256,7 +251,6 @@ export interface PromoCodeFormData {
   isActive?: boolean
 }
 
-// Registration request with ticket purchases
 export interface TicketRegistrationRequest {
   ticketSelections: Array<{
     ticketTypeId: string
@@ -267,7 +261,6 @@ export interface TicketRegistrationRequest {
     ticketTypeId: string
     seatNumbers: string[]
   }>
-  // User info
   firstName: string
   lastName: string
   email: string
@@ -279,7 +272,6 @@ export interface TicketRegistrationRequest {
   termsAccepted: boolean
 }
 
-// Ticket availability info
 export interface TicketAvailability {
   ticketTypeId: string
   name: string
@@ -296,7 +288,6 @@ export interface TicketAvailability {
 // API Response Types
 // ============================================================================
 
-// Pagination parameters
 export interface PaginationParams {
   page?: number
   limit?: number
@@ -307,7 +298,6 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc'
 }
 
-// Paginated response wrapper
 export interface PaginatedResponse<T> {
   data: T[]
   pagination: {
@@ -318,7 +308,6 @@ export interface PaginatedResponse<T> {
   }
 }
 
-// Events API response
 export interface EventsApiResponse {
   events: EventWithRelations[]
   pagination: {
@@ -329,7 +318,6 @@ export interface EventsApiResponse {
   }
 }
 
-// Registration API response
 export interface RegistrationApiResponse {
   registration: RegistrationWithRelations
   message: string
@@ -341,14 +329,12 @@ export interface RegistrationApiResponse {
   }
 }
 
-// Generic API error
 export interface ApiError {
   error: string
   details?: unknown
   statusCode?: number
 }
 
-// API success response
 export interface ApiSuccess<T = unknown> {
   success: boolean
   data?: T
@@ -388,6 +374,17 @@ export interface DashboardStats {
   publishedEvents: number
 }
 
+export interface AdminDashboardStats extends DashboardStats {
+  totalUsers: number
+  totalOrganizers: number
+  totalCheckIns: number
+  recentRegistrations: number
+  checkInRate: number
+  totalTicketsSold: number
+  completedEvents: number
+  eventsWithTicketing: number
+}
+
 // ============================================================================
 // Filter & Sort Types
 // ============================================================================
@@ -410,19 +407,16 @@ export interface EventFilters {
 // Utility Types
 // ============================================================================
 
-// For select options in forms
 export interface SelectOption {
   label: string
   value: string
 }
 
-// For date range pickers
 export interface DateRange {
   from: Date
   to: Date
 }
 
-// For capacity tracking
 export interface CapacityInfo {
   total: number
   registered: number
@@ -442,7 +436,7 @@ export interface WebhookPayload {
 }
 
 // ============================================================================
-// Mobile App Types (for Flutter integration)
+// Mobile App Types
 // ============================================================================
 
 export interface MobileAuthResponse {
@@ -468,8 +462,8 @@ export interface RegistrationMetadata {
   marketingEmails?: boolean
   termsAccepted?: boolean
   registeredAt?: string
-  quantity?: number // Legacy field for old registrations
-  [key: string]: unknown // Allow additional fields
+  quantity?: number
+  [key: string]: unknown
 }
 
 // ============================================================================
@@ -570,6 +564,10 @@ export function isEventWithRelations(event: Event | EventWithRelations): event i
 
 export function isRegistrationWithRelations(reg: Registration | RegistrationWithRelations): reg is RegistrationWithRelations {
   return 'event' in reg || 'user' in reg
+}
+
+export function isAdminEvent(event: AdminEvent | DashboardEvent): event is AdminEvent {
+  return 'totalRevenue' in event && 'fillRate' in event && typeof event.totalRevenue === 'number'
 }
 
 // ============================================================================
