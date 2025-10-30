@@ -1,14 +1,23 @@
-// components/layout/footer.tsx
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { Calendar, Mail, MapPin, Phone, Globe, ArrowRight, Sparkles } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Locale } from '@/app/i18n/config'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const params = useParams()
+  const locale = (params.locale as Locale) || 'am'
+  
+  const t = useTranslations('footer')
+  const tCommon = useTranslations('common')
+
+  const getLocalizedPath = (path: string) => `/${locale}${path}`
 
   return (
     <footer className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300 overflow-hidden">
@@ -42,22 +51,22 @@ export default function Footer() {
           <div className="max-w-xl mx-auto text-center">
             <Badge className="mb-2 bg-primary/10 text-primary border-primary/20 text-[10px] h-5">
               <Sparkles className="w-2.5 h-2.5 mr-1" />
-              Stay Updated
+              {t('newsletter.badge')}
             </Badge>
             <h3 className="text-base md:text-lg font-bold text-white mb-1.5">
-              Never Miss an Event
+              {t('newsletter.title')}
             </h3>
             <p className="text-xs text-gray-400 mb-4">
-              Get the latest events delivered to your inbox
+              {t('newsletter.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('newsletter.placeholder')}
                 className="flex-1 px-3 py-1.5 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors text-xs"
               />
               <Button size="sm" className="px-4 h-8 shadow-lg shadow-primary/25 text-xs">
-                Subscribe
+                {t('newsletter.subscribe')}
                 <ArrowRight className="w-3 h-3 ml-1.5" />
               </Button>
             </div>
@@ -67,36 +76,36 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <Link href="/" className="flex items-center space-x-1.5 mb-3 group">
+            <Link href={getLocalizedPath('/')} className="flex items-center space-x-1.5 mb-3 group">
               <div className="relative">
                 <Calendar className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
               </div>
               <span className="text-base font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                EventHub
+                {tCommon('appName')}
               </span>
             </Link>
             <p className="text-xs text-gray-400 mb-3 leading-relaxed max-w-sm">
-              Ethiopia&apos;s premier event management platform. Connecting communities across Addis Ababa and beyond.
+              {t('description')}
             </p>
             
             {/* Language & Location Badge */}
             <div className="flex flex-wrap gap-1.5 mb-3">
               <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 text-[10px] h-5">
                 <Globe className="w-2.5 h-2.5 mr-1" />
-                አማርኛ
+                {locale === 'am' ? 'አማርኛ' : 'English'}
               </Badge>
               <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 text-[10px] h-5">
                 <MapPin className="w-2.5 h-2.5 mr-1" />
-                Addis Ababa
+                {t('location')}
               </Badge>
               <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 text-[10px] h-5">
-                🇪🇹 Ethiopia
+                🇪🇹 {t('country')}
               </Badge>
             </div>
 
             {/* Social Links - Compact */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-500 font-medium">Follow:</span>
+              <span className="text-[10px] text-gray-500 font-medium">{t('follow')}</span>
               <div className="flex gap-1.5">
                 <a 
                   href="#" 
@@ -149,36 +158,36 @@ export default function Footer() {
 
           {/* Platform - Compact */}
           <div>
-            <h3 className="text-white font-semibold mb-2.5 text-xs">Platform</h3>
+            <h3 className="text-white font-semibold mb-2.5 text-xs">{t('platform.title')}</h3>
             <ul className="space-y-1.5">
               <li>
-                <Link href="/events" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                <Link href={getLocalizedPath('/events')} className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Browse Events
+                  {t('platform.browseEvents')}
                 </Link>
               </li>
               <li>
-                <Link href="/events/create" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                <Link href={getLocalizedPath('/events/create')} className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Create Event
+                  {t('platform.createEvent')}
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                <Link href={getLocalizedPath('/dashboard')} className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Dashboard
+                  {t('platform.dashboard')}
                 </Link>
               </li>
               <li>
-                <Link href="/upgrade" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                <Link href={getLocalizedPath('/upgrade')} className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Pricing
+                  {t('platform.pricing')}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Mobile App
+                  {t('platform.mobileApp')}
                 </Link>
               </li>
             </ul>
@@ -186,36 +195,36 @@ export default function Footer() {
 
           {/* Resources - Compact */}
           <div>
-            <h3 className="text-white font-semibold mb-2.5 text-xs">Resources</h3>
+            <h3 className="text-white font-semibold mb-2.5 text-xs">{t('resources.title')}</h3>
             <ul className="space-y-1.5">
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Help Center
+                  {t('resources.helpCenter')}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Documentation
+                  {t('resources.documentation')}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  API Reference
+                  {t('resources.apiReference')}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Community
+                  {t('resources.community')}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5 group">
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  Blog
+                  {t('resources.blog')}
                 </Link>
               </li>
             </ul>
@@ -223,7 +232,7 @@ export default function Footer() {
 
           {/* Contact - Compact */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-white font-semibold mb-2.5 text-xs">Contact</h3>
+            <h3 className="text-white font-semibold mb-2.5 text-xs">{t('contact.title')}</h3>
             <ul className="space-y-2">
               <li className="group">
                 <a 
@@ -234,7 +243,7 @@ export default function Footer() {
                     <Mail className="w-3 h-3 text-gray-300 group-hover:text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] text-gray-500 mb-0.5">Email</div>
+                    <div className="text-[10px] text-gray-500 mb-0.5">{t('contact.email')}</div>
                     <div className="text-xs truncate">support@eventhub.et</div>
                   </div>
                 </a>
@@ -248,7 +257,7 @@ export default function Footer() {
                     <Phone className="w-3 h-3 text-gray-300 group-hover:text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] text-gray-500 mb-0.5">Phone</div>
+                    <div className="text-[10px] text-gray-500 mb-0.5">{t('contact.phone')}</div>
                     <div className="text-xs">+251 91 123 4567</div>
                   </div>
                 </a>
@@ -259,10 +268,9 @@ export default function Footer() {
                     <MapPin className="w-3 h-3 text-gray-300" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] text-gray-500 mb-0.5">Office</div>
-                    <div className="text-xs leading-relaxed">
-                      Bole Road, Atlas<br />
-                      Addis Ababa, ET
+                    <div className="text-[10px] text-gray-500 mb-0.5">{t('contact.office')}</div>
+                    <div className="text-xs leading-relaxed whitespace-pre-line">
+                      {t('contact.address')}
                     </div>
                   </div>
                 </div>
@@ -276,21 +284,21 @@ export default function Footer() {
         {/* Bottom Bar - Compact */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-xs mb-4">
           <div className="flex flex-col md:flex-row items-center gap-2 text-gray-500">
-            <p>&copy; {currentYear} EventHub. All rights reserved.</p>
+            <p>&copy; {currentYear} {tCommon('appName')}. {t('rights')}</p>
           </div>
           
           <div className="flex flex-wrap justify-center gap-4 text-[11px]">
             <Link href="#" className="text-gray-500 hover:text-primary transition-colors">
-              Privacy
+              {t('legal.privacy')}
             </Link>
             <Link href="#" className="text-gray-500 hover:text-primary transition-colors">
-              Terms
+              {t('legal.terms')}
             </Link>
             <Link href="#" className="text-gray-500 hover:text-primary transition-colors">
-              Cookies
+              {t('legal.cookies')}
             </Link>
             <Link href="#" className="text-gray-500 hover:text-primary transition-colors">
-              Accessibility
+              {t('legal.accessibility')}
             </Link>
           </div>
         </div>
@@ -298,7 +306,7 @@ export default function Footer() {
         {/* Trust Indicators - Compact */}
         <div className="pt-4 border-t border-gray-700/50">
           <p className="text-center text-[10px] text-gray-600 mb-2">
-            Secure payments powered by trusted providers
+            {t('securePayments')}
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4 opacity-40 grayscale">
             {['Telebirr', 'CBE Birr', 'M-Pesa', 'Stripe'].map((payment, i) => (

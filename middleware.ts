@@ -1,29 +1,51 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import createMiddleware from 'next-intl/middleware'
+import { NextRequest } from 'next/server'
+import { defaultLocale, locales } from './app/i18n/config'
 
-// Define public routes that don't require authentication
+// Create next-intl middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always'
+})
+
+// Define public routes
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/events',
-  '/events/(.*)',
-  '/api/events',
-  '/api/events/(.*)',
-  '/api/categories',
-  '/api/webhook/clerk',
+  '/:locale',
+  '/:locale/sign-in(.*)',
+  '/:locale/sign-up(.*)',
+  '/:locale/events(.*)',
+  '/api/(.*)',
 ])
 
-export default clerkMiddleware(async (auth, request) => {
-  // If it's not a public route, require authentication
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  const { pathname } = request.nextUrl
+
+  // Skip for API routes, static files, etc.
+  if (
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/_vercel') ||
+    /\.(.*)$/.test(pathname)
+  ) {
+    return
+  }
+
+  // Protect non-public routes
   if (!isPublicRoute(request)) {
     await auth.protect()
   }
+
+  // Apply intl middleware
+  return intlMiddleware(request)
 })
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Skip Next.js internals and static files
+    '/((?!_next|_vercel|.*\\..*).*)',
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],

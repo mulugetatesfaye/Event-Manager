@@ -1,0 +1,211 @@
+{
+  "common": {
+    "appName": "አዲስቫይብ",
+    "language": "ቋንቋ",
+    "english": "እንግሊዝኛ",
+    "amharic": "አማርኛ"
+  },
+  "nav": {
+    "browseEvents": "ዝግጅቶችን ያስሱ",
+    "dashboard": "መቆጣጠሪያ ሰሌዳ",
+    "admin": "አስተዳዳሪ",
+    "myEvents": "የኔ ዝግጅቶች",
+    "registrations": "ምዝገባዎች",
+    "signIn": "ግባ",
+    "getStarted": "ጀምር",
+    "createEvent": "ዝግጅት ፍጠር",
+    "manageUsers": "ተጠቃሚዎችን አስተዳድር",
+    "categories": "ምድቦች",
+    "checkIns": "ምዝገባ ማረጋገጫ",
+    "allEvents": "ሁሉም ዝግጅቶች",
+    "eventManagement": "የዝግጅት አስተዳደር",
+    "analytics": "ትንተና",
+    "settings": "ቅንብሮች",
+    "systemManagement": "የስርዓት አስተዳደር",
+    "myRegistrations": "የኔ ምዝገባዎች",
+    "goToDashboard": "ወደ መቆጣጠሪያ ሰሌዳ ሂድ"
+  },
+  "home": {
+    "hero": {
+      "trustBadge": "በ10,000+ አዘጋጆች የታመነ",
+      "title": "ሙያዊ",
+      "subtitle": "ቀላል ተደርጓል",
+      "description": "በአጠቃላይ መድረካችን ዝግጅቶችን ይፍጠሩ፣ ያስተዳድሩ እና ይሳተፉ። ለአዘጋጆች እና ለተሳታፊዎች ፍጹም።",
+      "words": {
+        "conferences": "ኮንፈረንሶች",
+        "workshops": "አውደ ጥናቶች",
+        "meetups": "ስብሰባዎች",
+        "webinars": "ድረ-ገጽ ጥናቶች",
+        "seminars": "ሴሚናሮች"
+      }
+    },
+    "upcomingEvents": {
+      "title": "የሚመጡ ዝግጅቶች",
+      "description": "በአካባቢዎ የሚሆነውን ያግኙ",
+      "viewAll": "ሁሉንም ዝግጅቶች ይመልከቱ",
+      "stats": {
+        "multipleCities": "በበርካታ ከተሞች ውስጥ ዝግጅቶች",
+        "attendees": "የሚጠበቁ ተሳታፊዎች",
+        "newEvents": "በየቀኑ የሚታከሉ አዳዲስ ዝግጅቶች"
+      },
+      "noEvents": {
+        "title": "ምንም የሚመጡ ዝግጅቶች የሉም",
+        "description": "የመጀመሪያው ዝግጅት ፈጣሪ ይሁኑ እና ማህበረሰብዎን መገንባት ይጀምሩ።",
+        "createFirst": "የመጀመሪያ ዝግጅት ፍጠር"
+      }
+    },
+    "features": {
+      "title": "ዝግጅቶችን ለማስተዳደር የሚያስፈልግዎ ሁሉ",
+      "description": "መድረካችን ዝግጅቶችዎን በተሳካ ሁኔታ ለመፍጠር፣ ለማስተዳደር እና ለማሳደግ የሚያስፈልጉዎትን መሳሪያዎች ሁሉ ያቀርባል።",
+      "eventCreation": {
+        "title": "ዝግጅት ፈጠራ",
+        "description": "በአስደናቂ ገንቢያችን እና አጠቃላይ ማበጀት አማራጮች አስደናቂ ዝግጅቶችን ይፍጠሩ።"
+      },
+      "registration": {
+        "title": "የምዝገባ አስተዳደር",
+        "description": "በራስ-ሰር የአቅም አስተዳደር እና ማረጋገጫዎች ተሳታፊዎችን በእውነተኛ ጊዜ ይከታተሉ።"
+      },
+      "analytics": {
+        "title": "የትንተና መቆጣጠሪያ ሰሌዳ",
+        "description": "በአጠቃላይ ትንታኔዎች እና የአፈጻጸም መለኪያዎች ጠቃሚ ግንዛቤዎችን ያግኙ።"
+      },
+      "security": {
+        "title": "ደህንነቱ የተጠበቀ እና አስተማማኝ",
+        "description": "በሚና ላይ የተመሰረተ የመዳረሻ ቁጥጥር እና የውሂብ ጥበቃ ያለው የኢንተርፕራይዝ-ደረጃ ደህንነት።"
+      }
+    },
+    "howItWorks": {
+      "title": "በ3 ቀላል ደረጃዎች ይጀምሩ",
+      "description": "ከምዝገባ እስከ መጀመሪያው ዝግጅትዎ በደቂቃዎች ውስጥ",
+      "step1": {
+        "title": "መለያዎን ይፍጠሩ",
+        "description": "በነጻ ይመዝገቡ እና ሚናዎን ይምረጡ። የክሬዲት ካርድ አያስፈልግም።"
+      },
+      "step2": {
+        "title": "ዝግጅቶችን ይፍጠሩ ወይም ያስሱ",
+        "description": "አዘጋጆች ዝግጅቶችን ይፈጥራሉ፣ ተሳታፊዎች በቀላሉ ያገኛሉ እና ይመዘገባሉ።"
+      },
+      "step3": {
+        "title": "ያስተዳድሩ እና ይሳተፉ",
+        "description": "ምዝገባዎችን ይከታተሉ እና ከችግር ነጻ የዝግጅት ልምዶችን ይደሰቱ።"
+      }
+    },
+    "benefits": {
+      "title": "ለስኬት የተገነባ",
+      "description": "EventHub የሚያምኗቸው በሺዎች የሚቆጠሩ ስኬታማ የዝግጅት አዘጋጆች ይቀላቀሉ",
+      "easyToUse": {
+        "title": "ለመጠቀም ቀላል",
+        "description": "ለሁሉም የተነደፈ ቀላል በይነገጽ"
+      },
+      "realTime": {
+        "title": "የእውነተኛ ጊዜ ማሻሻያዎች",
+        "description": "ስለ ምዝገባዎች ፈጣን ማሳወቂያዎች"
+      },
+      "multiRole": {
+        "title": "ባለብዙ-ሚና ድጋፍ",
+        "description": "ለቡድንዎ ተለዋዋጭ ፈቃዶች"
+      },
+      "comprehensiveAnalytics": {
+        "title": "አጠቃላይ ትንተና",
+        "description": "አፈጻጸምን በዝርዝር ግንዛቤዎች ይከታተሉ"
+      },
+      "saveTime": {
+        "title": "ጊዜ ይቆጥቡ",
+        "description": "ተግባራትን በራስ-ሰር ያካሂዱ"
+      },
+      "fastSetup": {
+        "title": "ፈጣን ማዋቀር",
+        "description": "በደቂቃዎች ውስጥ ለማስጀመር"
+      },
+      "secure": {
+        "title": "ደህንነቱ የተጠበቀ",
+        "description": "የኢንተርፕራይዝ-ደረጃ"
+      },
+      "analyticsCard": {
+        "title": "ትንተና",
+        "description": "ሁሉንም ይከታተሉ"
+      }
+    },
+    "testimonials": {
+      "title": "በሺዎች የሚወደድ",
+      "description": "ተጠቃሚዎቻችን ስለ EventHub የሚሉትን ይመልከቱ",
+      "testimonial1": {
+        "name": "ሳራ ጆንሰን",
+        "role": "የቴክኖሎጂ ኮንፈረንስ አዘጋጅ",
+        "content": "EventHub የቴክኖሎጂ ኮንፈረንሶቻችንን አስተዳደር አስተላልፏል። የትንታኔ ባህሪያቱ ዝግጅቶቻችንን በ300% እንድናሳድግ ረድተውናል።"
+      },
+      "testimonial2": {
+        "name": "ሚካኤል ቼን",
+        "role": "የዝግጅት ወዳጅ",
+        "content": "እንደ ተሳታፊ፣ ዝግጅቶችን ማግኘት እና መመዝገብ ምን ያህል ቀላል እንደሆነ እወዳለሁ። በይነገጹ ቀላል ነው እና ምንም ዝግጅት አላመለጠኝም።"
+      },
+      "testimonial3": {
+        "name": "ኤሚሊ ሮድሪጌዝ",
+        "role": "የማህበረሰብ አስተዳዳሪ",
+        "content": "ባለብዙ-ሚና ስርዓቱ ለድርጅታችን ፍጹም ነው። ሁሉንም ከአንድ መድረክ እናስተዳድራለን እና ምርታማነት በእጥፍ ጨምሯል።"
+      }
+    },
+    "cta": {
+      "badge": "ጉዞዎን ይጀምሩ",
+      "title": "አስደናቂ ዝግጅቶችን ለመፍጠር ዝግጁ ነዎት?",
+      "description": "ራዕያቸውን ወደ ህይወት ለማምጣት መድረካችንን የሚያምኑ በሺዎች የሚቆጠሩ የዝግጅት አዘጋጆች ይቀላቀሉ",
+      "disclaimer": "የክሬዲት ካርድ አያስፈልግም • በነጻ ለመጀመር • በማንኛውም ጊዜ ይሰርዙ",
+      "startCreating": "ዛሬ ዝግጅቶችን መፍጠር ይጀምሩ"
+    },
+    "buttons": {
+      "getStartedFree": "በነጻ ጀምር",
+      "browseEvents": "ዝግጅቶችን ያስሱ",
+      "createEvent": "ዝግጅት ፍጠር",
+      "goToDashboard": "ወደ መቆጣጠሪያ ሰሌዳ ሂድ"
+    }
+  },
+  "footer": {
+    "newsletter": {
+      "badge": "መረጃ ያግኙ",
+      "title": "ምንም ዝግጅት አያመልጥዎ",
+      "description": "የቅርብ ጊዜ ዝግጅቶችን ወደ መልዕክት ሳጥንዎ ይቀበሉ",
+      "placeholder": "ኢሜይልዎን ያስገቡ",
+      "subscribe": "ይመዝገቡ"
+    },
+    "description": "የኢትዮጵያ ዋና የዝግጅት አስተዳደር መድረክ። በመላ አዲስ አበባ እና ከዚያ በላይ ማህበረሰቦችን እናገናኛለን።",
+    "location": "አዲስ አበባ",
+    "country": "ኢትዮጵያ",
+    "follow": "ይከተሉን:",
+    "platform": {
+      "title": "መድረክ",
+      "browseEvents": "ዝግጅቶችን ያስሱ",
+      "createEvent": "ዝግጅት ፍጠር",
+      "dashboard": "መቆጣጠሪያ ሰሌዳ",
+      "pricing": "ዋጋ አሰጣጥ",
+      "mobileApp": "የሞባይል መተግበሪያ"
+    },
+    "resources": {
+      "title": "ግብዓቶች",
+      "helpCenter": "የእገዛ ማእከል",
+      "documentation": "ሰነዶች",
+      "apiReference": "የኤፒአይ ማጣቀሻ",
+      "community": "ማህበረሰብ",
+      "blog": "ብሎግ"
+    },
+    "contact": {
+      "title": "ያግኙን",
+      "email": "ኢሜይል",
+      "phone": "ስልክ",
+      "office": "ቢሮ",
+      "address": "ቦሌ መንገድ፣ አትላስ\nአዲስ አበባ፣ ኢትዮጵያ"
+    },
+    "legal": {
+      "privacy": "ግላዊነት",
+      "terms": "ውሎች",
+      "cookies": "ኩኪዎች",
+      "accessibility": "ተደራሽነት"
+    },
+    "rights": "መብቱ በህግ የተጠበቀ ነው።",
+    "securePayments": "በታመኑ አቅራቢዎች የተጠበቀ ክፍያዎች"
+  },
+  "roles": {
+    "admin": "አስተዳዳሪ",
+    "organizer": "አዘጋጅ",
+    "attendee": "ተሳታፊ"
+  }
+}

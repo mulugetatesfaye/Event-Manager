@@ -1,0 +1,211 @@
+{
+  "common": {
+    "appName": "AddisVibe",
+    "language": "Language",
+    "english": "English",
+    "amharic": "Amharic"
+  },
+  "nav": {
+    "browseEvents": "Browse Events",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "myEvents": "My Events",
+    "registrations": "Registrations",
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "createEvent": "Create Event",
+    "manageUsers": "Manage Users",
+    "categories": "Categories",
+    "checkIns": "Check-ins",
+    "allEvents": "All Events",
+    "eventManagement": "Event Management",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "systemManagement": "System Management",
+    "myRegistrations": "My Registrations",
+    "goToDashboard": "Go to Dashboard"
+  },
+  "home": {
+    "hero": {
+      "trustBadge": "Trusted by 10,000+ organizers",
+      "title": "Professional",
+      "subtitle": "Made Simple",
+      "description": "Create, manage, and attend events with our comprehensive platform. Perfect for organizers and attendees alike.",
+      "words": {
+        "conferences": "Conferences",
+        "workshops": "Workshops",
+        "meetups": "Meetups",
+        "webinars": "Webinars",
+        "seminars": "Seminars"
+      }
+    },
+    "upcomingEvents": {
+      "title": "Upcoming Events",
+      "description": "Discover what's happening near you",
+      "viewAll": "View All Events",
+      "stats": {
+        "multipleCities": "Events in Multiple Cities",
+        "attendees": "Attendees Expected",
+        "newEvents": "New Events Added Daily"
+      },
+      "noEvents": {
+        "title": "No upcoming events",
+        "description": "Be the first to create an event and start building your community.",
+        "createFirst": "Create First Event"
+      }
+    },
+    "features": {
+      "title": "Everything You Need to Manage Events",
+      "description": "Our platform provides all the tools you need to create, manage, and grow your events successfully.",
+      "eventCreation": {
+        "title": "Event Creation",
+        "description": "Create stunning events with our intuitive builder and comprehensive customization options."
+      },
+      "registration": {
+        "title": "Registration Management",
+        "description": "Track attendees in real-time with automated capacity management and confirmations."
+      },
+      "analytics": {
+        "title": "Analytics Dashboard",
+        "description": "Gain valuable insights with comprehensive analytics and performance metrics."
+      },
+      "security": {
+        "title": "Secure & Reliable",
+        "description": "Enterprise-grade security with role-based access control and data protection."
+      }
+    },
+    "howItWorks": {
+      "title": "Get Started in 3 Easy Steps",
+      "description": "From signup to your first event in minutes",
+      "step1": {
+        "title": "Create Your Account",
+        "description": "Sign up for free and choose your role. No credit card required."
+      },
+      "step2": {
+        "title": "Create or Browse Events",
+        "description": "Organizers create events, attendees discover and register easily."
+      },
+      "step3": {
+        "title": "Manage & Attend",
+        "description": "Track registrations and enjoy seamless event experiences."
+      }
+    },
+    "benefits": {
+      "title": "Built for Success",
+      "description": "Join thousands of successful event organizers who trust EventHub",
+      "easyToUse": {
+        "title": "Easy to Use",
+        "description": "Intuitive interface designed for everyone"
+      },
+      "realTime": {
+        "title": "Real-time Updates",
+        "description": "Instant notifications about registrations"
+      },
+      "multiRole": {
+        "title": "Multi-role Support",
+        "description": "Flexible permissions for your team"
+      },
+      "comprehensiveAnalytics": {
+        "title": "Comprehensive Analytics",
+        "description": "Track performance with detailed insights"
+      },
+      "saveTime": {
+        "title": "Save Time",
+        "description": "Automate tasks"
+      },
+      "fastSetup": {
+        "title": "Fast Setup",
+        "description": "Minutes to launch"
+      },
+      "secure": {
+        "title": "Secure",
+        "description": "Enterprise-level"
+      },
+      "analyticsCard": {
+        "title": "Analytics",
+        "description": "Track everything"
+      }
+    },
+    "testimonials": {
+      "title": "Loved by Thousands",
+      "description": "See what our users have to say about EventHub",
+      "testimonial1": {
+        "name": "Sarah Johnson",
+        "role": "Tech Conference Organizer",
+        "content": "EventHub has transformed how we manage our tech conferences. The analytics features have helped us grow our events by 300%."
+      },
+      "testimonial2": {
+        "name": "Michael Chen",
+        "role": "Event Enthusiast",
+        "content": "As an attendee, I love how easy it is to find and register for events. The interface is intuitive and I never miss an event."
+      },
+      "testimonial3": {
+        "name": "Emily Rodriguez",
+        "role": "Community Manager",
+        "content": "The multi-role system is perfect for our organization. We manage everything from one platform and productivity has doubled."
+      }
+    },
+    "cta": {
+      "badge": "Start Your Journey",
+      "title": "Ready to Create Amazing Events?",
+      "description": "Join thousands of event organizers who trust our platform to bring their visions to life",
+      "disclaimer": "No credit card required • Free to start • Cancel anytime",
+      "startCreating": "Start creating events today"
+    },
+    "buttons": {
+      "getStartedFree": "Get Started Free",
+      "browseEvents": "Browse Events",
+      "createEvent": "Create Event",
+      "goToDashboard": "Go to Dashboard"
+    }
+  },
+  "footer": {
+    "newsletter": {
+      "badge": "Stay Updated",
+      "title": "Never Miss an Event",
+      "description": "Get the latest events delivered to your inbox",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe"
+    },
+    "description": "Ethiopia's premier event management platform. Connecting communities across Addis Ababa and beyond.",
+    "location": "Addis Ababa",
+    "country": "Ethiopia",
+    "follow": "Follow:",
+    "platform": {
+      "title": "Platform",
+      "browseEvents": "Browse Events",
+      "createEvent": "Create Event",
+      "dashboard": "Dashboard",
+      "pricing": "Pricing",
+      "mobileApp": "Mobile App"
+    },
+    "resources": {
+      "title": "Resources",
+      "helpCenter": "Help Center",
+      "documentation": "Documentation",
+      "apiReference": "API Reference",
+      "community": "Community",
+      "blog": "Blog"
+    },
+    "contact": {
+      "title": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "office": "Office",
+      "address": "Bole Road, Atlas\nAddis Ababa, ET"
+    },
+    "legal": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "cookies": "Cookies",
+      "accessibility": "Accessibility"
+    },
+    "rights": "All rights reserved.",
+    "securePayments": "Secure payments powered by trusted providers"
+  },
+  "roles": {
+    "admin": "Admin",
+    "organizer": "Organizer",
+    "attendee": "Attendee"
+  }
+}

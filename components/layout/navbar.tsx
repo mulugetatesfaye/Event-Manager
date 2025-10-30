@@ -1,8 +1,9 @@
-// components/layout/navbar.tsx
 'use client'
 
 import Link from 'next/link'
 import { UserButton, useUser } from '@clerk/nextjs'
+import { useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -36,6 +37,8 @@ import { useState, useEffect } from 'react'
 import { useCurrentUser } from '@/hooks/use-user'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { LanguageSwitcher } from '@/components/ui/language-switcher'
+import { Locale } from '@/app/i18n/config'
 
 export default function Navbar() {
   const { isSignedIn } = useUser()
@@ -43,6 +46,12 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
+  const params = useParams()
+  const locale = (params.locale as Locale) || 'am'
+  
+  const t = useTranslations('nav')
+  const tCommon = useTranslations('common')
+  const tRoles = useTranslations('roles')
 
   const isAdmin = currentUser?.role === 'ADMIN'
   const isOrganizer = currentUser?.role === 'ORGANIZER' || isAdmin
@@ -78,7 +87,12 @@ export default function Navbar() {
     }
   }, [mobileMenuOpen])
 
-  const isActive = (path: string) => pathname === path
+  const isActive = (path: string) => {
+    const currentPath = pathname.replace(`/${locale}`, '')
+    return currentPath === path || pathname === `/${locale}${path}`
+  }
+
+  const getLocalizedPath = (path: string) => `/${locale}${path}`
 
   return (
     <>
@@ -93,21 +107,21 @@ export default function Navbar() {
             {/* Logo */}
             <div className="flex items-center gap-8">
               <Link 
-                href="/" 
+                href={getLocalizedPath('/')} 
                 className="flex items-center gap-2.5 group"
               >
                 <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
                   <Calendar className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-xl font-bold text-gray-900">
-                  AddisVibe
+                  {tCommon('appName')}
                 </span>
               </Link>
               
               {/* Desktop Navigation */}
               <div className="hidden lg:flex items-center gap-1">
                 <Link 
-                  href="/events" 
+                  href={getLocalizedPath('/events')} 
                   className={cn(
                     "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                     isActive('/events')
@@ -115,13 +129,13 @@ export default function Navbar() {
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   )}
                 >
-                  Browse Events
+                  {t('browseEvents')}
                 </Link>
 
                 {isSignedIn && (
                   <>
                     <Link 
-                      href="/dashboard" 
+                      href={getLocalizedPath('/dashboard')} 
                       className={cn(
                         "px-4 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center gap-2",
                         isActive('/dashboard')
@@ -130,7 +144,7 @@ export default function Navbar() {
                       )}
                     >
                       <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
+                      {t('dashboard')}
                     </Link>
 
                     {/* Admin Menu */}
@@ -139,38 +153,38 @@ export default function Navbar() {
                         <DropdownMenuTrigger asChild>
                           <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
                             <Shield className="w-4 h-4" />
-                            Admin
+                            {t('admin')}
                             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-48">
                           <DropdownMenuLabel className="text-xs text-gray-500">
-                            System Management
+                            {t('systemManagement')}
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/users" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/users')} className="cursor-pointer">
                               <Users className="w-4 h-4 mr-2 text-gray-400" />
-                              Manage Users
+                              {t('manageUsers')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/categories" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/categories')} className="cursor-pointer">
                               <Tag className="w-4 h-4 mr-2 text-gray-400" />
-                              Categories
+                              {t('categories')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/check-ins" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/check-ins')} className="cursor-pointer">
                               <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
-                              Check-ins
+                              {t('checkIns')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/events" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/events')} className="cursor-pointer">
                               <Search className="w-4 h-4 mr-2 text-gray-400" />
-                              All Events
+                              {t('allEvents')}
                             </Link>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -182,38 +196,38 @@ export default function Navbar() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
-                            My Events
+                            {t('myEvents')}
                             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-48">
                           <DropdownMenuLabel className="text-xs text-gray-500">
-                            Event Management
+                            {t('eventManagement')}
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/my-events" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/my-events')} className="cursor-pointer">
                               <FolderOpen className="w-4 h-4 mr-2 text-gray-400" />
-                              All Events
+                              {t('allEvents')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/analytics" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/analytics')} className="cursor-pointer">
                               <BarChart3 className="w-4 h-4 mr-2 text-gray-400" />
-                              Analytics
+                              {t('analytics')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/check-ins" className="cursor-pointer">
+                            <Link href={getLocalizedPath('/dashboard/check-ins')} className="cursor-pointer">
                               <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
-                              Check-ins
+                              {t('checkIns')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/events/create" className="cursor-pointer text-blue-600 font-medium">
+                            <Link href={getLocalizedPath('/events/create')} className="cursor-pointer text-blue-600 font-medium">
                               <Plus className="w-4 h-4 mr-2" />
-                              Create Event
+                              {t('createEvent')}
                             </Link>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -221,7 +235,7 @@ export default function Navbar() {
                     )}
 
                     <Link 
-                      href="/dashboard/registrations" 
+                      href={getLocalizedPath('/dashboard/registrations')} 
                       className={cn(
                         "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                         isActive('/dashboard/registrations')
@@ -229,7 +243,7 @@ export default function Navbar() {
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                       )}
                     >
-                      Registrations
+                      {t('registrations')}
                     </Link>
                   </>
                 )}
@@ -238,6 +252,9 @@ export default function Navbar() {
 
             {/* Right Side Actions */}
             <div className="hidden lg:flex items-center gap-3">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {isSignedIn ? (
                 <>
                   {/* Role Badge */}
@@ -259,7 +276,7 @@ export default function Navbar() {
                         currentUser.role === 'ORGANIZER' ? 'bg-blue-600' :
                         'bg-green-500'
                       )} />
-                      {currentUser.role.toLowerCase()}
+                      {tRoles(currentUser.role.toLowerCase())}
                     </Badge>
                   )}
 
@@ -270,16 +287,16 @@ export default function Navbar() {
                       size="sm" 
                       className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                     >
-                      <Link href="/events/create">
+                      <Link href={getLocalizedPath('/events/create')}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Create Event
+                        {t('createEvent')}
                       </Link>
                     </Button>
                   )}
 
                   {/* User Profile */}
                   <UserButton 
-                    afterSignOutUrl="/"
+                    afterSignOutUrl={getLocalizedPath('/')}
                     appearance={{
                       elements: {
                         avatarBox: "w-9 h-9 rounded-full ring-2 ring-gray-200 hover:ring-gray-300 transition-all",
@@ -297,9 +314,9 @@ export default function Navbar() {
                     size="sm" 
                     className="font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   >
-                    <Link href="/sign-in">
+                    <Link href={getLocalizedPath('/sign-in')}>
                       <LogIn className="w-4 h-4 mr-2" />
-                      Sign In
+                      {t('signIn')}
                     </Link>
                   </Button>
                   <Button 
@@ -307,9 +324,9 @@ export default function Navbar() {
                     size="sm" 
                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                   >
-                    <Link href="/sign-up">
+                    <Link href={getLocalizedPath('/sign-up')}>
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Get Started
+                      {t('getStarted')}
                     </Link>
                   </Button>
                 </div>
@@ -317,7 +334,10 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="lg:hidden">
+            <div className="lg:hidden flex items-center gap-2">
+              {/* Language Switcher - Mobile */}
+              <LanguageSwitcher />
+              
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
@@ -352,7 +372,7 @@ export default function Navbar() {
           <div className="px-4 py-6 space-y-1">
             {/* Browse Events */}
             <Link
-              href="/events"
+              href={getLocalizedPath('/events')}
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -364,14 +384,14 @@ export default function Navbar() {
               <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                 <Search className="w-4 h-4 text-gray-600" />
               </div>
-              <span>Browse Events</span>
+              <span>{t('browseEvents')}</span>
             </Link>
 
             {isSignedIn && (
               <>
                 {/* Dashboard */}
                 <Link
-                  href="/dashboard"
+                  href={getLocalizedPath('/dashboard')}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -383,7 +403,7 @@ export default function Navbar() {
                   <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                     <LayoutDashboard className="w-4 h-4 text-gray-600" />
                   </div>
-                  <span>Dashboard</span>
+                  <span>{t('dashboard')}</span>
                 </Link>
 
                 {/* Admin Section */}
@@ -392,12 +412,12 @@ export default function Navbar() {
                     <div className="px-4 pt-4 pb-2">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
                         <Shield className="w-3 h-3" />
-                        Admin Tools
+                        {t('admin')}
                       </p>
                     </div>
 
                     <Link
-                      href="/dashboard/users"
+                      href={getLocalizedPath('/dashboard/users')}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -409,11 +429,11 @@ export default function Navbar() {
                       <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Users className="w-4 h-4 text-gray-600" />
                       </div>
-                      <span>Manage Users</span>
+                      <span>{t('manageUsers')}</span>
                     </Link>
 
                     <Link
-                      href="/dashboard/categories"
+                      href={getLocalizedPath('/dashboard/categories')}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -425,12 +445,12 @@ export default function Navbar() {
                       <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Tag className="w-4 h-4 text-gray-600" />
                       </div>
-                      <span>Categories</span>
+                      <span>{t('categories')}</span>
                     </Link>
 
                     <div className="px-4 pt-4 pb-2">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Event Management
+                        {t('eventManagement')}
                       </p>
                     </div>
                   </>
@@ -438,7 +458,7 @@ export default function Navbar() {
 
                 {/* Registrations */}
                 <Link
-                  href="/dashboard/registrations"
+                  href={getLocalizedPath('/dashboard/registrations')}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -450,7 +470,7 @@ export default function Navbar() {
                   <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                     <FolderOpen className="w-4 h-4 text-gray-600" />
                   </div>
-                  <span>My Registrations</span>
+                  <span>{t('myRegistrations')}</span>
                 </Link>
 
                 {/* Organizer/Admin Only */}
@@ -458,7 +478,7 @@ export default function Navbar() {
                   <>
                     {/* My Events */}
                     <Link
-                      href="/dashboard/my-events"
+                      href={getLocalizedPath('/dashboard/my-events')}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -470,12 +490,12 @@ export default function Navbar() {
                       <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Calendar className="w-4 h-4 text-gray-600" />
                       </div>
-                      <span>My Events</span>
+                      <span>{t('myEvents')}</span>
                     </Link>
 
                     {/* Analytics */}
                     <Link
-                      href="/dashboard/analytics"
+                      href={getLocalizedPath('/dashboard/analytics')}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -487,12 +507,12 @@ export default function Navbar() {
                       <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                         <BarChart3 className="w-4 h-4 text-gray-600" />
                       </div>
-                      <span>Analytics</span>
+                      <span>{t('analytics')}</span>
                     </Link>
 
                     {/* Check-ins */}
                     <Link
-                      href="/dashboard/check-ins"
+                      href={getLocalizedPath('/dashboard/check-ins')}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
@@ -504,33 +524,33 @@ export default function Navbar() {
                       <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                         <UserCheck className="w-4 h-4 text-gray-600" />
                       </div>
-                      <span>Check-ins</span>
+                      <span>{t('checkIns')}</span>
                     </Link>
 
                     {/* Create Event - Highlighted */}
                     <Link
-                      href="/events/create"
+                      href={getLocalizedPath('/events/create')}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all"
                     >
                       <div className="h-9 w-9 bg-white/20 rounded-lg flex items-center justify-center">
                         <Plus className="w-4 h-4 text-white" />
                       </div>
-                      <span>Create Event</span>
+                      <span>{t('createEvent')}</span>
                     </Link>
                   </>
                 )}
 
                 {/* Settings */}
                 <Link
-                  href="/dashboard/settings"
+                  href={getLocalizedPath('/dashboard/settings')}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
                 >
                   <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
                     <Settings className="w-4 h-4 text-gray-600" />
                   </div>
-                  <span>Settings</span>
+                  <span>{t('settings')}</span>
                 </Link>
               </>
             )}
@@ -545,18 +565,18 @@ export default function Navbar() {
                   variant="outline" 
                   className="w-full justify-center border-gray-300"
                 >
-                  <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href={getLocalizedPath('/sign-in')} onClick={() => setMobileMenuOpen(false)}>
                     <LogIn className="w-4 h-4 mr-2" />
-                    Sign In
+                    {t('signIn')}
                   </Link>
                 </Button>
                 <Button 
                   asChild 
                   className="w-full justify-center bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href={getLocalizedPath('/sign-up')} onClick={() => setMobileMenuOpen(false)}>
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Get Started
+                    {t('getStarted')}
                   </Link>
                 </Button>
               </div>
@@ -601,12 +621,12 @@ export default function Navbar() {
                         currentUser.role === 'ORGANIZER' ? 'bg-blue-600' :
                         'bg-green-500'
                       )} />
-                      {currentUser.role.toLowerCase()}
+                      {tRoles(currentUser.role.toLowerCase())}
                     </Badge>
                   </div>
                 </div>
                 <UserButton 
-                  afterSignOutUrl="/"
+                  afterSignOutUrl={getLocalizedPath('/')}
                   appearance={{
                     elements: {
                       avatarBox: "w-9 h-9 rounded-full ring-2 ring-gray-300 transition-all"
@@ -618,8 +638,6 @@ export default function Navbar() {
           )}
         </div>
       </div>
-
-      
     </>
   )
 }
