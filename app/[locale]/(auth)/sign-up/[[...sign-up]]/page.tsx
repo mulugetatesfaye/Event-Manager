@@ -14,7 +14,7 @@ export default function SignUpPage() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="w-full border-b border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link
             href={`/${locale}`}
             className="text-xl font-semibold text-gray-900 hover:text-gray-700 transition-colors"
@@ -96,19 +96,6 @@ export default function SignUpPage() {
             afterSignUpUrl={`/${locale}/onboarding`}
             redirectUrl={`/${locale}/onboarding`}
           />
-
-          {/* Alternative sign in */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link
-                href={`/${locale}/sign-in`}
-                className="font-medium text-gray-900 hover:text-gray-700 transition-colors"
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
 
           {/* Terms */}
           <p className="mt-8 text-xs text-center text-gray-500 leading-relaxed">
