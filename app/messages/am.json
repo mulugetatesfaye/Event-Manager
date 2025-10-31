@@ -9,7 +9,34 @@
     "viewDetails": "ዝርዝሮችን ይመልከቱ",
     "view": "ይመልከቱ",
     "manage": "አስተዳድር",
-    "noData": "ምንም መረጃ የለም"
+    "noData": "ምንም መረጃ የለም",
+    "save": "አስቀምጥ",
+    "cancel": "ሰርዝ",
+    "delete": "ሰርዝ",
+    "edit": "አርትዕ",
+    "create": "ፍጠር",
+    "update": "አዘምን",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "sort": "ደርድር",
+    "actions": "ድርጊቶች",
+    "status": "ሁኔታ",
+    "date": "ቀን",
+    "time": "ሰዓት",
+    "location": "አድራሻ",
+    "price": "ዋጋ",
+    "free": "ነጻ",
+    "paid": "የሚከፈል",
+    "yes": "አዎ",
+    "no": "አይ",
+    "confirm": "አረጋግጥ",
+    "back": "ተመለስ",
+    "next": "ቀጣይ",
+    "previous": "ቀዳሚ",
+    "close": "ዝጋ",
+    "open": "ክፈት",
+    "submit": "አስገባ",
+    "reset": "ዳግም አስጀምር"
   },
   "nav": {
     "browseEvents": "ዝግጅቶችን ያስሱ",
@@ -18,6 +45,8 @@
     "myEvents": "የኔ ዝግጅቶች",
     "registrations": "ምዝገባዎች",
     "signIn": "ግባ",
+    "signOut": "ውጣ",
+    "signUp": "ተመዝገብ",
     "getStarted": "ጀምር",
     "createEvent": "ዝግጅት ፍጠር",
     "manageUsers": "ተጠቃሚዎችን አስተዳድር",
@@ -29,7 +58,10 @@
     "settings": "ቅንብሮች",
     "systemManagement": "የስርዓት አስተዳደር",
     "myRegistrations": "የኔ ምዝገባዎች",
-    "goToDashboard": "ወደ መቆጣጠሪያ ሰሌዳ ሂድ"
+    "goToDashboard": "ወደ መቆጣጠሪያ ሰሌዳ ሂድ",
+    "profile": "መገለጫ",
+    "help": "እገዛ",
+    "logout": "ውጣ"
   },
   "dashboard": {
     "sections": {
@@ -144,6 +176,88 @@
       "totalCheckedIn": "አጠቃላይ ተሳታፊዎች ተመዝግበዋል",
       "recentActivity": "የቅርብ ጊዜ እንቅስቃሴ",
       "registrationsLast7Days": "ምዝገባዎች (ባለፉት 7 ቀናት)"
+    }
+  },
+  "events": {
+    "title": "ዝግጅቶችን ያግኙ",
+    "subtitle": "ፍላጎትዎን የሚያሟሉ ዝግጅቶችን ያግኙ እና ይቀላቀሉ",
+    "createEvent": "ዝግጅት ፍጠር",
+    "filters": {
+      "title": "ማጣሪያዎች",
+      "active": "ንቁ",
+      "search": "ዝግጅቶችን ይፈልጉ",
+      "searchPlaceholder": "ዝግጅቶችን ይፈልጉ...",
+      "categories": "ምድቦች",
+      "allEvents": "ሁሉም ዝግጅቶች",
+      "price": "ዋጋ",
+      "priceAll": "ሁሉም ዝግጅቶች",
+      "priceFree": "ነጻ ዝግጅቶች",
+      "pricePaid": "የሚከፈልባቸው ዝግጅቶች",
+      "popular": "ታዋቂ",
+      "date": "ቀን",
+      "dateAll": "ማንኛውም ቀን",
+      "today": "ዛሬ",
+      "tomorrow": "ነገ",
+      "thisWeek": "በዚህ ሳምንት",
+      "thisWeekend": "በዚህ ቅዳሜና እሁድ",
+      "thisMonth": "በዚህ ወር",
+      "clearAll": "ሁሉንም ማጣሪያዎች አጽዳ"
+    },
+    "stats": {
+      "total": "ጠቅላላ",
+      "showing": "በማሳየት ላይ",
+      "events": "ዝግጅቶች"
+    },
+    "sort": {
+      "byDate": "በቀን",
+      "popular": "ታዋቂ",
+      "priceLow": "ዋጋ: ዝቅተኛ",
+      "priceHigh": "ዋጋ: ከፍተኛ",
+      "newest": "አዲስ"
+    },
+    "viewMode": {
+      "grid": "ፍርግርግ",
+      "list": "ዝርዝር"
+    },
+    "pagination": {
+      "showing": "በማሳየት ላይ",
+      "to": "እስከ",
+      "of": "ከ",
+      "events": "ዝግጅቶች",
+      "previous": "ቀዳሚ",
+      "next": "ቀጣይ",
+      "page": "ገጽ"
+    },
+    "empty": {
+      "title": "ምንም ዝግጅቶች አልተገኙም",
+      "description": "መስፈርትዎን የሚያሟላ ማንኛውም ዝግጅት ማግኘት አልቻልንም። ማጣሪያዎችዎን ማስተካከል ይሞክሩ።",
+      "descriptionNoFilters": "በአሁኑ ጊዜ ምንም ዝግጅቶች የሉም። በኋላ ይመልከቱ!",
+      "clearFilters": "ማጣሪያዎችን አጽዳ",
+      "createFirst": "የመጀመሪያ ዝግጅት ፍጠር"
+    },
+    "error": {
+      "title": "ዝግጅቶችን በመጫን ላይ ስህተት",
+      "description": "የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
+      "retry": "እንደገና ሞክር"
+    },
+    "card": {
+      "status": {
+        "ended": "ተጠናቋል",
+        "soldOut": "ተሽጧል",
+        "today": "ዛሬ",
+        "tomorrow": "ነገ",
+        "fillingFast": "በፍጥነት እየተሞላ",
+        "available": "ይገኛል"
+      },
+      "free": "ነጻ",
+      "from": "ከ",
+      "noImage": "ምስል የለም",
+      "hostedBy": "አስተናጋጅ",
+      "ticketTypes": "የትኬት ዓይነቶች",
+      "ticketType": "የትኬት ዓይነት",
+      "left": "ይቀራል",
+      "booked": "ተይዟል",
+      "fillingFastBadge": "በፍጥነት እየተሞላ"
     }
   },
   "home": {

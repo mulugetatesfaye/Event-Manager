@@ -1,27 +1,26 @@
-// app/events/page.tsx
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import { useEvents, useCategories } from '@/hooks'
-import { EventCard } from '@/components/events/event-card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
+import { useState, useCallback, useEffect } from "react";
+import { useEvents, useCategories } from "@/hooks";
+import { EventCard } from "@/components/events/event-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { 
-  Search, 
-  Calendar, 
+} from "@/components/ui/select";
+import {
+  Search,
+  Calendar,
   X,
   ChevronLeft,
   ChevronRight,
@@ -33,30 +32,33 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react'
-import Navbar from '@/components/layout/navbar'
-import Footer from '@/components/layout/footer'
-import { EventWithRelations, CategoryWithCount } from '@/types'
-import { cn } from '@/lib/utils'
-import Link from 'next/link'
-import { useUser } from '@clerk/nextjs'
-import { useCurrentUser } from '@/hooks/use-user'
+} from "lucide-react";
+import Navbar from "@/components/layout/navbar";
+import Footer from "@/components/layout/footer";
+import { EventWithRelations, CategoryWithCount } from "@/types";
+import { cn } from "@/lib/utils";
+import { Link } from "@/app/i18n/routing";
+import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/use-user";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { Locale } from "@/app/i18n/config";
 
 // Custom hook for debouncing
 function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
+      setDebouncedValue(value);
+    }, delay);
 
     return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
 
-  return debouncedValue
+  return debouncedValue;
 }
 
 // Loading skeleton grid
@@ -73,22 +75,22 @@ const EventsGridSkeleton = () => (
       </Card>
     ))}
   </div>
-)
+);
 
-// Sidebar Filter Component - Moved outside of main component
+// Sidebar Filter Component
 interface FilterSidebarProps {
-  className?: string
-  searchTerm: string
-  setSearchTerm: (value: string) => void
-  category: string
-  handleCategoryChange: (value: string) => void
-  priceFilter: string
-  setPriceFilter: (value: string) => void
-  dateFilter: string
-  setDateFilter: (value: string) => void
-  categories: CategoryWithCount[] | undefined
-  hasActiveFilters: boolean
-  clearFilters: () => void
+  className?: string;
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  category: string;
+  handleCategoryChange: (value: string) => void;
+  priceFilter: string;
+  setPriceFilter: (value: string) => void;
+  dateFilter: string;
+  setDateFilter: (value: string) => void;
+  categories: CategoryWithCount[] | undefined;
+  hasActiveFilters: boolean;
+  clearFilters: () => void;
 }
 
 const FilterSidebar = ({
@@ -105,31 +107,32 @@ const FilterSidebar = ({
   hasActiveFilters,
   clearFilters,
 }: FilterSidebarProps) => {
+  const t = useTranslations("events.filters");
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
     date: true,
-  })
+  });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
-    }))
-  }
+      [section]: !prev[section],
+    }));
+  };
 
   return (
     <div className={cn("space-y-6", className)}>
       {/* Search */}
       <div>
         <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-          Search Events
+          {t("search")}
         </Label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search events..."
+            placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 h-11 border-gray-300 focus:border-blue-500"
@@ -142,11 +145,11 @@ const FilterSidebar = ({
       {/* Categories */}
       <div>
         <button
-          onClick={() => toggleSection('categories')}
+          onClick={() => toggleSection("categories")}
           className="flex items-center justify-between w-full mb-3"
         >
           <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
-            Categories
+            {t("categories")}
           </Label>
           {expandedSections.categories ? (
             <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -154,19 +157,19 @@ const FilterSidebar = ({
             <ChevronDown className="w-4 h-4 text-gray-500" />
           )}
         </button>
-        
+
         {expandedSections.categories && (
           <div className="space-y-2">
             <button
-              onClick={() => handleCategoryChange('')}
+              onClick={() => handleCategoryChange("")}
               className={cn(
                 "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                !category 
-                  ? "bg-blue-50 text-blue-700 font-medium" 
+                !category
+                  ? "bg-blue-50 text-blue-700 font-medium"
                   : "text-gray-700 hover:bg-gray-50"
               )}
             >
-              All Events
+              {t("allEvents")}
             </button>
             {categories?.map((cat: CategoryWithCount) => (
               <button
@@ -174,15 +177,15 @@ const FilterSidebar = ({
                 onClick={() => handleCategoryChange(cat.id)}
                 className={cn(
                   "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between",
-                  category === cat.id 
-                    ? "bg-blue-50 text-blue-700 font-medium" 
+                  category === cat.id
+                    ? "bg-blue-50 text-blue-700 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: cat.color || '#6b7280' }}
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: cat.color || "#6b7280" }}
                   />
                   <span>{cat.name}</span>
                 </div>
@@ -202,11 +205,11 @@ const FilterSidebar = ({
       {/* Price Filter */}
       <div>
         <button
-          onClick={() => toggleSection('price')}
+          onClick={() => toggleSection("price")}
           className="flex items-center justify-between w-full mb-3"
         >
           <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
-            Price
+            {t("price")}
           </Label>
           {expandedSections.price ? (
             <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -214,27 +217,38 @@ const FilterSidebar = ({
             <ChevronDown className="w-4 h-4 text-gray-500" />
           )}
         </button>
-        
+
         {expandedSections.price && (
           <RadioGroup value={priceFilter} onValueChange={setPriceFilter}>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="all" id="price-all" />
-                <Label htmlFor="price-all" className="text-sm text-gray-700 cursor-pointer">
-                  All Events
+                <Label
+                  htmlFor="price-all"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("priceAll")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="free" id="price-free" />
-                <Label htmlFor="price-free" className="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
-                  Free Events
-                  <Badge variant="secondary" className="text-xs">Popular</Badge>
+                <Label
+                  htmlFor="price-free"
+                  className="text-sm text-gray-700 cursor-pointer flex items-center gap-2"
+                >
+                  {t("priceFree")}
+                  <Badge variant="secondary" className="text-xs">
+                    {t("popular")}
+                  </Badge>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="paid" id="price-paid" />
-                <Label htmlFor="price-paid" className="text-sm text-gray-700 cursor-pointer">
-                  Paid Events
+                <Label
+                  htmlFor="price-paid"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("pricePaid")}
                 </Label>
               </div>
             </div>
@@ -247,11 +261,11 @@ const FilterSidebar = ({
       {/* Date Filter */}
       <div>
         <button
-          onClick={() => toggleSection('date')}
+          onClick={() => toggleSection("date")}
           className="flex items-center justify-between w-full mb-3"
         >
           <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
-            Date
+            {t("date")}
           </Label>
           {expandedSections.date ? (
             <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -259,44 +273,62 @@ const FilterSidebar = ({
             <ChevronDown className="w-4 h-4 text-gray-500" />
           )}
         </button>
-        
+
         {expandedSections.date && (
           <RadioGroup value={dateFilter} onValueChange={setDateFilter}>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="all" id="date-all" />
-                <Label htmlFor="date-all" className="text-sm text-gray-700 cursor-pointer">
-                  Any Date
+                <Label
+                  htmlFor="date-all"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("dateAll")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="today" id="date-today" />
-                <Label htmlFor="date-today" className="text-sm text-gray-700 cursor-pointer">
-                  Today
+                <Label
+                  htmlFor="date-today"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("today")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="tomorrow" id="date-tomorrow" />
-                <Label htmlFor="date-tomorrow" className="text-sm text-gray-700 cursor-pointer">
-                  Tomorrow
+                <Label
+                  htmlFor="date-tomorrow"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("tomorrow")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="week" id="date-week" />
-                <Label htmlFor="date-week" className="text-sm text-gray-700 cursor-pointer">
-                  This Week
+                <Label
+                  htmlFor="date-week"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("thisWeek")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="weekend" id="date-weekend" />
-                <Label htmlFor="date-weekend" className="text-sm text-gray-700 cursor-pointer">
-                  This Weekend
+                <Label
+                  htmlFor="date-weekend"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("thisWeekend")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="month" id="date-month" />
-                <Label htmlFor="date-month" className="text-sm text-gray-700 cursor-pointer">
-                  This Month
+                <Label
+                  htmlFor="date-month"
+                  className="text-sm text-gray-700 cursor-pointer"
+                >
+                  {t("thisMonth")}
                 </Label>
               </div>
             </div>
@@ -314,57 +346,68 @@ const FilterSidebar = ({
             className="w-full border-gray-300 hover:bg-gray-50"
           >
             <X className="w-4 h-4 mr-2" />
-            Clear All Filters
+            {t("clearAll")}
           </Button>
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
 export default function EventsPage() {
-  const { isSignedIn } = useUser()
-  const { data: currentUser } = useCurrentUser()
-  const [page, setPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [category, setCategory] = useState('')
-  const [sortBy, setSortBy] = useState('date')
-  const [priceFilter, setPriceFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState('all')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
-  
-  const debouncedSearch = useDebounce(searchTerm, 500)
+  const { isSignedIn } = useUser();
+  const { data: currentUser } = useCurrentUser();
+  const t = useTranslations("events");
+  const tNav = useTranslations("nav");
+  const params = useParams();
+  const locale = (params?.locale as Locale) || "am";
 
-  const { data: eventsData, isLoading, error } = useEvents({
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState("");
+  const [sortBy, setSortBy] = useState("date");
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const {
+    data: eventsData,
+    isLoading,
+    error,
+  } = useEvents({
     page,
-    limit: viewMode === 'grid' ? 12 : 10,
+    limit: viewMode === "grid" ? 12 : 10,
     search: debouncedSearch,
     category,
-  })
+  });
 
-  const { data: categories } = useCategories()
+  const { data: categories } = useCategories();
 
   const handleCategoryChange = (value: string) => {
-    setCategory(value === category ? '' : value)
-    setPage(1)
-  }
+    setCategory(value === category ? "" : value);
+    setPage(1);
+  };
 
   const clearFilters = useCallback(() => {
-    setSearchTerm('')
-    setCategory('')
-    setPriceFilter('all')
-    setDateFilter('all')
-    setPage(1)
-  }, [])
+    setSearchTerm("");
+    setCategory("");
+    setPriceFilter("all");
+    setDateFilter("all");
+    setPage(1);
+  }, []);
 
-  const hasActiveFilters = Boolean(category || priceFilter !== 'all' || dateFilter !== 'all' || debouncedSearch)
+  const hasActiveFilters = Boolean(
+    category || priceFilter !== "all" || dateFilter !== "all" || debouncedSearch
+  );
 
-  const totalEvents = eventsData?.pagination?.total ?? 0
-  const currentEvents = eventsData?.events?.length ?? 0
-  const totalPages = eventsData?.pagination?.totalPages ?? 0
-  
-  const canCreateEvent = isSignedIn && currentUser?.role !== 'ATTENDEE'
+  const totalEvents = eventsData?.pagination?.total ?? 0;
+  const currentEvents = eventsData?.events?.length ?? 0;
+  const totalPages = eventsData?.pagination?.totalPages ?? 0;
+
+  const canCreateEvent = isSignedIn && currentUser?.role !== "ATTENDEE";
 
   return (
     <>
@@ -376,18 +419,19 @@ export default function EventsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Discover Events
+                  {t("title")}
                 </h1>
-                <p className="text-gray-600">
-                  Find and join events that match your interests
-                </p>
+                <p className="text-gray-600">{t("subtitle")}</p>
               </div>
-              
+
               {canCreateEvent && (
-                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white hidden md:flex">
+                <Button
+                  asChild
+                  className="bg-blue-600 hover:bg-blue-700 text-white hidden md:flex"
+                >
                   <Link href="/events/create">
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Event
+                    {t("createEvent")}
                   </Link>
                 </Button>
               )}
@@ -404,11 +448,11 @@ export default function EventsPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Filter className="w-4 h-4" />
-                    Filters
+                    {t("filters.title")}
                   </h2>
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="text-xs">
-                      Active
+                      {t("filters.active")}
                     </Badge>
                   )}
                 </div>
@@ -435,10 +479,13 @@ export default function EventsPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg h-12 px-6"
               >
                 <Filter className="w-4 h-4 mr-2" />
-                Filters
+                {t("filters.title")}
                 {hasActiveFilters && (
-                  <Badge variant="secondary" className="ml-2 bg-white text-blue-600">
-                    Active
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 bg-white text-blue-600"
+                  >
+                    {t("filters.active")}
                   </Badge>
                 )}
               </Button>
@@ -446,14 +493,19 @@ export default function EventsPage() {
 
             {/* Mobile Filter Drawer */}
             {showMobileFilters && (
-              <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setShowMobileFilters(false)}>
-                <div 
+              <div
+                className="lg:hidden fixed inset-0 z-50 bg-black/50"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                <div
                   className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="font-semibold text-gray-900 text-lg">Filters</h2>
+                      <h2 className="font-semibold text-gray-900 text-lg">
+                        {t("filters.title")}
+                      </h2>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -490,11 +542,21 @@ export default function EventsPage() {
                     <div className="flex items-center gap-6">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        <span><span className="font-semibold text-gray-900">{totalEvents}</span> total</span>
+                        <span>
+                          <span className="font-semibold text-gray-900">
+                            {totalEvents}
+                          </span>{" "}
+                          {t("stats.total")}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Eye className="w-4 h-4 text-gray-400" />
-                        <span>Showing <span className="font-semibold text-gray-900">{currentEvents}</span></span>
+                        <span>
+                          {t("stats.showing")}{" "}
+                          <span className="font-semibold text-gray-900">
+                            {currentEvents}
+                          </span>
+                        </span>
                       </div>
                     </div>
 
@@ -505,10 +567,10 @@ export default function EventsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setViewMode('grid')}
+                          onClick={() => setViewMode("grid")}
                           className={cn(
                             "h-8 px-3",
-                            viewMode === 'grid' && "bg-white shadow-sm"
+                            viewMode === "grid" && "bg-white shadow-sm"
                           )}
                         >
                           <Grid3x3 className="w-4 h-4" />
@@ -516,10 +578,10 @@ export default function EventsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setViewMode('list')}
+                          onClick={() => setViewMode("list")}
                           className={cn(
                             "h-8 px-3",
-                            viewMode === 'list' && "bg-white shadow-sm"
+                            viewMode === "list" && "bg-white shadow-sm"
                           )}
                         >
                           <List className="w-4 h-4" />
@@ -533,11 +595,21 @@ export default function EventsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="date">By Date</SelectItem>
-                          <SelectItem value="popular">Popular</SelectItem>
-                          <SelectItem value="price-low">Price: Low</SelectItem>
-                          <SelectItem value="price-high">Price: High</SelectItem>
-                          <SelectItem value="newest">Newest</SelectItem>
+                          <SelectItem value="date">
+                            {t("sort.byDate")}
+                          </SelectItem>
+                          <SelectItem value="popular">
+                            {t("sort.popular")}
+                          </SelectItem>
+                          <SelectItem value="price-low">
+                            {t("sort.priceLow")}
+                          </SelectItem>
+                          <SelectItem value="price-high">
+                            {t("sort.priceHigh")}
+                          </SelectItem>
+                          <SelectItem value="newest">
+                            {t("sort.newest")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -553,10 +625,15 @@ export default function EventsPage() {
                   <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <X className="w-10 h-10 text-red-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Error Loading Events</h3>
-                  <p className="text-gray-600 mb-6">Something went wrong. Please try again.</p>
-                  <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Retry
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    {t("error.title")}
+                  </h3>
+                  <p className="text-gray-600 mb-6">{t("error.description")}</p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {t("error.retry")}
                   </Button>
                 </div>
               ) : !eventsData || eventsData.events.length === 0 ? (
@@ -564,24 +641,33 @@ export default function EventsPage() {
                   <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Calendar className="w-12 h-12 text-gray-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No events found</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    {t("empty.title")}
+                  </h3>
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    {hasActiveFilters 
-                      ? "We couldn't find any events matching your criteria. Try adjusting your filters."
-                      : "There are no events available at the moment. Check back later!"}
+                    {hasActiveFilters
+                      ? t("empty.description")
+                      : t("empty.descriptionNoFilters")}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     {hasActiveFilters && (
-                      <Button onClick={clearFilters} variant="outline" className="border-gray-300">
+                      <Button
+                        onClick={clearFilters}
+                        variant="outline"
+                        className="border-gray-300"
+                      >
                         <X className="w-4 h-4 mr-2" />
-                        Clear Filters
+                        {t("empty.clearFilters")}
                       </Button>
                     )}
                     {canCreateEvent && !hasActiveFilters && (
-                      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button
+                        asChild
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
                         <Link href="/events/create">
                           <Plus className="w-4 h-4 mr-2" />
-                          Create First Event
+                          {t("empty.createFirst")}
                         </Link>
                       </Button>
                     )}
@@ -589,11 +675,13 @@ export default function EventsPage() {
                 </div>
               ) : (
                 <>
-                  <div className={cn(
-                    viewMode === 'grid' 
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                      : "space-y-4"
-                  )}>
+                  <div
+                    className={cn(
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        : "space-y-4"
+                    )}
+                  >
                     {eventsData.events.map((event: EventWithRelations) => (
                       <EventCard key={event.id} event={event} />
                     ))}
@@ -603,86 +691,96 @@ export default function EventsPage() {
                   {totalPages > 1 && (
                     <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white border border-gray-200 rounded-lg">
                       <div className="text-sm text-gray-600 order-2 sm:order-1">
-                        Showing{' '}
+                        {t("pagination.showing")}{" "}
                         <span className="font-semibold text-gray-900">
                           {(page - 1) * 12 + 1}
-                        </span>
-                        {' '}to{' '}
+                        </span>{" "}
+                        {t("pagination.to")}{" "}
                         <span className="font-semibold text-gray-900">
                           {Math.min(page * 12, totalEvents)}
-                        </span>
-                        {' '}of{' '}
+                        </span>{" "}
+                        {t("pagination.of")}{" "}
                         <span className="font-semibold text-gray-900">
                           {totalEvents}
-                        </span>
-                        {' '}events
+                        </span>{" "}
+                        {t("pagination.events")}
                       </div>
-                      
+
                       <div className="flex items-center gap-2 order-1 sm:order-2">
                         <Button
                           variant="outline"
                           onClick={() => {
-                            setPage(page - 1)
-                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                            setPage(page - 1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                           disabled={page === 1}
                           className="border-gray-300"
                         >
                           <ChevronLeft className="w-4 h-4 mr-2" />
-                          Previous
+                          {t("pagination.previous")}
                         </Button>
 
                         {/* Page Numbers - Desktop */}
                         <div className="hidden sm:flex items-center gap-1">
-                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNum
-                            if (totalPages <= 5) {
-                              pageNum = i + 1
-                            } else if (page <= 3) {
-                              pageNum = i + 1
-                            } else if (page >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i
-                            } else {
-                              pageNum = page - 2 + i
-                            }
+                          {Array.from(
+                            { length: Math.min(5, totalPages) },
+                            (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (page <= 3) {
+                                pageNum = i + 1;
+                              } else if (page >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = page - 2 + i;
+                              }
 
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={page === pageNum ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => {
-                                  setPage(pageNum)
-                                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                                }}
-                                className={cn(
-                                  "w-10 h-10",
-                                  page === pageNum && "bg-blue-600 hover:bg-blue-700 text-white"
-                                )}
-                              >
-                                {pageNum}
-                              </Button>
-                            )
-                          })}
+                              return (
+                                <Button
+                                  key={pageNum}
+                                  variant={
+                                    page === pageNum ? "default" : "ghost"
+                                  }
+                                  size="sm"
+                                  onClick={() => {
+                                    setPage(pageNum);
+                                    window.scrollTo({
+                                      top: 0,
+                                      behavior: "smooth",
+                                    });
+                                  }}
+                                  className={cn(
+                                    "w-10 h-10",
+                                    page === pageNum &&
+                                      "bg-blue-600 hover:bg-blue-700 text-white"
+                                  )}
+                                >
+                                  {pageNum}
+                                </Button>
+                              );
+                            }
+                          )}
                         </div>
 
                         {/* Page Indicator - Mobile */}
                         <div className="flex sm:hidden items-center gap-2 px-4">
                           <span className="text-sm font-medium text-gray-700">
-                            Page {page} of {totalPages}
+                            {t("pagination.page")} {page} {t("pagination.of")}{" "}
+                            {totalPages}
                           </span>
                         </div>
 
                         <Button
                           variant="outline"
                           onClick={() => {
-                            setPage(page + 1)
-                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                            setPage(page + 1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                           disabled={page === totalPages}
                           className="border-gray-300"
                         >
-                          Next
+                          {t("pagination.next")}
                           <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                       </div>
@@ -696,5 +794,5 @@ export default function EventsPage() {
       </div>
       <Footer />
     </>
-  )
+  );
 }

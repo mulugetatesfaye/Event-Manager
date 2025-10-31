@@ -4,7 +4,39 @@
     "language": "Language",
     "english": "English",
     "amharic": "Amharic",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "viewAll": "View all",
+    "viewDetails": "View Details",
+    "view": "View",
+    "manage": "Manage",
+    "noData": "No data available",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "location": "Location",
+    "price": "Price",
+    "free": "Free",
+    "paid": "Paid",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "open": "Open",
+    "submit": "Submit",
+    "reset": "Reset"
   },
   "nav": {
     "browseEvents": "Browse Events",
@@ -13,6 +45,8 @@
     "myEvents": "My Events",
     "registrations": "Registrations",
     "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
     "getStarted": "Get Started",
     "createEvent": "Create Event",
     "manageUsers": "Manage Users",
@@ -24,25 +58,21 @@
     "settings": "Settings",
     "systemManagement": "System Management",
     "myRegistrations": "My Registrations",
-    "goToDashboard": "Go to Dashboard"
+    "goToDashboard": "Go to Dashboard",
+    "profile": "Profile",
+    "help": "Help",
+    "logout": "Logout"
   },
   "dashboard": {
-    "sidebar": {
+    "sections": {
       "overview": "Overview",
       "events": "Events",
       "adminTools": "Admin Tools",
       "account": "Account",
-      "dashboard": "Dashboard",
-      "myEvents": "My Events",
-      "registrations": "Registrations",
-      "analytics": "Analytics",
-      "checkIns": "Check-ins",
-      "users": "Users",
-      "categories": "Categories",
-      "settings": "Settings"
+      "systemManagement": "System Management"
     },
     "welcome": {
-      "title": "Welcome back",
+      "title": "Welcome back, {name}",
       "adminSubtitle": "System-wide overview and analytics",
       "organizerSubtitle": "Here's an overview of your events and performance",
       "attendeeSubtitle": "Here's what's happening with your events"
@@ -62,92 +92,172 @@
       "drafts": "drafts",
       "organizers": "organizers",
       "recent": "recent",
-      "fromTickets": "From ticket sales",
+      "fromTicketsSold": "From {count} tickets sold",
       "acrossAllEvents": "Across all your events",
+      "fromTicketSales": "From ticket sales",
       "totalCheckIns": "Total Check-ins",
-      "recentActivity": "Recent Activity",
       "browse": "Browse"
     },
     "nextEvent": {
       "title": "Your Next Event",
-      "subtitle": "Upcoming event details",
+      "subtitle": "Coming up soon",
+      "upcomingDetails": "Upcoming event details",
       "comingSoon": "Coming up soon",
-      "view": "View",
-      "viewDetails": "View Details",
       "manageEvent": "Manage Event"
     },
-    "sections": {
-      "recentEvents": {
-        "title": "Your Events",
-        "subtitle": "Recently created events",
-        "viewAll": "View all",
-        "noEvents": "No events yet",
-        "noEventsDesc": "Create your first event to get started",
-        "createFirst": "Create Event"
+    "recentEvents": {
+      "title": "Recent Events",
+      "subtitle": "Latest events in the system",
+      "yourEvents": "Your Events",
+      "recentlyCreated": "Recently created events",
+      "noEvents": "No events in the system",
+      "noEventsYet": "No events yet",
+      "createFirst": "Create your first event to get started"
+    },
+    "topPerforming": {
+      "title": "Top Performing Events",
+      "subtitle": "Events with highest fill rates",
+      "noPublished": "No published events",
+      "publishToSee": "Publish an event to see performance"
+    },
+    "upcomingRegistrations": {
+      "title": "Upcoming Events",
+      "subtitle": "Events you're attending",
+      "noUpcoming": "No upcoming events",
+      "browseToFind": "Browse events to find something interesting"
+    },
+    "performanceInsights": {
+      "title": "Performance Insights",
+      "subtitle": "Key metrics for your events",
+      "mostPopular": "Most Popular",
+      "highestRevenue": "Highest Revenue",
+      "comingNext": "Coming Next",
+      "ticketsSold": "tickets sold",
+      "earned": "earned",
+      "noPaidEvents": "No paid events",
+      "noPublishedEvents": "No published events",
+      "noUpcomingEvents": "No upcoming events"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "subtitle": "Common tasks and shortcuts",
+      "manageUsers": {
+        "title": "Manage Users",
+        "description": "View all users"
       },
-      "recentActivity": {
-        "title": "Recent Events",
-        "subtitle": "Latest events in the system",
-        "viewAll": "View all",
-        "noEvents": "No events in the system"
+      "categories": {
+        "title": "Categories",
+        "description": "Manage categories"
       },
-      "topPerforming": {
-        "title": "Top Performing",
-        "subtitle": "Events with highest fill rates",
-        "noPublished": "No published events",
-        "noPublishedDesc": "Events will appear here once published"
+      "createEvent": {
+        "title": "Create Event",
+        "description": "Start a new event"
       },
-      "upcomingRegistrations": {
-        "title": "Upcoming Events",
-        "subtitle": "Events you're attending",
-        "noUpcoming": "No upcoming events",
-        "noUpcomingDesc": "Browse events to find something interesting"
+      "myEvents": {
+        "title": "My Events",
+        "description": "Manage your events"
       },
-      "performanceInsights": {
-        "title": "Performance Insights",
-        "subtitle": "Key metrics for your events",
-        "mostPopular": "Most Popular",
-        "highestRevenue": "Highest Revenue",
-        "comingNext": "Coming Next",
-        "ticketsSold": "tickets sold",
-        "earned": "earned",
-        "noPublishedEvents": "No published events",
-        "noPaidEvents": "No paid events",
-        "noUpcomingEvents": "No upcoming events"
+      "analytics": {
+        "title": "Analytics",
+        "description": "View insights"
       },
-      "quickActions": {
-        "title": "Quick Actions",
-        "subtitle": "Common tasks and shortcuts",
-        "manageUsers": "Manage Users",
-        "viewAllUsers": "View all users",
-        "categories": "Categories",
-        "manageCategories": "Manage categories",
-        "createEvent": "Create Event",
-        "startNewEvent": "Start a new event",
-        "myEvents": "My Events",
-        "manageYourEvents": "Manage your events",
-        "analytics": "Analytics",
-        "viewInsights": "View insights",
-        "browseEvents": "Browse Events",
-        "findEvents": "Find events to join",
-        "settings": "Settings",
-        "manageAccount": "Manage account"
+      "browseEvents": {
+        "title": "Browse Events",
+        "description": "Find events to join"
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Manage account"
       }
     },
-    "buttons": {
-      "manageUsers": "Manage Users",
-      "browseEvents": "Browse Events",
-      "createEvent": "Create Event",
-      "viewAll": "View all",
-      "view": "View",
-      "manage": "Manage",
-      "viewDetails": "View Details"
+    "systemActivity": {
+      "avgFillRate": "Avg Fill Rate",
+      "checkIns": "Check-ins",
+      "totalCheckedIn": "Total attendees checked in",
+      "recentActivity": "Recent Activity",
+      "registrationsLast7Days": "Registrations (last 7 days)"
+    }
+  },
+  "events": {
+    "title": "Discover Events",
+    "subtitle": "Find and join events that match your interests",
+    "createEvent": "Create Event",
+    "filters": {
+      "title": "Filters",
+      "active": "Active",
+      "search": "Search Events",
+      "searchPlaceholder": "Search events...",
+      "categories": "Categories",
+      "allEvents": "All Events",
+      "price": "Price",
+      "priceAll": "All Events",
+      "priceFree": "Free Events",
+      "pricePaid": "Paid Events",
+      "popular": "Popular",
+      "date": "Date",
+      "dateAll": "Any Date",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "thisWeek": "This Week",
+      "thisWeekend": "This Weekend",
+      "thisMonth": "This Month",
+      "clearAll": "Clear All Filters"
     },
-    "status": {
-      "published": "PUBLISHED",
-      "draft": "DRAFT",
-      "completed": "COMPLETED",
-      "cancelled": "CANCELLED"
+    "stats": {
+      "total": "total",
+      "showing": "Showing",
+      "events": "events"
+    },
+    "sort": {
+      "byDate": "By Date",
+      "popular": "Popular",
+      "priceLow": "Price: Low",
+      "priceHigh": "Price: High",
+      "newest": "Newest"
+    },
+    "viewMode": {
+      "grid": "Grid",
+      "list": "List"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "events": "events",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    },
+    "empty": {
+      "title": "No events found",
+      "description": "We couldn't find any events matching your criteria. Try adjusting your filters.",
+      "descriptionNoFilters": "There are no events available at the moment. Check back later!",
+      "clearFilters": "Clear Filters",
+      "createFirst": "Create First Event"
+    },
+    "error": {
+      "title": "Error Loading Events",
+      "description": "Something went wrong. Please try again.",
+      "retry": "Retry"
+    },
+    "card": {
+      "status": {
+        "ended": "Ended",
+        "soldOut": "Sold Out",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "fillingFast": "Filling Fast",
+        "available": "Available"
+      },
+      "free": "FREE",
+      "from": "From",
+      "noImage": "No image",
+      "hostedBy": "Hosted by",
+      "ticketTypes": "Ticket Types",
+      "ticketType": "Ticket Type",
+      "left": "Left",
+      "booked": "Booked",
+      "fillingFastBadge": "Filling Fast"
     }
   },
   "home": {
