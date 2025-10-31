@@ -3,7 +3,13 @@
     "appName": "አዲስቫይብ",
     "language": "ቋንቋ",
     "english": "እንግሊዝኛ",
-    "amharic": "አማርኛ"
+    "amharic": "አማርኛ",
+    "loading": "በመጫን ላይ...",
+    "viewAll": "ሁሉንም ይመልከቱ",
+    "viewDetails": "ዝርዝሮችን ይመልከቱ",
+    "view": "ይመልከቱ",
+    "manage": "አስተዳድር",
+    "noData": "ምንም መረጃ የለም"
   },
   "nav": {
     "browseEvents": "ዝግጅቶችን ያስሱ",
@@ -24,6 +30,121 @@
     "systemManagement": "የስርዓት አስተዳደር",
     "myRegistrations": "የኔ ምዝገባዎች",
     "goToDashboard": "ወደ መቆጣጠሪያ ሰሌዳ ሂድ"
+  },
+  "dashboard": {
+    "sections": {
+      "overview": "አጠቃላይ እይታ",
+      "events": "ዝግጅቶች",
+      "adminTools": "የአስተዳደር መሳሪያዎች",
+      "account": "መለያ",
+      "systemManagement": "የስርዓት አስተዳደር"
+    },
+    "welcome": {
+      "title": "እንኳን በደህና መጡ፣ {name}",
+      "adminSubtitle": "የስርዓት አቀፍ አጠቃላይ እይታ እና ትንተና",
+      "organizerSubtitle": "የዝግጅቶችዎ እና የአፈጻጸም አጠቃላይ እይታ እዚህ አለ",
+      "attendeeSubtitle": "በዝግጅቶችዎ ላይ እየተከሰተ ያለው ነገር እዚህ አለ"
+    },
+    "stats": {
+      "totalEvents": "አጠቃላይ ዝግጅቶች",
+      "upcomingEvents": "የሚመጡ ዝግጅቶች",
+      "totalUsers": "አጠቃላይ ተጠቃሚዎች",
+      "totalRevenue": "አጠቃላይ ገቢ",
+      "checkInRate": "የምዝገባ ማረጋገጫ መጠን",
+      "ticketsSold": "የተሸጡ ትኬቶች",
+      "avgFillRate": "አማካይ የመሙላት መጠን",
+      "myRegistrations": "የኔ ምዝገባዎች",
+      "eventsAttended": "የተሳተፍኳቸው ዝግጅቶች",
+      "discoverMore": "ተጨማሪ ያግኙ",
+      "published": "የታተሙ",
+      "drafts": "ረቂቆች",
+      "organizers": "አዘጋጆች",
+      "recent": "የቅርብ ጊዜ",
+      "fromTicketsSold": "ከ{count} የተሸጡ ትኬቶች",
+      "acrossAllEvents": "በሁሉም ዝግጅቶችዎ",
+      "fromTicketSales": "ከትኬት ሽያጭ",
+      "totalCheckIns": "አጠቃላይ ምዝገባ ማረጋገጫዎች",
+      "browse": "አስስ"
+    },
+    "nextEvent": {
+      "title": "ቀጣይ ዝግጅትዎ",
+      "subtitle": "ቅርብ ጊዜ መምጣት",
+      "upcomingDetails": "የሚመጣ ዝግጅት ዝርዝሮች",
+      "comingSoon": "በቅርቡ እየመጣ ነው",
+      "manageEvent": "ዝግጅቱን አስተዳድር"
+    },
+    "recentEvents": {
+      "title": "የቅርብ ጊዜ ዝግጅቶች",
+      "subtitle": "በስርዓቱ ውስጥ የቅርብ ጊዜ ዝግጅቶች",
+      "yourEvents": "ዝግጅቶችዎ",
+      "recentlyCreated": "በቅርብ ጊዜ የተፈጠሩ ዝግጅቶች",
+      "noEvents": "ምንም ዝግጅቶች በስርዓቱ ውስጥ የሉም",
+      "noEventsYet": "እስካሁን ምንም ዝግጅቶች የሉም",
+      "createFirst": "የመጀመሪያ ዝግጅትዎን ለመጀመር ይፍጠሩ"
+    },
+    "topPerforming": {
+      "title": "ከፍተኛ አፈጻጸም ያላቸው ዝግጅቶች",
+      "subtitle": "ከፍተኛ የመሙላት መጠን ያላቸው ዝግጅቶች",
+      "noPublished": "ምንም የታተሙ ዝግጅቶች የሉም",
+      "publishToSee": "አፈጻጸምን ለማየት ዝግጅት ያትሙ"
+    },
+    "upcomingRegistrations": {
+      "title": "የሚመጡ ዝግጅቶች",
+      "subtitle": "እየተሳተፉባቸው ያሉ ዝግጅቶች",
+      "noUpcoming": "ምንም የሚመጡ ዝግጅቶች የሉም",
+      "browseToFind": "አስደሳች ነገር ለማግኘት ዝግጅቶችን ያስሱ"
+    },
+    "performanceInsights": {
+      "title": "የአፈጻጸም ግንዛቤዎች",
+      "subtitle": "ለዝግጅቶችዎ ቁልፍ መለኪያዎች",
+      "mostPopular": "በጣም ታዋቂ",
+      "highestRevenue": "ከፍተኛ ገቢ",
+      "comingNext": "ቀጥሎ እየመጣ",
+      "ticketsSold": "ትኬቶች ተሽጠዋል",
+      "earned": "ተገኝቷል",
+      "noPaidEvents": "ምንም የሚከፈልባቸው ዝግጅቶች የሉም",
+      "noPublishedEvents": "ምንም የታተሙ ዝግጅቶች የሉም",
+      "noUpcomingEvents": "ምንም የሚመጡ ዝግጅቶች የሉም"
+    },
+    "quickActions": {
+      "title": "ፈጣን ድርጊቶች",
+      "subtitle": "የተለመዱ ተግባራት እና አቋራጮች",
+      "manageUsers": {
+        "title": "ተጠቃሚዎችን አስተዳድር",
+        "description": "ሁሉንም ተጠቃሚዎች ይመልከቱ"
+      },
+      "categories": {
+        "title": "ምድቦች",
+        "description": "ምድቦችን አስተዳድር"
+      },
+      "createEvent": {
+        "title": "ዝግጅት ፍጠር",
+        "description": "አዲስ ዝግጅት ጀምር"
+      },
+      "myEvents": {
+        "title": "የኔ ዝግጅቶች",
+        "description": "ዝግጅቶችዎን አስተዳድር"
+      },
+      "analytics": {
+        "title": "ትንተና",
+        "description": "ግንዛቤዎችን ይመልከቱ"
+      },
+      "browseEvents": {
+        "title": "ዝግጅቶችን ያስሱ",
+        "description": "ለመቀላቀል ዝግጅቶችን ያግኙ"
+      },
+      "settings": {
+        "title": "ቅንብሮች",
+        "description": "መለያን አስተዳድር"
+      }
+    },
+    "systemActivity": {
+      "avgFillRate": "አማካይ የመሙላት መጠን",
+      "checkIns": "ምዝገባ ማረጋገጫዎች",
+      "totalCheckedIn": "አጠቃላይ ተሳታፊዎች ተመዝግበዋል",
+      "recentActivity": "የቅርብ ጊዜ እንቅስቃሴ",
+      "registrationsLast7Days": "ምዝገባዎች (ባለፉት 7 ቀናት)"
+    }
   },
   "home": {
     "hero": {

@@ -1,3 +1,4 @@
-export type Messages = typeof import('@/app/messages/en.json')
+// app/i18n/messages.ts
+export type Messages = typeof import("@/app/messages/en.json");
 
-export type MessageKeys = keyof Messages
+export type MessageKeys = keyof Messages;
