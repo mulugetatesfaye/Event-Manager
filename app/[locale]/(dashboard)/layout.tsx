@@ -194,21 +194,21 @@ export default function DashboardLayout({
     },
     {
       name: tNav("registrations"),
-      href: `/${locale}/dashboard/registrations`,
+      href: `/dashboard/registrations`,
       icon: FolderOpen,
       roles: ["ATTENDEE", "ORGANIZER", "ADMIN"],
       section: "events",
     },
     {
       name: tNav("analytics"),
-      href: `/${locale}/dashboard/analytics`,
+      href: `/dashboard/analytics`,
       icon: BarChart3,
       roles: ["ORGANIZER", "ADMIN"],
       section: "events",
     },
     {
       name: tNav("checkIns"),
-      href: `/${locale}/dashboard/check-ins`,
+      href: `/dashboard/check-ins`,
       icon: UserCheck,
       roles: ["ORGANIZER", "ADMIN"],
       section: "events",
@@ -217,14 +217,14 @@ export default function DashboardLayout({
     // Admin Section
     {
       name: tNav("manageUsers"),
-      href: `/${locale}/dashboard/users`,
+      href: `/dashboard/users`,
       icon: Users,
       roles: ["ADMIN"],
       section: "admin",
     },
     {
       name: tNav("categories"),
-      href: `/${locale}/dashboard/categories`,
+      href: `/dashboard/categories`,
       icon: Tag,
       roles: ["ADMIN"],
       section: "admin",
@@ -233,7 +233,7 @@ export default function DashboardLayout({
     // Settings Section
     {
       name: tNav("settings"),
-      href: `/${locale}/dashboard/settings`,
+      href: `/dashboard/settings`,
       icon: Settings,
       roles: ["ADMIN", "ORGANIZER", "ATTENDEE"],
       section: "settings",
