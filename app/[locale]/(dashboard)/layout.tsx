@@ -178,7 +178,7 @@ export default function DashboardLayout({
     // Overview Section
     {
       name: tNav("dashboard"),
-      href: `/${locale}/dashboard`,
+      href: `/dashboard`,
       icon: LayoutDashboard,
       roles: ["ADMIN", "ORGANIZER", "ATTENDEE"],
       section: "overview",
@@ -187,7 +187,7 @@ export default function DashboardLayout({
     // Events Section
     {
       name: tNav("myEvents"),
-      href: `/${locale}/dashboard/my-events`,
+      href: `/dashboard/my-events`,
       icon: Calendar,
       roles: ["ORGANIZER", "ADMIN"],
       section: "events",
