@@ -65,7 +65,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const EventsGridSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {[...Array(6)].map((_, i) => (
-      <Card key={i} className="overflow-hidden border-gray-200">
+      <Card key={i} className="overflow-hidden border-slate-200">
         <Skeleton className="h-48 w-full" />
         <div className="p-5 space-y-3">
           <Skeleton className="h-4 w-3/4" />
@@ -125,36 +125,36 @@ const FilterSidebar = ({
     <div className={cn("space-y-6", className)}>
       {/* Search */}
       <div>
-        <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+        <Label className="text-sm font-semibold text-slate-900 mb-3 block">
           {t("search")}
         </Label>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             type="text"
             placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 border-gray-300 focus:border-blue-500"
+            className="pl-10 h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500"
           />
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-slate-200" />
 
       {/* Categories */}
       <div>
         <button
           onClick={() => toggleSection("categories")}
-          className="flex items-center justify-between w-full mb-3"
+          className="flex items-center justify-between w-full mb-3 group"
         >
-          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+          <Label className="text-sm font-semibold text-slate-900 cursor-pointer">
             {t("categories")}
           </Label>
           {expandedSections.categories ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           )}
         </button>
 
@@ -163,10 +163,10 @@ const FilterSidebar = ({
             <button
               onClick={() => handleCategoryChange("")}
               className={cn(
-                "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                "w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 !category
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-orange-50 text-orange-700 shadow-sm"
+                  : "text-slate-700 hover:bg-slate-50"
               )}
             >
               {t("allEvents")}
@@ -176,21 +176,24 @@ const FilterSidebar = ({
                 key={cat.id}
                 onClick={() => handleCategoryChange(cat.id)}
                 className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between",
+                  "w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-between",
                   category === cat.id
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-orange-50 text-orange-700 shadow-sm"
+                    : "text-slate-700 hover:bg-slate-50"
                 )}
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: cat.color || "#6b7280" }}
+                    className="w-2.5 h-2.5 rounded-full shadow-sm"
+                    style={{ backgroundColor: cat.color || "#64748b" }}
                   />
                   <span>{cat.name}</span>
                 </div>
                 {cat._count?.events > 0 && (
-                  <Badge variant="secondary" className="text-xs h-5 px-2">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs h-5 px-2 bg-slate-100 text-slate-700 border-slate-200"
+                  >
                     {cat._count.events}
                   </Badge>
                 )}
@@ -200,53 +203,68 @@ const FilterSidebar = ({
         )}
       </div>
 
-      <Separator />
+      <Separator className="bg-slate-200" />
 
       {/* Price Filter */}
       <div>
         <button
           onClick={() => toggleSection("price")}
-          className="flex items-center justify-between w-full mb-3"
+          className="flex items-center justify-between w-full mb-3 group"
         >
-          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+          <Label className="text-sm font-semibold text-slate-900 cursor-pointer">
             {t("price")}
           </Label>
           {expandedSections.price ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           )}
         </button>
 
         {expandedSections.price && (
           <RadioGroup value={priceFilter} onValueChange={setPriceFilter}>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="price-all" />
+                <RadioGroupItem
+                  value="all"
+                  id="price-all"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="price-all"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("priceAll")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="free" id="price-free" />
+                <RadioGroupItem
+                  value="free"
+                  id="price-free"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="price-free"
-                  className="text-sm text-gray-700 cursor-pointer flex items-center gap-2"
+                  className="text-sm text-slate-700 cursor-pointer flex items-center gap-2 font-medium"
                 >
                   {t("priceFree")}
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200"
+                  >
                     {t("popular")}
                   </Badge>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="paid" id="price-paid" />
+                <RadioGroupItem
+                  value="paid"
+                  id="price-paid"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="price-paid"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("pricePaid")}
                 </Label>
@@ -256,77 +274,101 @@ const FilterSidebar = ({
         )}
       </div>
 
-      <Separator />
+      <Separator className="bg-slate-200" />
 
       {/* Date Filter */}
       <div>
         <button
           onClick={() => toggleSection("date")}
-          className="flex items-center justify-between w-full mb-3"
+          className="flex items-center justify-between w-full mb-3 group"
         >
-          <Label className="text-sm font-semibold text-gray-900 cursor-pointer">
+          <Label className="text-sm font-semibold text-slate-900 cursor-pointer">
             {t("date")}
           </Label>
           {expandedSections.date ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
           )}
         </button>
 
         {expandedSections.date && (
           <RadioGroup value={dateFilter} onValueChange={setDateFilter}>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="date-all" />
+                <RadioGroupItem
+                  value="all"
+                  id="date-all"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-all"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("dateAll")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="today" id="date-today" />
+                <RadioGroupItem
+                  value="today"
+                  id="date-today"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-today"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("today")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="tomorrow" id="date-tomorrow" />
+                <RadioGroupItem
+                  value="tomorrow"
+                  id="date-tomorrow"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-tomorrow"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("tomorrow")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="week" id="date-week" />
+                <RadioGroupItem
+                  value="week"
+                  id="date-week"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-week"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("thisWeek")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="weekend" id="date-weekend" />
+                <RadioGroupItem
+                  value="weekend"
+                  id="date-weekend"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-weekend"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("thisWeekend")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="month" id="date-month" />
+                <RadioGroupItem
+                  value="month"
+                  id="date-month"
+                  className="border-slate-300"
+                />
                 <Label
                   htmlFor="date-month"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-700 cursor-pointer font-medium"
                 >
                   {t("thisMonth")}
                 </Label>
@@ -339,11 +381,11 @@ const FilterSidebar = ({
       {/* Clear Filters */}
       {hasActiveFilters && (
         <>
-          <Separator />
+          <Separator className="bg-slate-200" />
           <Button
             variant="outline"
             onClick={clearFilters}
-            className="w-full border-gray-300 hover:bg-gray-50"
+            className="w-full border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
           >
             <X className="w-4 h-4 mr-2" />
             {t("clearAll")}
@@ -412,22 +454,22 @@ export default function EventsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">
                   {t("title")}
                 </h1>
-                <p className="text-gray-600">{t("subtitle")}</p>
+                <p className="text-slate-600">{t("subtitle")}</p>
               </div>
 
               {canCreateEvent && (
                 <Button
                   asChild
-                  className="bg-blue-600 hover:bg-blue-700 text-white hidden md:flex"
+                  className="bg-orange-600 hover:bg-orange-700 text-white hidden md:flex shadow-sm font-medium"
                 >
                   <Link href="/events/create">
                     <Plus className="w-4 h-4 mr-2" />
@@ -444,14 +486,17 @@ export default function EventsPage() {
           <div className="flex gap-8">
             {/* Left Sidebar - Desktop */}
             <aside className="hidden lg:block w-64 flex-shrink-0">
-              <div className="sticky top-24 bg-white rounded-lg border border-gray-200 p-6">
+              <div className="sticky top-24 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <Filter className="w-4 h-4" />
+                  <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-orange-600" />
                     {t("filters.title")}
                   </h2>
                   {hasActiveFilters && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-orange-100 text-orange-700 border-orange-200"
+                    >
                       {t("filters.active")}
                     </Badge>
                   )}
@@ -473,17 +518,17 @@ export default function EventsPage() {
             </aside>
 
             {/* Mobile Filter Button */}
-            <div className="lg:hidden fixed bottom-4 right-4 z-40">
+            <div className="lg:hidden fixed bottom-6 right-6 z-40">
               <Button
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg h-12 px-6"
+                className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg h-12 px-6 font-medium"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 {t("filters.title")}
                 {hasActiveFilters && (
                   <Badge
                     variant="secondary"
-                    className="ml-2 bg-white text-blue-600"
+                    className="ml-2 bg-white text-orange-600 border-orange-200"
                   >
                     {t("filters.active")}
                   </Badge>
@@ -494,22 +539,23 @@ export default function EventsPage() {
             {/* Mobile Filter Drawer */}
             {showMobileFilters && (
               <div
-                className="lg:hidden fixed inset-0 z-50 bg-black/50"
+                className="lg:hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
                 onClick={() => setShowMobileFilters(false)}
               >
                 <div
-                  className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto"
+                  className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="font-semibold text-gray-900 text-lg">
+                      <h2 className="font-semibold text-slate-900 text-lg">
                         {t("filters.title")}
                       </h2>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowMobileFilters(false)}
+                        className="hover:bg-slate-100"
                       >
                         <X className="w-5 h-5" />
                       </Button>
@@ -536,24 +582,24 @@ export default function EventsPage() {
             <div className="flex-1 min-w-0">
               {/* Stats & Controls Bar */}
               {!isLoading && eventsData && (
-                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 shadow-sm">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     {/* Stats */}
                     <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Calendar className="w-4 h-4 text-slate-400" />
                         <span>
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-slate-900">
                             {totalEvents}
                           </span>{" "}
                           {t("stats.total")}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Eye className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Eye className="w-4 h-4 text-slate-400" />
                         <span>
                           {t("stats.showing")}{" "}
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-slate-900">
                             {currentEvents}
                           </span>
                         </span>
@@ -563,14 +609,15 @@ export default function EventsPage() {
                     {/* View Controls */}
                     <div className="flex items-center gap-3">
                       {/* View Mode Toggle */}
-                      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                      <div className="flex items-center bg-slate-100 rounded-lg p-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setViewMode("grid")}
                           className={cn(
-                            "h-8 px-3",
-                            viewMode === "grid" && "bg-white shadow-sm"
+                            "h-8 px-3 hover:bg-white",
+                            viewMode === "grid" &&
+                              "bg-white shadow-sm text-slate-900"
                           )}
                         >
                           <Grid3x3 className="w-4 h-4" />
@@ -580,8 +627,9 @@ export default function EventsPage() {
                           size="sm"
                           onClick={() => setViewMode("list")}
                           className={cn(
-                            "h-8 px-3",
-                            viewMode === "list" && "bg-white shadow-sm"
+                            "h-8 px-3 hover:bg-white",
+                            viewMode === "list" &&
+                              "bg-white shadow-sm text-slate-900"
                           )}
                         >
                           <List className="w-4 h-4" />
@@ -590,8 +638,8 @@ export default function EventsPage() {
 
                       {/* Sort */}
                       <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="w-[140px] h-9 border-gray-300">
-                          <ArrowUpDown className="w-4 h-4 mr-2" />
+                        <SelectTrigger className="w-[140px] h-9 border-slate-300 focus:border-orange-500 focus:ring-orange-500">
+                          <ArrowUpDown className="w-4 h-4 mr-2 text-slate-500" />
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -621,30 +669,32 @@ export default function EventsPage() {
               {isLoading ? (
                 <EventsGridSkeleton />
               ) : error ? (
-                <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
+                <div className="text-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <X className="w-10 h-10 text-red-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">
                     {t("error.title")}
                   </h3>
-                  <p className="text-gray-600 mb-6">{t("error.description")}</p>
+                  <p className="text-slate-600 mb-6">
+                    {t("error.description")}
+                  </p>
                   <Button
                     onClick={() => window.location.reload()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-medium"
                   >
                     {t("error.retry")}
                   </Button>
                 </div>
               ) : !eventsData || eventsData.events.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
-                  <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-12 h-12 text-gray-400" />
+                <div className="text-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="h-24 w-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="w-12 h-12 text-slate-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">
                     {t("empty.title")}
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  <p className="text-slate-600 mb-6 max-w-md mx-auto">
                     {hasActiveFilters
                       ? t("empty.description")
                       : t("empty.descriptionNoFilters")}
@@ -654,7 +704,7 @@ export default function EventsPage() {
                       <Button
                         onClick={clearFilters}
                         variant="outline"
-                        className="border-gray-300"
+                        className="border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
                       >
                         <X className="w-4 h-4 mr-2" />
                         {t("empty.clearFilters")}
@@ -663,7 +713,7 @@ export default function EventsPage() {
                     {canCreateEvent && !hasActiveFilters && (
                       <Button
                         asChild
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-orange-600 hover:bg-orange-700 text-white font-medium"
                       >
                         <Link href="/events/create">
                           <Plus className="w-4 h-4 mr-2" />
@@ -689,18 +739,18 @@ export default function EventsPage() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white border border-gray-200 rounded-lg">
-                      <div className="text-sm text-gray-600 order-2 sm:order-1">
+                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+                      <div className="text-sm text-slate-600 order-2 sm:order-1">
                         {t("pagination.showing")}{" "}
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-slate-900">
                           {(page - 1) * 12 + 1}
                         </span>{" "}
                         {t("pagination.to")}{" "}
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-slate-900">
                           {Math.min(page * 12, totalEvents)}
                         </span>{" "}
                         {t("pagination.of")}{" "}
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-slate-900">
                           {totalEvents}
                         </span>{" "}
                         {t("pagination.events")}
@@ -714,7 +764,7 @@ export default function EventsPage() {
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                           disabled={page === 1}
-                          className="border-gray-300"
+                          className="border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
                         >
                           <ChevronLeft className="w-4 h-4 mr-2" />
                           {t("pagination.previous")}
@@ -752,8 +802,9 @@ export default function EventsPage() {
                                   }}
                                   className={cn(
                                     "w-10 h-10",
-                                    page === pageNum &&
-                                      "bg-blue-600 hover:bg-blue-700 text-white"
+                                    page === pageNum
+                                      ? "bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
+                                      : "text-slate-700 hover:bg-slate-50"
                                   )}
                                 >
                                   {pageNum}
@@ -765,7 +816,7 @@ export default function EventsPage() {
 
                         {/* Page Indicator - Mobile */}
                         <div className="flex sm:hidden items-center gap-2 px-4">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-slate-700">
                             {t("pagination.page")} {page} {t("pagination.of")}{" "}
                             {totalPages}
                           </span>
@@ -778,7 +829,7 @@ export default function EventsPage() {
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                           disabled={page === totalPages}
-                          className="border-gray-300"
+                          className="border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
                         >
                           {t("pagination.next")}
                           <ChevronRight className="w-4 h-4 ml-2" />

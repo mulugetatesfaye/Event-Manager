@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { useCurrentUser } from "@/hooks/use-user";
-import { useEvents } from "@/hooks";
+import { useEvents, useCategories } from "@/hooks";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -36,17 +36,34 @@ import {
   Headphones,
   Award,
   Building2,
-  Play,
   MousePointer,
   Layers,
   RefreshCw,
   ArrowDown,
+  ChevronLeft,
+  Tag,
+  Music,
+  Briefcase,
+  GraduationCap,
+  Heart,
+  Palette,
+  Coffee,
+  Code,
+  Dumbbell,
+  Camera,
+  Plane,
+  Gamepad2,
+  Baby,
+  Car,
+  Home,
+  Utensils,
 } from "lucide-react";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
-import { EventWithRelations } from "@/types";
+import { EventWithRelations, CategoryWithCount } from "@/types";
 import { Locale } from "@/app/i18n/config";
 import { cn } from "@/lib/utils";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ============================================================================
 // CONSTANTS & CONFIGURATION
@@ -79,6 +96,29 @@ const INTEGRATION_LOGOS = [
 
 const HERO_IMAGE_URL =
   "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2070&q=80";
+
+// Category icon mapping
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  music: Music,
+  business: Briefcase,
+  education: GraduationCap,
+  health: Heart,
+  art: Palette,
+  food: Utensils,
+  technology: Code,
+  sports: Dumbbell,
+  photography: Camera,
+  travel: Plane,
+  gaming: Gamepad2,
+  family: Baby,
+  automotive: Car,
+  "real estate": Home,
+  entertainment: Star,
+  networking: Users,
+  conference: Calendar,
+  workshop: GraduationCap,
+  default: Tag,
+};
 
 // ============================================================================
 // TYPES
@@ -121,7 +161,7 @@ interface HeroSectionProps {
 }
 
 // ============================================================================
-// SUBCOMPONENTS
+// UTILITY COMPONENTS
 // ============================================================================
 
 function StatCard({ value, labelKey, icon: Icon, delay = 0 }: StatCardProps) {
@@ -130,12 +170,14 @@ function StatCard({ value, labelKey, icon: Icon, delay = 0 }: StatCardProps) {
   return (
     <FadeIn direction="up" delay={delay}>
       <div className="group relative">
-        <div className="relative bg-white border border-gray-200 rounded-2xl p-6 text-center hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 mb-4 group-hover:bg-blue-100 transition-colors">
-            <Icon className="w-6 h-6 text-blue-600" />
+        <div className="relative bg-white border border-slate-200 rounded-2xl p-6 text-center hover:border-orange-300 hover:shadow-lg transition-all duration-300">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 mb-4 group-hover:bg-orange-100 transition-colors">
+            <Icon className="w-6 h-6 text-orange-600" />
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
-          <div className="text-sm text-gray-600 font-medium">{t(labelKey)}</div>
+          <div className="text-3xl font-bold text-slate-900 mb-1">{value}</div>
+          <div className="text-sm text-slate-600 font-medium">
+            {t(labelKey)}
+          </div>
         </div>
       </div>
     </FadeIn>
@@ -150,15 +192,15 @@ function FeatureCard({
 }: FeatureCardProps) {
   return (
     <FadeIn direction="up" delay={index * 100}>
-      <Card className="group relative overflow-hidden border-gray-200 bg-white hover:border-blue-300 hover:shadow-lg transition-all duration-300 h-full">
+      <Card className="group relative overflow-hidden border-slate-200 bg-white hover:border-orange-300 hover:shadow-lg transition-all duration-300 h-full">
         <CardContent className="p-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 shadow-lg shadow-blue-600/20 mb-6 group-hover:scale-105 transition-transform duration-300">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-600 shadow-lg shadow-orange-600/20 mb-6 group-hover:scale-105 transition-transform duration-300">
             <Icon className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-xl font-semibold text-slate-900 mb-3 group-hover:text-orange-600 transition-colors">
             {title}
           </h3>
-          <p className="text-gray-600 leading-relaxed">{description}</p>
+          <p className="text-slate-600 leading-relaxed">{description}</p>
         </CardContent>
       </Card>
     </FadeIn>
@@ -175,33 +217,30 @@ function TestimonialCard({
 }: TestimonialCardProps) {
   return (
     <FadeIn direction="up" delay={index * 100}>
-      <Card className="group relative overflow-hidden border-gray-200 bg-white hover:border-blue-300 hover:shadow-lg transition-all duration-300 h-full">
-        <div className="absolute top-0 left-0 w-full h-1 bg-blue-600" />
+      <Card className="group relative overflow-hidden border-slate-200 bg-white hover:border-orange-300 hover:shadow-lg transition-all duration-300 h-full">
+        <div className="absolute top-0 left-0 w-full h-1 bg-orange-600" />
         <CardContent className="p-8">
-          <div className="absolute top-6 right-6 text-6xl text-gray-100 font-serif leading-none select-none">
+          <div className="absolute top-6 right-6 text-6xl text-slate-100 font-serif leading-none select-none">
             &ldquo;
           </div>
 
           <div className="flex items-center gap-1 mb-4">
             {[...Array(rating)].map((_, i) => (
-              <Star
-                key={i}
-                className="w-5 h-5 fill-yellow-400 text-yellow-400"
-              />
+              <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
             ))}
           </div>
 
-          <p className="text-gray-700 mb-6 leading-relaxed relative z-10 text-lg">
+          <p className="text-slate-700 mb-6 leading-relaxed relative z-10 text-lg">
             &ldquo;{content}&rdquo;
           </p>
 
-          <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl shadow-lg">
+          <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+            <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl shadow-lg">
               {avatar}
             </div>
             <div>
-              <p className="font-semibold text-gray-900">{name}</p>
-              <p className="text-sm text-gray-500">{role}</p>
+              <p className="font-semibold text-slate-900">{name}</p>
+              <p className="text-sm text-slate-500">{role}</p>
             </div>
           </div>
         </CardContent>
@@ -210,38 +249,21 @@ function TestimonialCard({
   );
 }
 
-function EventCardSkeleton() {
-  return (
-    <Card className="overflow-hidden border-gray-200">
-      <Skeleton className="h-48 w-full rounded-none" />
-      <CardContent className="p-6 space-y-4">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-        <div className="flex gap-4 pt-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function TrustedBySection() {
   const t = useTranslations("home.trustedBy");
 
   return (
-    <section className="border-b border-gray-200 bg-gray-50">
+    <section className="border-b border-slate-200 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <FadeIn direction="up">
-          <p className="text-center text-sm font-medium text-gray-500 mb-8 uppercase tracking-wider">
+          <p className="text-center text-sm font-medium text-slate-500 mb-8 uppercase tracking-wider">
             {t("title")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
             {TRUSTED_COMPANIES.map((company) => (
               <div
                 key={company}
-                className="flex items-center gap-2 text-gray-400 opacity-60 hover:opacity-100 transition-opacity"
+                className="flex items-center gap-2 text-slate-400 opacity-60 hover:opacity-100 transition-opacity"
               >
                 <Building2 className="w-6 h-6" />
                 <span className="font-semibold text-lg">{company}</span>
@@ -258,18 +280,18 @@ function IntegrationsSection() {
   const t = useTranslations("home.integrations");
 
   return (
-    <section className="bg-gray-50 border-y border-gray-200">
+    <section className="bg-slate-50 border-y border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <FadeIn direction="up">
           <div className="text-center mb-12">
-            <Badge className="mb-4 bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+            <Badge className="mb-4 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
               <Layers className="w-3 h-3 mr-1.5" />
               {t("badge")}
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               {t("title")}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               {t("description")}
             </p>
           </div>
@@ -280,18 +302,231 @@ function IntegrationsSection() {
             {INTEGRATION_LOGOS.map((name) => (
               <div
                 key={name}
-                className="flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+                className="flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all"
               >
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <RefreshCw className="w-4 h-4 text-gray-600" />
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <RefreshCw className="w-4 h-4 text-slate-600" />
                 </div>
-                <span className="font-medium text-gray-700">{name}</span>
+                <span className="font-medium text-slate-700">{name}</span>
               </div>
             ))}
           </div>
         </FadeIn>
       </div>
     </section>
+  );
+}
+
+// ============================================================================
+// CATEGORIES CAROUSEL - Circular Icons with Labels Below
+// ============================================================================
+
+function CategoriesCarousel({ locale }: { locale: Locale }) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
+
+  const { data: categories, isLoading } = useCategories();
+
+  const checkScrollButtons = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScrollButtons();
+    window.addEventListener("resize", checkScrollButtons);
+    return () => window.removeEventListener("resize", checkScrollButtons);
+  }, [checkScrollButtons, categories]);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      const newScrollLeft =
+        direction === "left"
+          ? scrollContainerRef.current.scrollLeft - scrollAmount
+          : scrollContainerRef.current.scrollLeft + scrollAmount;
+
+      scrollContainerRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const getCategoryIcon = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    for (const key in CATEGORY_ICONS) {
+      if (name.includes(key)) {
+        return CATEGORY_ICONS[key];
+      }
+    }
+    return CATEGORY_ICONS.default;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-8 overflow-hidden py-6 px-6 justify-center">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex-none flex flex-col items-center gap-3">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-14" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="relative group"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Gradient Fade - Left */}
+      <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+
+      {/* Gradient Fade - Right */}
+      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
+
+      {/* Left Arrow */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll("left")}
+          className={cn(
+            "absolute left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-slate-200 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:bg-slate-50 hover:scale-110 hover:shadow-xl hover:border-slate-300",
+            isHovering ? "opacity-100" : "opacity-0 md:opacity-100"
+          )}
+          aria-label="Scroll left"
+        >
+          <ChevronLeft className="w-5 h-5 text-slate-600" />
+        </button>
+      )}
+
+      {/* Right Arrow */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll("right")}
+          className={cn(
+            "absolute right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-slate-200 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:bg-slate-50 hover:scale-110 hover:shadow-xl hover:border-slate-300",
+            isHovering ? "opacity-100" : "opacity-0 md:opacity-100"
+          )}
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-5 h-5 text-slate-600" />
+        </button>
+      )}
+
+      {/* Categories Container */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={checkScrollButtons}
+        className="flex gap-6 sm:gap-8 overflow-x-auto scrollbar-hide scroll-smooth py-6 px-6"
+      >
+        {/* All Categories */}
+        <Link
+          href={`/${locale}/events`}
+          className="flex-none group/item"
+          style={{ animation: `fadeInScale 0.5s ease-out both` }}
+        >
+          <div className="flex flex-col items-center w-24 sm:w-28">
+            {/* Circular Icon Container */}
+            <div className="relative mb-3">
+              {/* Main Circle */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 flex items-center justify-center shadow-lg shadow-orange-500/25 transition-all duration-300 group-hover/item:scale-110 group-hover/item:shadow-xl group-hover/item:shadow-orange-500/35">
+                <Tag className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              </div>
+
+              {/* Animated ring on hover */}
+              <div className="absolute -inset-1 rounded-full border-2 border-orange-400/50 opacity-0 group-hover/item:opacity-100 group-hover/item:scale-105 transition-all duration-300" />
+            </div>
+
+            {/* Label - Always Visible */}
+            <div className="text-center w-full">
+              <p className="font-semibold text-slate-900 text-sm leading-tight">
+                All Events
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Browse all</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Category Items */}
+        {categories.map((category: CategoryWithCount, index: number) => {
+          const IconComponent = getCategoryIcon(category.name);
+          const eventCount = category._count?.events || 0;
+          const categoryColor = category.color || "#ea580c";
+
+          return (
+            <Link
+              key={category.id}
+              href={`/${locale}/events?category=${category.id}`}
+              className="flex-none group/item"
+              style={{
+                animation: `fadeInScale 0.5s ease-out ${
+                  (index + 1) * 0.06
+                }s both`,
+              }}
+            >
+              <div className="flex flex-col items-center w-24 sm:w-28">
+                {/* Circular Icon Container */}
+                <div className="relative mb-3">
+                  {/* Main Circle */}
+                  <div
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 group-hover/item:scale-110 group-hover/item:shadow-xl"
+                    style={{
+                      backgroundColor: categoryColor,
+                      boxShadow: `0 10px 25px -5px ${categoryColor}40`,
+                    }}
+                  >
+                    <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                  </div>
+
+                  {/* Animated ring on hover */}
+                  <div
+                    className="absolute -inset-1 rounded-full border-2 opacity-0 group-hover/item:opacity-100 group-hover/item:scale-105 transition-all duration-300"
+                    style={{ borderColor: `${categoryColor}60` }}
+                  />
+
+                  {/* Event count badge */}
+                  {eventCount > 0 && (
+                    <div className="absolute -top-0.5 -right-0.5 min-w-[22px] h-[22px] px-1.5 bg-white rounded-full shadow-md flex items-center justify-center border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-700 leading-none">
+                        {eventCount > 99 ? "99+" : eventCount}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Label - Always Visible */}
+                <div className="text-center w-full">
+                  <p className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">
+                    {category.name}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {eventCount === 0
+                      ? "No events"
+                      : eventCount === 1
+                      ? "1 event"
+                      : `${eventCount} events`}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -326,13 +561,13 @@ function HeroSection({
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-slate-900/85" />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-transparent to-slate-900/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-transparent to-slate-900/90" />
       </div>
 
       {/* Subtle decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
@@ -342,7 +577,7 @@ function HeroSection({
           <FadeIn direction="down" delay={100}>
             <div className="inline-flex items-center gap-3 mb-8 flex-wrap justify-center">
               <Badge className="bg-white/10 border-white/20 text-white px-4 py-2 hover:bg-white/15">
-                <Sparkles className="w-4 h-4 mr-2 text-blue-400" />
+                <Sparkles className="w-4 h-4 mr-2 text-orange-400" />
                 {t("hero.trustBadge")}
               </Badge>
               <Badge className="bg-emerald-500/20 border-emerald-500/30 text-emerald-400 px-3 py-2 hover:bg-emerald-500/25">
@@ -360,7 +595,10 @@ function HeroSection({
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 text-white">
               {t("hero.title")}{" "}
               <span className="inline-block">
-                <AnimatedTextLoop words={heroWords} className="text-blue-400" />
+                <AnimatedTextLoop
+                  words={heroWords}
+                  className="text-orange-400"
+                />
               </span>
               <br />
               {t("hero.subtitle")}
@@ -369,7 +607,7 @@ function HeroSection({
 
           {/* Description */}
           <FadeIn direction="up" delay={300}>
-            <p className="text-lg sm:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
               {t("hero.description")}
             </p>
           </FadeIn>
@@ -380,7 +618,7 @@ function HeroSection({
               <Button
                 asChild
                 size="lg"
-                className="h-14 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all duration-300"
+                className="h-14 px-8 text-base font-semibold bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/25 transition-all duration-300"
               >
                 <Link href={primaryCTA.href}>
                   {primaryCTA.text}
@@ -402,7 +640,7 @@ function HeroSection({
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 <span>{t("hero.freeToStart")}</span>
@@ -418,105 +656,12 @@ function HeroSection({
             </div>
           </FadeIn>
         </div>
-
-        {/* Dashboard Preview */}
-        <FadeIn direction="up" delay={500}>
-          <div className="mt-16 lg:mt-20 relative max-w-5xl mx-auto">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-slate-800">
-              {/* Browser Chrome */}
-              <div className="flex items-center gap-2 px-4 py-3 bg-slate-900 border-b border-white/10">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="px-4 py-1.5 bg-slate-800 rounded-md text-xs text-gray-400 font-mono flex items-center gap-2 border border-white/5">
-                    <Lock className="w-3 h-3 text-emerald-500" />
-                    addisvibe.com/dashboard
-                  </div>
-                </div>
-                <div className="w-[52px]" />
-              </div>
-
-              {/* Preview Content */}
-              <div className="aspect-[16/9] bg-slate-800 flex items-center justify-center relative">
-                {/* Grid Pattern */}
-                <div
-                  className="absolute inset-0 opacity-5"
-                  style={{
-                    backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-                    backgroundSize: "32px 32px",
-                  }}
-                />
-
-                {/* Mock UI - Header */}
-                <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600" />
-                    <div className="w-24 h-3 bg-white/10 rounded" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 h-8 bg-white/5 rounded-lg border border-white/10" />
-                    <div className="w-8 h-8 bg-white/5 rounded-full border border-white/10" />
-                  </div>
-                </div>
-
-                {/* Mock UI - Sidebar */}
-                <div className="absolute left-6 top-20 bottom-6 w-48 bg-white/5 rounded-xl border border-white/10 p-4 hidden md:block">
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-4 h-4 rounded bg-white/10" />
-                        <div
-                          className="h-2 bg-white/10 rounded"
-                          style={{ width: `${50 + i * 10}%` }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mock UI - Main Content */}
-                <div className="absolute md:left-60 left-6 right-6 top-20 bottom-6 flex flex-col gap-4">
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="flex-1 h-24 bg-white/5 rounded-xl border border-white/10 p-4 hidden sm:block"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-blue-600/20 mb-2" />
-                        <div className="w-16 h-2 bg-white/10 rounded" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex-1 bg-white/5 rounded-xl border border-white/10" />
-                </div>
-
-                {/* Play Button */}
-                <div className="relative z-10 text-center">
-                  <button
-                    className="group w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center shadow-xl shadow-blue-600/30 transition-all duration-300 hover:scale-105"
-                    aria-label="Watch demo video"
-                  >
-                    <Play className="w-8 h-8 text-white ml-1 group-hover:scale-110 transition-transform" />
-                  </button>
-                  <p className="mt-4 text-gray-300 font-medium">
-                    {t("hero.watchDemo")}
-                  </p>
-                  <p className="text-gray-500 text-sm mt-1">2 min overview</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </FadeIn>
       </div>
 
       {/* Scroll Indicator */}
       <button
         onClick={scrollToContent}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden lg:flex flex-col items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden lg:flex flex-col items-center gap-2 text-slate-400 hover:text-white transition-colors cursor-pointer"
         aria-label="Scroll to content"
       >
         <span className="text-xs uppercase tracking-widest font-medium">
@@ -541,7 +686,7 @@ export default function HomePage() {
 
   const { data: eventsData, isLoading: eventsLoading } = useEvents({
     page: 1,
-    limit: 4,
+    limit: 8,
     search: "",
     category: "",
   });
@@ -645,7 +790,9 @@ export default function HomePage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-white">
+        {/* ============================================================ */}
         {/* HERO SECTION */}
+        {/* ============================================================ */}
         <HeroSection
           t={t}
           heroWords={heroWords}
@@ -653,9 +800,138 @@ export default function HomePage() {
           secondaryCTA={secondaryCTA}
         />
 
+        {/* ============================================================ */}
+        {/* CATEGORIES SECTION */}
+        {/* ============================================================ */}
+        <section className="bg-white border-b border-slate-200 py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FadeIn direction="up">
+              <div className="text-center mb-10">
+                <Badge className="mb-4 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
+                  <Tag className="w-3 h-3 mr-1.5" />
+                  Browse by Category
+                </Badge>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3">
+                  Explore Event Categories
+                </h2>
+                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                  Find events that match your interests across various
+                  categories
+                </p>
+              </div>
+            </FadeIn>
+
+            <FadeIn direction="up" delay={200}>
+              <CategoriesCarousel locale={locale} />
+            </FadeIn>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* UPCOMING EVENTS SECTION */}
+        {/* ============================================================ */}
+        <section className="bg-white py-20 lg:py-24 border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FadeIn direction="up">
+              <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <Badge className="mb-4 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">
+                    <Calendar className="w-3 h-3 mr-1.5" />
+                    Upcoming Events
+                  </Badge>
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3">
+                    Discover Amazing Events
+                  </h2>
+                  <p className="text-lg text-slate-600 max-w-2xl">
+                    Join thousands of attendees at our curated events happening
+                    near you
+                  </p>
+                </div>
+
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-600/20"
+                >
+                  <Link href={`/${locale}/events`}>
+                    View All Events
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              </div>
+            </FadeIn>
+
+            {/* Events Grid */}
+            {eventsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i}>
+                    <Card className="overflow-hidden border-slate-200">
+                      <Skeleton className="h-48 w-full" />
+                      <CardContent className="p-5 space-y-3">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            ) : eventsData && eventsData.events.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {eventsData.events.map(
+                  (event: EventWithRelations, index: number) => (
+                    <FadeIn key={event.id} direction="up" delay={index * 100}>
+                      <EventCard event={event} />
+                    </FadeIn>
+                  )
+                )}
+              </div>
+            ) : (
+              <FadeIn direction="up">
+                <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    No upcoming events
+                  </h3>
+                  <p className="text-slate-600 mb-6">
+                    Be the first to create an event and connect with your
+                    community
+                  </p>
+                  <Button asChild className="bg-orange-600 hover:bg-orange-700">
+                    <Link href={`/${locale}/events/create`}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create First Event
+                    </Link>
+                  </Button>
+                </div>
+              </FadeIn>
+            )}
+          </div>
+        </section>
+
+        {/* ============================================================ */}
         {/* STATS SECTION */}
-        <section className="bg-white border-b border-gray-200">
+        {/* ============================================================ */}
+        <section className="bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+            <FadeIn direction="up">
+              <div className="text-center mb-12">
+                <Badge className="mb-4 bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+                  <BarChart className="w-3 h-3 mr-1.5" />
+                  Platform Statistics
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
+                  Trusted by Thousands
+                </h2>
+                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                  Join our growing community of event organizers and attendees
+                </p>
+              </div>
+            </FadeIn>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {STATS_DATA.map((stat, index) => (
                 <StatCard
@@ -670,140 +946,26 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* TRUSTED BY SECTION */}
+        {/* ============================================================ */}
         <TrustedBySection />
 
-        {/* LATEST EVENTS SECTION */}
-        <section className="bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
-            <FadeIn direction="up">
-              <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <Badge className="mb-4 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
-                    <Calendar className="w-3 h-3 mr-1.5" />
-                    {t("upcomingEvents.badge")}
-                  </Badge>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                    {t("upcomingEvents.title")}
-                  </h2>
-                  <p className="text-lg text-gray-600">
-                    {t("upcomingEvents.description")}
-                  </p>
-                </div>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all"
-                >
-                  <Link href={`/${locale}/events`}>
-                    {t("upcomingEvents.viewAll")}
-                    <ChevronRight className="ml-2 w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
-            </FadeIn>
-
-            {eventsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <EventCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : eventsData && eventsData.events.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {eventsData.events.map(
-                    (event: EventWithRelations, index: number) => (
-                      <FadeIn key={event.id} direction="up" delay={index * 100}>
-                        <EventCard event={event} />
-                      </FadeIn>
-                    )
-                  )}
-                </div>
-
-                <FadeIn direction="up" delay={500}>
-                  <div className="mt-12 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-                    <div className="flex flex-wrap items-center justify-center gap-8 text-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <span className="text-gray-600">
-                          {t("upcomingEvents.stats.multipleCities")}
-                        </span>
-                      </div>
-                      <div className="w-px h-8 bg-gray-300 hidden md:block" />
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-green-600" />
-                        </div>
-                        <span className="text-gray-600">
-                          <span className="font-bold text-gray-900">1000+</span>{" "}
-                          {t("upcomingEvents.stats.attendees")}
-                        </span>
-                      </div>
-                      <div className="w-px h-8 bg-gray-300 hidden md:block" />
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <span className="text-gray-600">
-                          {t("upcomingEvents.stats.newEvents")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </FadeIn>
-              </>
-            ) : (
-              <FadeIn direction="up">
-                <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-200">
-                  <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-10 h-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {t("upcomingEvents.noEvents.title")}
-                  </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    {t("upcomingEvents.noEvents.description")}
-                  </p>
-                  <Button
-                    asChild
-                    className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20"
-                  >
-                    <Link
-                      href={
-                        isSignedIn
-                          ? `/${locale}/events/create`
-                          : `/${locale}/sign-up`
-                      }
-                    >
-                      {isSignedIn
-                        ? t("upcomingEvents.noEvents.createFirst")
-                        : t("buttons.getStartedFree")}
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </FadeIn>
-            )}
-          </div>
-        </section>
-
+        {/* ============================================================ */}
         {/* FEATURES SECTION */}
-        <section className="bg-gray-50 border-y border-gray-200">
+        {/* ============================================================ */}
+        <section className="bg-slate-50 border-y border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
             <FadeIn direction="up">
               <div className="text-center mb-16">
-                <Badge className="mb-4 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">
+                <Badge className="mb-4 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
                   <Zap className="w-3 h-3 mr-1.5" />
                   {t("features.badge")}
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                   {t("features.title")}
                 </h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                   {t("features.description")}
                 </p>
               </div>
@@ -823,7 +985,9 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* HOW IT WORKS SECTION */}
+        {/* ============================================================ */}
         <section className="bg-slate-900 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
             <FadeIn direction="up">
@@ -835,14 +999,13 @@ export default function HomePage() {
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
                   {t("howItWorks.title")}
                 </h2>
-                <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
                   {t("howItWorks.description")}
                 </p>
               </div>
             </FadeIn>
 
             <div className="relative">
-              {/* Connection Line */}
               <div className="hidden lg:block absolute top-10 left-[16.67%] right-[16.67%] h-px bg-white/20" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-8">
@@ -868,22 +1031,20 @@ export default function HomePage() {
                 ].map((item, index) => (
                   <FadeIn key={index} direction="up" delay={index * 150}>
                     <div className="relative text-center">
-                      {/* Step Number */}
                       <div className="relative inline-block mb-6">
-                        <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-xl">
+                        <div className="w-20 h-20 bg-orange-600 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-xl">
                           {item.step}
                         </div>
                       </div>
 
-                      {/* Icon */}
                       <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4 border border-white/10">
-                        <item.icon className="w-6 h-6 text-blue-400" />
+                        <item.icon className="w-6 h-6 text-orange-400" />
                       </div>
 
                       <h3 className="text-xl font-semibold mb-3">
                         {item.title}
                       </h3>
-                      <p className="text-gray-400 leading-relaxed">
+                      <p className="text-slate-400 leading-relaxed">
                         {item.description}
                       </p>
                     </div>
@@ -894,20 +1055,22 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* BENEFITS SECTION */}
+        {/* ============================================================ */}
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <FadeIn direction="left">
                 <div>
-                  <Badge className="mb-4 bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                  <Badge className="mb-4 bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
                     <Award className="w-3 h-3 mr-1.5" />
                     {t("benefits.badge")}
                   </Badge>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                     {t("benefits.title")}
                   </h2>
-                  <p className="text-lg text-gray-600 mb-8">
+                  <p className="text-lg text-slate-600 mb-8">
                     {t("benefits.description")}
                   </p>
 
@@ -917,19 +1080,19 @@ export default function HomePage() {
                         title: t("benefits.easyToUse.title"),
                         description: t("benefits.easyToUse.description"),
                         icon: MousePointer,
-                        color: "blue" as const,
+                        color: "orange" as const,
                       },
                       {
                         title: t("benefits.realTime.title"),
                         description: t("benefits.realTime.description"),
                         icon: Zap,
-                        color: "yellow" as const,
+                        color: "amber" as const,
                       },
                       {
                         title: t("benefits.multiRole.title"),
                         description: t("benefits.multiRole.description"),
                         icon: Users,
-                        color: "purple" as const,
+                        color: "blue" as const,
                       },
                       {
                         title: t("benefits.comprehensiveAnalytics.title"),
@@ -937,38 +1100,38 @@ export default function HomePage() {
                           "benefits.comprehensiveAnalytics.description"
                         ),
                         icon: BarChart,
-                        color: "green" as const,
+                        color: "emerald" as const,
                       },
                     ].map((benefit, index) => (
                       <div
                         key={index}
-                        className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors group"
+                        className="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors group"
                       >
                         <div
                           className={cn(
                             "flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105",
                             {
+                              "bg-orange-100": benefit.color === "orange",
+                              "bg-amber-100": benefit.color === "amber",
                               "bg-blue-100": benefit.color === "blue",
-                              "bg-yellow-100": benefit.color === "yellow",
-                              "bg-purple-100": benefit.color === "purple",
-                              "bg-green-100": benefit.color === "green",
+                              "bg-emerald-100": benefit.color === "emerald",
                             }
                           )}
                         >
                           <benefit.icon
                             className={cn("w-6 h-6", {
+                              "text-orange-600": benefit.color === "orange",
+                              "text-amber-600": benefit.color === "amber",
                               "text-blue-600": benefit.color === "blue",
-                              "text-yellow-600": benefit.color === "yellow",
-                              "text-purple-600": benefit.color === "purple",
-                              "text-green-600": benefit.color === "green",
+                              "text-emerald-600": benefit.color === "emerald",
                             })}
                           />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">
+                          <h3 className="font-semibold text-slate-900 mb-1">
                             {benefit.title}
                           </h3>
-                          <p className="text-gray-600 text-sm leading-relaxed">
+                          <p className="text-slate-600 text-sm leading-relaxed">
                             {benefit.description}
                           </p>
                         </div>
@@ -985,30 +1148,30 @@ export default function HomePage() {
                       icon: Clock,
                       title: t("benefits.saveTime.title"),
                       description: t("benefits.saveTime.description"),
-                      bgColor: "bg-blue-600",
+                      bgColor: "bg-orange-600",
                     },
                     {
                       icon: Zap,
                       title: t("benefits.fastSetup.title"),
                       description: t("benefits.fastSetup.description"),
-                      bgColor: "bg-purple-600",
+                      bgColor: "bg-amber-600",
                     },
                     {
                       icon: Shield,
                       title: t("benefits.secure.title"),
                       description: t("benefits.secure.description"),
-                      bgColor: "bg-green-600",
+                      bgColor: "bg-emerald-600",
                     },
                     {
                       icon: BarChart,
                       title: t("benefits.analyticsCard.title"),
                       description: t("benefits.analyticsCard.description"),
-                      bgColor: "bg-orange-600",
+                      bgColor: "bg-blue-600",
                     },
                   ].map((benefit, index) => (
                     <Card
                       key={index}
-                      className="group border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300"
+                      className="group border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all duration-300"
                     >
                       <CardContent className="p-6 text-center">
                         <div
@@ -1019,10 +1182,10 @@ export default function HomePage() {
                         >
                           <benefit.icon className="w-7 h-7 text-white" />
                         </div>
-                        <h3 className="font-semibold text-gray-900 mb-2">
+                        <h3 className="font-semibold text-slate-900 mb-2">
                           {benefit.title}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-600">
                           {benefit.description}
                         </p>
                       </CardContent>
@@ -1034,22 +1197,26 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* INTEGRATIONS SECTION */}
+        {/* ============================================================ */}
         <IntegrationsSection />
 
+        {/* ============================================================ */}
         {/* TESTIMONIALS SECTION */}
+        {/* ============================================================ */}
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
             <FadeIn direction="up">
               <div className="text-center mb-16">
-                <Badge className="mb-4 bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+                <Badge className="mb-4 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
                   <Star className="w-3 h-3 mr-1.5" />
                   {t("testimonials.badge")}
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                   {t("testimonials.title")}
                 </h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                   {t("testimonials.description")}
                 </p>
               </div>
@@ -1063,8 +1230,10 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* CTA SECTION */}
-        <section className="bg-blue-600">
+        {/* ============================================================ */}
+        <section className="bg-orange-600">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
             <FadeIn direction="up">
               <div className="text-center max-w-3xl mx-auto">
@@ -1077,7 +1246,7 @@ export default function HomePage() {
                   {t("cta.title")}
                 </h2>
 
-                <p className="text-xl text-blue-100 mb-10 leading-relaxed">
+                <p className="text-xl text-orange-100 mb-10 leading-relaxed">
                   {t("cta.description")}
                 </p>
 
@@ -1085,7 +1254,7 @@ export default function HomePage() {
                   <Button
                     asChild
                     size="lg"
-                    className="h-14 px-8 text-base font-semibold bg-white text-blue-600 hover:bg-blue-50 shadow-xl transition-all duration-300"
+                    className="h-14 px-8 text-base font-semibold bg-white text-orange-600 hover:bg-orange-50 shadow-xl transition-all duration-300"
                   >
                     <Link
                       href={
@@ -1109,7 +1278,7 @@ export default function HomePage() {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="h-14 px-8 text-base font-semibold border-2 border-white/30 text-white bg-transparent hover:bg-white hover:text-blue-600 transition-all duration-300"
+                    className="h-14 px-8 text-base font-semibold border-2 border-white/30 text-white bg-transparent hover:bg-white hover:text-orange-600 transition-all duration-300"
                   >
                     <Link
                       href={
@@ -1126,7 +1295,7 @@ export default function HomePage() {
                   </Button>
                 </div>
 
-                <p className="text-sm text-blue-200">
+                <p className="text-sm text-orange-200">
                   {isSignedIn ? t("cta.startCreating") : t("cta.disclaimer")}
                 </p>
               </div>
@@ -1134,27 +1303,29 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ============================================================ */}
         {/* SECURITY BANNER */}
-        <section className="bg-gray-50 border-t border-gray-200">
+        {/* ============================================================ */}
+        <section className="bg-slate-50 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-sm text-slate-600">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-gray-500" />
+                <Lock className="w-4 h-4 text-slate-500" />
                 <span>{t("security.sslSecured")}</span>
               </div>
-              <div className="w-px h-4 bg-gray-300 hidden sm:block" />
+              <div className="w-px h-4 bg-slate-300 hidden sm:block" />
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-gray-500" />
+                <Shield className="w-4 h-4 text-slate-500" />
                 <span>{t("security.gdprCompliant")}</span>
               </div>
-              <div className="w-px h-4 bg-gray-300 hidden sm:block" />
+              <div className="w-px h-4 bg-slate-300 hidden sm:block" />
               <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-gray-500" />
+                <Award className="w-4 h-4 text-slate-500" />
                 <span>{t("security.soc2Certified")}</span>
               </div>
-              <div className="w-px h-4 bg-gray-300 hidden sm:block" />
+              <div className="w-px h-4 bg-slate-300 hidden sm:block" />
               <div className="flex items-center gap-2">
-                <Headphones className="w-4 h-4 text-gray-500" />
+                <Headphones className="w-4 h-4 text-slate-500" />
                 <span>{t("security.support247")}</span>
               </div>
             </div>

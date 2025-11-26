@@ -59,7 +59,7 @@ export default function Navbar() {
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 0);
+      setScrolled(window.scrollY > 10);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -98,10 +98,10 @@ export default function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 bg-white transition-shadow duration-200",
+          "fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300",
           scrolled
-            ? "shadow-sm border-b border-gray-200"
-            : "border-b border-gray-200"
+            ? "shadow-md shadow-slate-200/60 border-b border-slate-200"
+            : "border-b border-slate-100"
         )}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -112,10 +112,10 @@ export default function Navbar() {
                 href={getLocalizedPath("/")}
                 className="flex items-center gap-2.5 group"
               >
-                <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+                <div className="h-9 w-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm shadow-orange-500/20 transition-all duration-300 group-hover:shadow-md group-hover:shadow-orange-500/30 group-hover:scale-105">
                   <Calendar className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">
+                <span className="text-xl font-bold text-slate-800">
                   {tCommon("appName")}
                 </span>
               </Link>
@@ -125,10 +125,10 @@ export default function Navbar() {
                 <Link
                   href={getLocalizedPath("/events")}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive("/events")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-orange-600 bg-orange-50"
+                      : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                   )}
                 >
                   {t("browseEvents")}
@@ -139,10 +139,10 @@ export default function Navbar() {
                     <Link
                       href={getLocalizedPath("/dashboard")}
                       className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center gap-2",
+                        "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 inline-flex items-center gap-2",
                         isActive("/dashboard")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-600 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
                       <LayoutDashboard className="w-4 h-4" />
@@ -153,23 +153,26 @@ export default function Navbar() {
                     {isAdmin && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
+                          <button className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-all duration-200 inline-flex items-center gap-1.5 group">
                             <Shield className="w-4 h-4" />
                             {t("admin")}
-                            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
-                          <DropdownMenuLabel className="text-xs text-gray-500">
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-52 shadow-lg border-slate-200"
+                        >
+                          <DropdownMenuLabel className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
                             {t("systemManagement")}
                           </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="bg-slate-200" />
                           <DropdownMenuItem asChild>
                             <Link
                               href={getLocalizedPath("/dashboard/users")}
                               className="cursor-pointer"
                             >
-                              <Users className="w-4 h-4 mr-2 text-gray-400" />
+                              <Users className="w-4 h-4 mr-2 text-slate-500" />
                               {t("manageUsers")}
                             </Link>
                           </DropdownMenuItem>
@@ -178,7 +181,7 @@ export default function Navbar() {
                               href={getLocalizedPath("/dashboard/categories")}
                               className="cursor-pointer"
                             >
-                              <Tag className="w-4 h-4 mr-2 text-gray-400" />
+                              <Tag className="w-4 h-4 mr-2 text-slate-500" />
                               {t("categories")}
                             </Link>
                           </DropdownMenuItem>
@@ -187,17 +190,17 @@ export default function Navbar() {
                               href={getLocalizedPath("/dashboard/check-ins")}
                               className="cursor-pointer"
                             >
-                              <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
+                              <UserCheck className="w-4 h-4 mr-2 text-slate-500" />
                               {t("checkIns")}
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="bg-slate-200" />
                           <DropdownMenuItem asChild>
                             <Link
                               href={getLocalizedPath("/events")}
                               className="cursor-pointer"
                             >
-                              <Search className="w-4 h-4 mr-2 text-gray-400" />
+                              <Search className="w-4 h-4 mr-2 text-slate-500" />
                               {t("allEvents")}
                             </Link>
                           </DropdownMenuItem>
@@ -209,22 +212,25 @@ export default function Navbar() {
                     {isOrganizer && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all inline-flex items-center gap-1.5 group">
+                          <button className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-all duration-200 inline-flex items-center gap-1.5 group">
                             {t("myEvents")}
-                            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
-                          <DropdownMenuLabel className="text-xs text-gray-500">
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-52 shadow-lg border-slate-200"
+                        >
+                          <DropdownMenuLabel className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
                             {t("eventManagement")}
                           </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="bg-slate-200" />
                           <DropdownMenuItem asChild>
                             <Link
                               href={getLocalizedPath("/dashboard/my-events")}
                               className="cursor-pointer"
                             >
-                              <FolderOpen className="w-4 h-4 mr-2 text-gray-400" />
+                              <FolderOpen className="w-4 h-4 mr-2 text-slate-500" />
                               {t("allEvents")}
                             </Link>
                           </DropdownMenuItem>
@@ -233,7 +239,7 @@ export default function Navbar() {
                               href={getLocalizedPath("/dashboard/analytics")}
                               className="cursor-pointer"
                             >
-                              <BarChart3 className="w-4 h-4 mr-2 text-gray-400" />
+                              <BarChart3 className="w-4 h-4 mr-2 text-slate-500" />
                               {t("analytics")}
                             </Link>
                           </DropdownMenuItem>
@@ -242,15 +248,15 @@ export default function Navbar() {
                               href={getLocalizedPath("/dashboard/check-ins")}
                               className="cursor-pointer"
                             >
-                              <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
+                              <UserCheck className="w-4 h-4 mr-2 text-slate-500" />
                               {t("checkIns")}
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="bg-slate-200" />
                           <DropdownMenuItem asChild>
                             <Link
                               href={getLocalizedPath("/events/create")}
-                              className="cursor-pointer text-blue-600 font-medium"
+                              className="cursor-pointer text-orange-600 font-semibold"
                             >
                               <Plus className="w-4 h-4 mr-2" />
                               {t("createEvent")}
@@ -263,10 +269,10 @@ export default function Navbar() {
                     <Link
                       href={getLocalizedPath("/dashboard/registrations")}
                       className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                        "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/registrations")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-600 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
                       {t("registrations")}
@@ -288,22 +294,22 @@ export default function Navbar() {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "capitalize font-medium text-xs",
+                        "capitalize font-medium text-xs border",
                         currentUser.role === "ADMIN"
-                          ? "border-red-200 bg-red-50 text-red-700"
+                          ? "border-purple-200 bg-purple-50 text-purple-700"
                           : currentUser.role === "ORGANIZER"
                           ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-green-200 bg-green-50 text-green-700"
+                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
                       )}
                     >
                       <div
                         className={cn(
                           "w-2 h-2 rounded-full mr-1.5",
                           currentUser.role === "ADMIN"
-                            ? "bg-red-500"
+                            ? "bg-purple-500"
                             : currentUser.role === "ORGANIZER"
-                            ? "bg-blue-600"
-                            : "bg-green-500"
+                            ? "bg-blue-500"
+                            : "bg-emerald-500"
                         )}
                       />
                       {tRoles(currentUser.role.toLowerCase())}
@@ -315,7 +321,7 @@ export default function Navbar() {
                     <Button
                       asChild
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                      className="bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium"
                     >
                       <Link href={getLocalizedPath("/events/create")}>
                         <Plus className="w-4 h-4 mr-2" />
@@ -330,8 +336,8 @@ export default function Navbar() {
                     appearance={{
                       elements: {
                         avatarBox:
-                          "w-9 h-9 rounded-full ring-2 ring-gray-200 hover:ring-gray-300 transition-all",
-                        userButtonPopoverCard: "shadow-lg",
+                          "w-9 h-9 rounded-full ring-2 ring-slate-200 hover:ring-slate-300 transition-all duration-200",
+                        userButtonPopoverCard: "shadow-xl border-slate-200",
                         userButtonPopoverFooter: "hidden",
                       },
                     }}
@@ -343,7 +349,7 @@ export default function Navbar() {
                     asChild
                     variant="ghost"
                     size="sm"
-                    className="font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    className="font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                   >
                     <Link href={getLocalizedPath("/sign-in")}>
                       <LogIn className="w-4 h-4 mr-2" />
@@ -353,7 +359,7 @@ export default function Navbar() {
                   <Button
                     asChild
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium"
                   >
                     <Link href={getLocalizedPath("/sign-up")}>
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -371,7 +377,7 @@ export default function Navbar() {
 
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all duration-200"
                 aria-label="Toggle menu"
                 aria-expanded={mobileMenuOpen}
               >
@@ -389,7 +395,7 @@ export default function Navbar() {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -397,7 +403,7 @@ export default function Navbar() {
       {/* Mobile menu panel */}
       <div
         className={cn(
-          "fixed top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40 lg:hidden transition-all duration-300 transform",
+          "fixed top-16 left-0 right-0 bg-white border-b border-slate-200 shadow-xl z-40 lg:hidden transition-all duration-300 transform",
           mobileMenuOpen
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0 pointer-events-none"
@@ -410,14 +416,24 @@ export default function Navbar() {
               href={getLocalizedPath("/events")}
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                 isActive("/events")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  ? "text-orange-700 bg-orange-50"
+                  : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
               )}
             >
-              <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Search className="w-4 h-4 text-gray-600" />
+              <div
+                className={cn(
+                  "h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
+                  isActive("/events") ? "bg-orange-100" : "bg-slate-100"
+                )}
+              >
+                <Search
+                  className={cn(
+                    "w-5 h-5",
+                    isActive("/events") ? "text-orange-600" : "text-slate-600"
+                  )}
+                />
               </div>
               <span>{t("browseEvents")}</span>
             </Link>
@@ -429,14 +445,26 @@ export default function Navbar() {
                   href={getLocalizedPath("/dashboard")}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive("/dashboard")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-orange-700 bg-orange-50"
+                      : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                   )}
                 >
-                  <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <LayoutDashboard className="w-4 h-4 text-gray-600" />
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
+                      isActive("/dashboard") ? "bg-orange-100" : "bg-slate-100"
+                    )}
+                  >
+                    <LayoutDashboard
+                      className={cn(
+                        "w-5 h-5",
+                        isActive("/dashboard")
+                          ? "text-orange-600"
+                          : "text-slate-600"
+                      )}
+                    />
                   </div>
                   <span>{t("dashboard")}</span>
                 </Link>
@@ -444,9 +472,9 @@ export default function Navbar() {
                 {/* Admin Section */}
                 {isAdmin && (
                   <>
-                    <div className="px-4 pt-4 pb-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
-                        <Shield className="w-3 h-3" />
+                    <div className="px-4 pt-6 pb-2">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5 text-purple-600" />
                         {t("admin")}
                       </p>
                     </div>
@@ -455,14 +483,28 @@ export default function Navbar() {
                       href={getLocalizedPath("/dashboard/users")}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/users")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-700 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
-                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Users className="w-4 h-4 text-gray-600" />
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          isActive("/dashboard/users")
+                            ? "bg-orange-100"
+                            : "bg-slate-100"
+                        )}
+                      >
+                        <Users
+                          className={cn(
+                            "w-5 h-5",
+                            isActive("/dashboard/users")
+                              ? "text-orange-600"
+                              : "text-slate-600"
+                          )}
+                        />
                       </div>
                       <span>{t("manageUsers")}</span>
                     </Link>
@@ -471,20 +513,34 @@ export default function Navbar() {
                       href={getLocalizedPath("/dashboard/categories")}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/categories")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-700 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
-                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Tag className="w-4 h-4 text-gray-600" />
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          isActive("/dashboard/categories")
+                            ? "bg-orange-100"
+                            : "bg-slate-100"
+                        )}
+                      >
+                        <Tag
+                          className={cn(
+                            "w-5 h-5",
+                            isActive("/dashboard/categories")
+                              ? "text-orange-600"
+                              : "text-slate-600"
+                          )}
+                        />
                       </div>
                       <span>{t("categories")}</span>
                     </Link>
 
-                    <div className="px-4 pt-4 pb-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="px-4 pt-6 pb-2">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                         {t("eventManagement")}
                       </p>
                     </div>
@@ -496,14 +552,28 @@ export default function Navbar() {
                   href={getLocalizedPath("/dashboard/registrations")}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive("/dashboard/registrations")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-orange-700 bg-orange-50"
+                      : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                   )}
                 >
-                  <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <FolderOpen className="w-4 h-4 text-gray-600" />
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-lg flex items-center justify-center",
+                      isActive("/dashboard/registrations")
+                        ? "bg-orange-100"
+                        : "bg-slate-100"
+                    )}
+                  >
+                    <FolderOpen
+                      className={cn(
+                        "w-5 h-5",
+                        isActive("/dashboard/registrations")
+                          ? "text-orange-600"
+                          : "text-slate-600"
+                      )}
+                    />
                   </div>
                   <span>{t("myRegistrations")}</span>
                 </Link>
@@ -516,14 +586,28 @@ export default function Navbar() {
                       href={getLocalizedPath("/dashboard/my-events")}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/my-events")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-700 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
-                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="w-4 h-4 text-gray-600" />
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          isActive("/dashboard/my-events")
+                            ? "bg-orange-100"
+                            : "bg-slate-100"
+                        )}
+                      >
+                        <Calendar
+                          className={cn(
+                            "w-5 h-5",
+                            isActive("/dashboard/my-events")
+                              ? "text-orange-600"
+                              : "text-slate-600"
+                          )}
+                        />
                       </div>
                       <span>{t("myEvents")}</span>
                     </Link>
@@ -533,14 +617,28 @@ export default function Navbar() {
                       href={getLocalizedPath("/dashboard/analytics")}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/analytics")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-700 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
-                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="w-4 h-4 text-gray-600" />
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          isActive("/dashboard/analytics")
+                            ? "bg-orange-100"
+                            : "bg-slate-100"
+                        )}
+                      >
+                        <BarChart3
+                          className={cn(
+                            "w-5 h-5",
+                            isActive("/dashboard/analytics")
+                              ? "text-orange-600"
+                              : "text-slate-600"
+                          )}
+                        />
                       </div>
                       <span>{t("analytics")}</span>
                     </Link>
@@ -550,14 +648,28 @@ export default function Navbar() {
                       href={getLocalizedPath("/dashboard/check-ins")}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive("/dashboard/check-ins")
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "text-orange-700 bg-orange-50"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-50"
                       )}
                     >
-                      <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <UserCheck className="w-4 h-4 text-gray-600" />
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          isActive("/dashboard/check-ins")
+                            ? "bg-orange-100"
+                            : "bg-slate-100"
+                        )}
+                      >
+                        <UserCheck
+                          className={cn(
+                            "w-5 h-5",
+                            isActive("/dashboard/check-ins")
+                              ? "text-orange-600"
+                              : "text-slate-600"
+                          )}
+                        />
                       </div>
                       <span>{t("checkIns")}</span>
                     </Link>
@@ -566,10 +678,10 @@ export default function Navbar() {
                     <Link
                       href={getLocalizedPath("/events/create")}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
-                      <div className="h-9 w-9 bg-white/20 rounded-lg flex items-center justify-center">
-                        <Plus className="w-4 h-4 text-white" />
+                      <div className="h-10 w-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <Plus className="w-5 h-5 text-white" />
                       </div>
                       <span>{t("createEvent")}</span>
                     </Link>
@@ -580,10 +692,10 @@ export default function Navbar() {
                 <Link
                   href={getLocalizedPath("/dashboard/settings")}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-all duration-200"
                 >
-                  <div className="h-9 w-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Settings className="w-4 h-4 text-gray-600" />
+                  <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-slate-600" />
                   </div>
                   <span>{t("settings")}</span>
                 </Link>
@@ -593,12 +705,12 @@ export default function Navbar() {
 
           {/* Mobile Auth Section */}
           {!isSignedIn && (
-            <div className="px-4 py-6 border-t border-gray-200 bg-gray-50">
+            <div className="px-4 py-6 border-t border-slate-200 bg-slate-50">
               <div className="space-y-3">
                 <Button
                   asChild
                   variant="outline"
-                  className="w-full justify-center border-gray-300"
+                  className="w-full justify-center border-slate-300 hover:border-slate-400 hover:bg-slate-50 font-medium"
                 >
                   <Link
                     href={getLocalizedPath("/sign-in")}
@@ -610,7 +722,7 @@ export default function Navbar() {
                 </Button>
                 <Button
                   asChild
-                  className="w-full justify-center bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full justify-center bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md font-medium"
                 >
                   <Link
                     href={getLocalizedPath("/sign-up")}
@@ -626,17 +738,17 @@ export default function Navbar() {
 
           {/* Mobile User Info */}
           {isSignedIn && currentUser && (
-            <div className="px-4 py-6 border-t border-gray-200 bg-gray-50">
+            <div className="px-4 py-6 border-t border-slate-200 bg-slate-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      "h-10 w-10 rounded-lg flex items-center justify-center",
+                      "h-11 w-11 rounded-lg flex items-center justify-center shadow-sm",
                       currentUser.role === "ADMIN"
-                        ? "bg-red-600"
+                        ? "bg-purple-500 shadow-purple-500/20"
                         : currentUser.role === "ORGANIZER"
-                        ? "bg-blue-600"
-                        : "bg-green-600"
+                        ? "bg-blue-500 shadow-blue-500/20"
+                        : "bg-emerald-500 shadow-emerald-500/20"
                     )}
                   >
                     {currentUser.role === "ADMIN" ? (
@@ -646,28 +758,28 @@ export default function Navbar() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-slate-900">
                       {currentUser.firstName} {currentUser.lastName}
                     </p>
                     <Badge
                       variant="outline"
                       className={cn(
-                        "capitalize text-xs mt-1",
+                        "capitalize text-xs mt-1.5 border font-medium",
                         currentUser.role === "ADMIN"
-                          ? "border-red-200 bg-red-50 text-red-700"
+                          ? "border-purple-200 bg-purple-50 text-purple-700"
                           : currentUser.role === "ORGANIZER"
                           ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-green-200 bg-green-50 text-green-700"
+                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
                       )}
                     >
                       <div
                         className={cn(
-                          "w-2 h-2 rounded-full mr-1.5",
+                          "w-1.5 h-1.5 rounded-full mr-1.5",
                           currentUser.role === "ADMIN"
-                            ? "bg-red-500"
+                            ? "bg-purple-500"
                             : currentUser.role === "ORGANIZER"
-                            ? "bg-blue-600"
-                            : "bg-green-500"
+                            ? "bg-blue-500"
+                            : "bg-emerald-500"
                         )}
                       />
                       {tRoles(currentUser.role.toLowerCase())}
@@ -679,7 +791,7 @@ export default function Navbar() {
                   appearance={{
                     elements: {
                       avatarBox:
-                        "w-9 h-9 rounded-full ring-2 ring-gray-300 transition-all",
+                        "w-10 h-10 rounded-full ring-2 ring-slate-200 hover:ring-slate-300 transition-all",
                     },
                   }}
                 />

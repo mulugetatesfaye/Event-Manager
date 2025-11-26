@@ -85,11 +85,11 @@ const formatETB = (amount: number): string => {
 const STATUS_CONFIG: Record<StatusKey, StatusConfig> = {
   ended: {
     label: "status.ended",
-    bgColor: "bg-gray-100",
-    textColor: "text-gray-600",
-    borderColor: "border-gray-200",
+    bgColor: "bg-slate-100",
+    textColor: "text-slate-600",
+    borderColor: "border-slate-200",
     icon: XCircle,
-    iconColor: "text-gray-400",
+    iconColor: "text-slate-400",
     pulse: false,
   },
   soldOut: {
@@ -103,11 +103,11 @@ const STATUS_CONFIG: Record<StatusKey, StatusConfig> = {
   },
   today: {
     label: "status.today",
-    bgColor: "bg-green-50",
-    textColor: "text-green-700",
-    borderColor: "border-green-200",
+    bgColor: "bg-emerald-50",
+    textColor: "text-emerald-700",
+    borderColor: "border-emerald-200",
     icon: Sparkles,
-    iconColor: "text-green-500",
+    iconColor: "text-emerald-500",
     pulse: true,
   },
   tomorrow: {
@@ -199,7 +199,7 @@ export function EventCard({
   const getProgressColor = (): string => {
     if (fillPercentage >= 100) return "bg-red-500";
     if (fillPercentage > 80) return "bg-orange-500";
-    if (fillPercentage > 50) return "bg-yellow-500";
+    if (fillPercentage > 50) return "bg-amber-500";
     return "bg-emerald-500";
   };
 
@@ -212,16 +212,16 @@ export function EventCard({
         className={cn(
           "relative overflow-hidden rounded-xl border bg-white h-full flex flex-col",
           "transition-all duration-300 ease-out",
-          "hover:shadow-lg hover:shadow-gray-200/50",
+          "hover:shadow-lg hover:shadow-slate-200/60",
           "hover:-translate-y-0.5",
-          urgencyLevel === "high" && "ring-1 ring-green-500/20",
+          urgencyLevel === "high" && "ring-1 ring-emerald-500/20",
           isPastEvent && "opacity-75",
           isFull && !isPastEvent && "ring-1 ring-red-500/10",
-          "border-gray-200 hover:border-gray-300"
+          "border-slate-200 hover:border-slate-300"
         )}
       >
         {/* Image Section */}
-        <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 shrink-0">
+        <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 shrink-0">
           {event.imageUrl ? (
             <>
               <Image
@@ -238,10 +238,10 @@ export function EventCard({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
               <div className="text-center">
-                <div className="w-10 h-10 rounded-xl bg-gray-200/50 flex items-center justify-center mx-auto">
-                  <CalendarDays className="w-5 h-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-xl bg-slate-200/50 flex items-center justify-center mx-auto">
+                  <CalendarDays className="w-5 h-5 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -253,7 +253,7 @@ export function EventCard({
               <Badge
                 className="px-2 py-0.5 text-[10px] font-semibold shadow-md backdrop-blur-sm border-0"
                 style={{
-                  backgroundColor: `${event.category.color || "#6b7280"}E6`,
+                  backgroundColor: `${event.category.color || "#64748b"}E6`,
                   color: "white",
                 }}
               >
@@ -273,8 +273,8 @@ export function EventCard({
               >
                 {statusConfig.pulse ? (
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                   </span>
                 ) : (
                   <statusConfig.icon
@@ -299,11 +299,11 @@ export function EventCard({
               {displayPrice > 0 ? (
                 <div className="text-right">
                   {hasTicketTypes && (
-                    <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide block leading-none">
+                    <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wide block leading-none">
                       {t("from")}
                     </span>
                   )}
-                  <span className="font-bold text-xs text-gray-900">
+                  <span className="font-bold text-xs text-slate-900">
                     {formatETB(displayPrice)}
                   </span>
                 </div>
@@ -322,9 +322,9 @@ export function EventCard({
           <div>
             <h3
               className={cn(
-                "text-sm font-semibold line-clamp-2 text-gray-900 leading-snug",
+                "text-sm font-semibold line-clamp-2 text-slate-900 leading-snug",
                 "transition-colors duration-300",
-                "group-hover:text-blue-600"
+                "group-hover:text-orange-600"
               )}
             >
               {event.title}
@@ -335,16 +335,16 @@ export function EventCard({
           <div className="space-y-2 grow">
             {/* Date & Time */}
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
+              <div className="h-7 w-7 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-3.5 h-3.5 text-orange-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-900 truncate">
+                <p className="text-xs font-medium text-slate-900 truncate">
                   {format(new Date(event.startDate), "EEE, MMM dd")} •{" "}
                   {format(new Date(event.startDate), "h:mm a")}
                 </p>
                 {isUpcoming && !isEventToday && !isEventTomorrow && (
-                  <p className="text-[10px] text-blue-600">
+                  <p className="text-[10px] text-orange-600 font-medium">
                     {formatDistanceToNow(new Date(event.startDate), {
                       addSuffix: true,
                     })}
@@ -359,11 +359,11 @@ export function EventCard({
                 <MapPin className="w-3.5 h-3.5 text-purple-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-900 truncate">
+                <p className="text-xs font-medium text-slate-900 truncate">
                   {event.location}
                 </p>
                 {event.venue && (
-                  <p className="text-[10px] text-gray-500 truncate">
+                  <p className="text-[10px] text-slate-500 truncate">
                     {event.venue}
                   </p>
                 )}
@@ -379,7 +379,7 @@ export function EventCard({
                   <Ticket className="w-3.5 h-3.5 text-amber-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900">
+                  <p className="text-xs font-medium text-slate-900">
                     {event.ticketTypes.length}{" "}
                     {event.ticketTypes.length === 1
                       ? t("ticketType")
@@ -394,17 +394,17 @@ export function EventCard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs font-medium text-gray-900">
+                    <p className="text-xs font-medium text-slate-900">
                       {totalTicketsSold}/{event.capacity}
                     </p>
                     <span
                       className={cn(
-                        "text-[10px] font-medium px-1.5 py-0.5 rounded",
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded",
                         isFull
-                          ? "bg-red-100 text-red-600"
+                          ? "bg-red-100 text-red-700"
                           : fillPercentage > 80
-                          ? "bg-orange-100 text-orange-600"
-                          : "bg-emerald-100 text-emerald-600"
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-emerald-100 text-emerald-700"
                       )}
                     >
                       {isFull
@@ -412,7 +412,7 @@ export function EventCard({
                         : `${availableSpots} ${t("left")}`}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-500",
@@ -458,24 +458,24 @@ export function EventCard({
 
           {/* Organizer */}
           {showOrganizer && event.organizer && (
-            <div className="pt-2.5 border-t border-gray-100">
+            <div className="pt-2.5 border-t border-slate-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Avatar className="w-6 h-6 shrink-0">
+                  <Avatar className="w-6 h-6 shrink-0 ring-1 ring-slate-200">
                     <AvatarImage
                       src={event.organizer.imageUrl || undefined}
                       alt={`${event.organizer.firstName} ${event.organizer.lastName}`}
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] font-semibold">
+                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white text-[10px] font-semibold">
                       {event.organizer.firstName?.[0]}
                       {event.organizer.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 leading-none">
+                    <p className="text-[10px] text-slate-400 leading-none">
                       {t("hostedBy")}
                     </p>
-                    <p className="text-xs font-medium text-gray-900 truncate">
+                    <p className="text-xs font-medium text-slate-900 truncate">
                       {event.organizer.firstName} {event.organizer.lastName}
                     </p>
                   </div>
@@ -484,9 +484,9 @@ export function EventCard({
                 <div
                   className={cn(
                     "h-6 w-6 rounded-full flex items-center justify-center shrink-0",
-                    "bg-gray-100 text-gray-400",
+                    "bg-slate-100 text-slate-400",
                     "transition-all duration-300",
-                    "group-hover:bg-blue-600 group-hover:text-white"
+                    "group-hover:bg-orange-600 group-hover:text-white"
                   )}
                 >
                   <ArrowUpRight className="w-3 h-3" />
@@ -508,25 +508,25 @@ export function EventCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-gray-200 bg-white h-full",
+        "overflow-hidden rounded-xl border border-slate-200 bg-white h-full",
         className
       )}
     >
-      <div className="h-36 w-full bg-gray-100 animate-pulse" />
+      <div className="h-36 w-full bg-slate-100 animate-pulse" />
       <div className="p-3.5 space-y-3">
-        <div className="h-4 w-4/5 rounded bg-gray-100 animate-pulse" />
+        <div className="h-4 w-4/5 rounded bg-slate-100 animate-pulse" />
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="flex-1 h-4 rounded bg-gray-100 animate-pulse" />
+              <div className="h-7 w-7 rounded-lg bg-slate-100 animate-pulse" />
+              <div className="flex-1 h-4 rounded bg-slate-100 animate-pulse" />
             </div>
           ))}
         </div>
-        <div className="pt-2.5 border-t border-gray-100">
+        <div className="pt-2.5 border-t border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-gray-100 animate-pulse" />
-            <div className="flex-1 h-4 rounded bg-gray-100 animate-pulse" />
+            <div className="h-6 w-6 rounded-full bg-slate-100 animate-pulse" />
+            <div className="flex-1 h-4 rounded bg-slate-100 animate-pulse" />
           </div>
         </div>
       </div>
@@ -557,14 +557,14 @@ export function EventCardCompact({
     <Link href={`/events/${event.id}`} className={cn("group block", className)}>
       <div
         className={cn(
-          "flex gap-3 p-3 rounded-lg border border-gray-200 bg-white",
+          "flex gap-3 p-3 rounded-xl border border-slate-200 bg-white",
           "transition-all duration-300",
-          "hover:shadow-md hover:border-gray-300",
+          "hover:shadow-md hover:shadow-slate-200/60 hover:border-slate-300",
           "hover:-translate-y-0.5"
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-20 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+        <div className="relative h-20 w-20 rounded-lg overflow-hidden bg-slate-100 shrink-0">
           {event.imageUrl ? (
             <Image
               src={event.imageUrl}
@@ -574,7 +574,7 @@ export function EventCardCompact({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <CalendarDays className="w-6 h-6 text-gray-300" />
+              <CalendarDays className="w-6 h-6 text-slate-300" />
             </div>
           )}
         </div>
@@ -583,23 +583,23 @@ export function EventCardCompact({
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-xs font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-xs font-semibold text-slate-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
                 {event.title}
               </h3>
               {isEventToday && (
-                <Badge className="shrink-0 px-1.5 py-0.5 text-[9px] bg-green-100 text-green-700 border-0">
+                <Badge className="shrink-0 px-1.5 py-0.5 text-[9px] bg-emerald-100 text-emerald-700 border-0 font-semibold">
                   {t("status.today")}
                 </Badge>
               )}
             </div>
-            <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+            <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
               <MapPin className="w-2.5 h-2.5" />
               <span className="truncate">{event.location}</span>
             </p>
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-gray-500 flex items-center gap-1">
+            <p className="text-[10px] text-slate-500 flex items-center gap-1">
               <Clock className="w-2.5 h-2.5" />
               {format(new Date(event.startDate), "MMM dd, h:mm a")}
             </p>
@@ -607,7 +607,7 @@ export function EventCardCompact({
               className={cn(
                 "px-2 py-0.5 rounded text-[10px] font-semibold",
                 displayPrice > 0
-                  ? "bg-gray-100 text-gray-900"
+                  ? "bg-slate-100 text-slate-900"
                   : "bg-emerald-100 text-emerald-700"
               )}
             >
@@ -642,9 +642,9 @@ export function EventCardFeatured({
     <Link href={`/events/${event.id}`} className={cn("group block", className)}>
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl border border-gray-200 bg-white",
+          "relative overflow-hidden rounded-2xl border border-slate-200 bg-white",
           "transition-all duration-500",
-          "hover:shadow-xl hover:shadow-gray-200/50",
+          "hover:shadow-xl hover:shadow-slate-200/60",
           "hover:-translate-y-1"
         )}
       >
@@ -661,14 +661,14 @@ export function EventCardFeatured({
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50">
-              <CalendarDays className="w-12 h-12 text-gray-300" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+              <CalendarDays className="w-12 h-12 text-slate-300" />
             </div>
           )}
 
           {/* Featured Badge */}
           <div className="absolute top-3 left-3">
-            <Badge className="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-md text-xs font-semibold">
+            <Badge className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-md text-xs font-semibold">
               <Sparkles className="w-3 h-3 mr-1" />
               Featured
             </Badge>
@@ -680,7 +680,7 @@ export function EventCardFeatured({
               <Badge
                 className="px-2 py-0.5 text-[10px] font-semibold shadow-md backdrop-blur-sm border-0"
                 style={{
-                  backgroundColor: `${event.category.color || "#6b7280"}E6`,
+                  backgroundColor: `${event.category.color || "#64748b"}E6`,
                   color: "white",
                 }}
               >
@@ -711,19 +711,19 @@ export function EventCardFeatured({
         <div className="p-4 flex items-center justify-between">
           {event.organizer && (
             <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
+              <Avatar className="w-8 h-8 ring-1 ring-slate-200">
                 <AvatarImage
                   src={event.organizer.imageUrl || undefined}
                   alt={`${event.organizer.firstName} ${event.organizer.lastName}`}
                 />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-semibold">
                   {event.organizer.firstName?.[0]}
                   {event.organizer.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-[10px] text-gray-500">{t("hostedBy")}</p>
-                <p className="text-xs font-semibold text-gray-900">
+                <p className="text-[10px] text-slate-500">{t("hostedBy")}</p>
+                <p className="text-xs font-semibold text-slate-900">
                   {event.organizer.firstName} {event.organizer.lastName}
                 </p>
               </div>
@@ -734,11 +734,11 @@ export function EventCardFeatured({
             {displayPrice > 0 ? (
               <div className="text-right">
                 {hasTicketTypes && (
-                  <p className="text-[9px] text-gray-500 uppercase">
+                  <p className="text-[9px] text-slate-500 uppercase font-medium">
                     {t("from")}
                   </p>
                 )}
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-sm font-bold text-slate-900">
                   {formatETB(displayPrice)}
                 </p>
               </div>
@@ -750,14 +750,80 @@ export function EventCardFeatured({
             <div
               className={cn(
                 "h-9 w-9 rounded-full flex items-center justify-center",
-                "bg-blue-600 text-white shadow-md",
+                "bg-orange-600 text-white shadow-md",
                 "transition-all duration-300",
-                "group-hover:scale-110 group-hover:shadow-lg"
+                "group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-orange-600/25"
               )}
             >
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ============================================================================
+// MINI VARIANT (For sidebars, lists)
+// ============================================================================
+
+export function EventCardMini({
+  event,
+  className,
+}: {
+  event: EventWithRelations;
+  className?: string;
+}) {
+  const t = useTranslations("events.card");
+  const isEventToday = isToday(new Date(event.startDate));
+  const isEventTomorrow = isTomorrow(new Date(event.startDate));
+
+  return (
+    <Link href={`/events/${event.id}`} className={cn("group block", className)}>
+      <div
+        className={cn(
+          "flex items-center gap-3 p-2.5 rounded-lg",
+          "transition-all duration-200",
+          "hover:bg-slate-50"
+        )}
+      >
+        {/* Date Badge */}
+        <div className="h-12 w-12 rounded-lg bg-orange-50 flex flex-col items-center justify-center shrink-0 border border-orange-100">
+          <span className="text-[10px] font-semibold text-orange-600 uppercase">
+            {format(new Date(event.startDate), "MMM")}
+          </span>
+          <span className="text-lg font-bold text-slate-900 leading-none">
+            {format(new Date(event.startDate), "dd")}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-semibold text-slate-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
+            {event.title}
+          </h4>
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {format(new Date(event.startDate), "h:mm a")}
+            {(isEventToday || isEventTomorrow) && (
+              <Badge
+                className={cn(
+                  "ml-1 px-1.5 py-0 text-[9px] font-semibold border-0",
+                  isEventToday
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-blue-100 text-blue-700"
+                )}
+              >
+                {isEventToday ? t("status.today") : t("status.tomorrow")}
+              </Badge>
+            )}
+          </p>
+        </div>
+
+        {/* Arrow */}
+        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-orange-100 transition-colors">
+          <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-orange-600" />
         </div>
       </div>
     </Link>
