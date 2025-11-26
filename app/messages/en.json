@@ -266,6 +266,11 @@
       "title": "Professional",
       "subtitle": "Made Simple",
       "description": "Create, manage, and attend events with our comprehensive platform. Perfect for organizers and attendees alike.",
+      "liveNow": "Live Events Now",
+      "freeToStart": "Free to start",
+      "noCardRequired": "No credit card required",
+      "setupInMinutes": "Setup in minutes",
+      "watchDemo": "Watch Demo",
       "words": {
         "conferences": "Conferences",
         "workshops": "Workshops",
@@ -274,9 +279,19 @@
         "seminars": "Seminars"
       }
     },
+    "stats": {
+      "eventsHosted": "Events Hosted",
+      "totalAttendees": "Total Attendees",
+      "uptime": "Platform Uptime",
+      "countries": "Countries"
+    },
+    "trustedBy": {
+      "title": "Trusted by industry-leading companies worldwide"
+    },
     "upcomingEvents": {
       "title": "Upcoming Events",
       "description": "Discover what's happening near you",
+      "badge": "Live & Upcoming",
       "viewAll": "View All Events",
       "stats": {
         "multipleCities": "Events in Multiple Cities",
@@ -292,6 +307,7 @@
     "features": {
       "title": "Everything You Need to Manage Events",
       "description": "Our platform provides all the tools you need to create, manage, and grow your events successfully.",
+      "badge": "Powerful Features",
       "eventCreation": {
         "title": "Event Creation",
         "description": "Create stunning events with our intuitive builder and comprehensive customization options."
@@ -312,6 +328,7 @@
     "howItWorks": {
       "title": "Get Started in 3 Easy Steps",
       "description": "From signup to your first event in minutes",
+      "badge": "Simple Process",
       "step1": {
         "title": "Create Your Account",
         "description": "Sign up for free and choose your role. No credit card required."
@@ -327,7 +344,8 @@
     },
     "benefits": {
       "title": "Built for Success",
-      "description": "Join thousands of successful event organizers who trust EventHub",
+      "description": "Join thousands of successful event organizers who trust AddisVibe",
+      "badge": "Why Choose Us",
       "easyToUse": {
         "title": "Easy to Use",
         "description": "Intuitive interface designed for everyone"
@@ -361,13 +379,19 @@
         "description": "Track everything"
       }
     },
+    "integrations": {
+      "badge": "Seamless Integrations",
+      "title": "Connect with your favorite tools",
+      "description": "Integrate with the platforms you already use for a seamless workflow"
+    },
     "testimonials": {
       "title": "Loved by Thousands",
-      "description": "See what our users have to say about EventHub",
+      "description": "See what our users have to say about AddisVibe",
+      "badge": "Customer Love",
       "testimonial1": {
         "name": "Sarah Johnson",
         "role": "Tech Conference Organizer",
-        "content": "EventHub has transformed how we manage our tech conferences. The analytics features have helped us grow our events by 300%."
+        "content": "AddisVibe has transformed how we manage our tech conferences. The analytics features have helped us grow our events by 300%."
       },
       "testimonial2": {
         "name": "Michael Chen",
@@ -386,6 +410,12 @@
       "description": "Join thousands of event organizers who trust our platform to bring their visions to life",
       "disclaimer": "No credit card required • Free to start • Cancel anytime",
       "startCreating": "Start creating events today"
+    },
+    "security": {
+      "sslSecured": "SSL Secured",
+      "gdprCompliant": "GDPR Compliant",
+      "soc2Certified": "SOC 2 Certified",
+      "support247": "24/7 Support"
     },
     "buttons": {
       "getStartedFree": "Get Started Free",
