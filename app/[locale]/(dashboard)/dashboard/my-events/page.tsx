@@ -236,13 +236,13 @@ function StatCard({
           )}
         />
 
-        <CardContent className="p-4 sm:p-6 relative">
+        <CardContent className="p-4 sm:p-5 lg:p-6 relative">
           <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+            <div className="space-y-1.5 sm:space-y-2 min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">
                 {title}
               </p>
-              <p className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 truncate">
                 {typeof value === "number" ? formatNumber(value) : value}
               </p>
               {subtitle && (
@@ -253,11 +253,11 @@ function StatCard({
             </div>
             <div
               className={cn(
-                "flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110",
+                "flex-shrink-0 w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110",
                 colorConfig.icon
               )}
             >
-              <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <Icon className="w-5 h-5 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
             </div>
           </div>
         </CardContent>
@@ -361,18 +361,18 @@ function LoadingSkeleton() {
         </div>
       </div>
 
-      {/* Stats Skeleton */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
+      {/* Stats Skeleton - Max 4 columns */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="border-slate-200">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 sm:p-5 lg:p-6">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-2 flex-1">
                   <Skeleton className="h-3 sm:h-4 w-14 sm:w-20" />
                   <Skeleton className="h-6 sm:h-8 w-12 sm:w-16" />
                   <Skeleton className="h-2 sm:h-3 w-16 sm:w-24" />
                 </div>
-                <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl flex-shrink-0" />
+                <Skeleton className="h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 rounded-lg sm:rounded-xl flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -724,10 +724,10 @@ function AdminMyEventsView() {
       </FadeIn>
 
       {/* ============================================================ */}
-      {/* STATS OVERVIEW */}
+      {/* STATS OVERVIEW - MAX 4 COLUMNS */}
       {/* ============================================================ */}
       {events && events.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <StatCard
             title="Total Events"
             value={stats.total}
@@ -1235,10 +1235,10 @@ function OrganizerMyEventsView() {
       </FadeIn>
 
       {/* ============================================================ */}
-      {/* STATS OVERVIEW */}
+      {/* STATS OVERVIEW - MAX 4 COLUMNS */}
       {/* ============================================================ */}
       {events && events.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <StatCard
             title="Total Events"
             value={stats.total}
