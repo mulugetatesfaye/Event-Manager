@@ -290,7 +290,7 @@ export default function OnboardingPage() {
       <footer className="py-6 border-t border-slate-200 bg-white">
         <div className="max-w-3xl mx-auto px-4">
           <p className="text-center text-xs text-slate-500">
-            © 2024 AddisVibe. All rights reserved.
+            © 2024 Megbiya. All rights reserved.
           </p>
         </div>
       </footer>
