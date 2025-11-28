@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -110,14 +111,26 @@ export default function Navbar() {
             <div className="flex items-center gap-8">
               <Link
                 href={getLocalizedPath("/")}
-                className="flex items-center gap-2.5 group"
+                className="flex items-center group"
               >
-                <div className="h-9 w-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm shadow-orange-500/20 transition-all duration-300 group-hover:shadow-md group-hover:shadow-orange-500/30 group-hover:scale-105">
-                  <Calendar className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-slate-800">
-                  {tCommon("appName")}
-                </span>
+                {/* Mobile logo (smaller) */}
+                <Image
+                  src="/logo.png"
+                  alt={tCommon("appName")}
+                  width={100}
+                  height={32}
+                  className="h-8 w-auto lg:hidden transition-all duration-300 group-hover:scale-105"
+                  priority
+                />
+                {/* Desktop logo (larger) */}
+                <Image
+                  src="/logo.png"
+                  alt={tCommon("appName")}
+                  width={140}
+                  height={40}
+                  className="hidden lg:block h-10 w-auto transition-all duration-300 group-hover:scale-105"
+                  priority
+                />
               </Link>
 
               {/* Desktop Navigation */}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AddisVibe - Professional Event Management",
+  title: "Megbiya - Professional Event Management",
   description:
     "Create, manage, and attend events with our comprehensive platform.",
 };
