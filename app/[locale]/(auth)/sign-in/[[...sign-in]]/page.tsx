@@ -72,7 +72,7 @@ export default function SignInPage() {
               <div className="h-10 w-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/25 transition-transform group-hover:scale-105">
                 <Calendar className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">AddisVibe</span>
+              <span className="text-2xl font-bold text-white">Megbiya</span>
             </Link>
           </div>
 
@@ -87,7 +87,7 @@ export default function SignInPage() {
               Welcome back to
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
-                AddisVibe
+                Megbiya
               </span>
             </h1>
 
@@ -160,9 +160,7 @@ export default function SignInPage() {
               <div className="h-9 w-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
                 <Calendar className="h-4 w-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-slate-900">
-                AddisVibe
-              </span>
+              <span className="text-lg font-bold text-slate-900">Megbiya</span>
             </Link>
 
             <Link
@@ -314,7 +312,7 @@ export default function SignInPage() {
               >
                 Privacy Policy
               </Link>
-              <span className="text-slate-400">© 2024 AddisVibe</span>
+              <span className="text-slate-400">© 2024 Megbiya</span>
             </div>
           </div>
         </footer>

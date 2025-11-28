@@ -31,7 +31,7 @@ const BENEFITS = [
 
 const TESTIMONIAL = {
   quote:
-    "AddisVibe transformed how we run our tech meetups. The platform is incredibly intuitive and our attendance has grown 3x!",
+    "Megbiya transformed how we run our tech meetups. The platform is incredibly intuitive and our attendance has grown 3x!",
   author: "Abebe Kebede",
   role: "Tech Community Lead",
   avatar: "AK",
@@ -69,7 +69,7 @@ export default function SignUpPage() {
               <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105">
                 <Calendar className="h-5 w-5 text-orange-600" />
               </div>
-              <span className="text-2xl font-bold text-white">AddisVibe</span>
+              <span className="text-2xl font-bold text-white">Megbiya</span>
             </Link>
           </div>
 
@@ -87,7 +87,7 @@ export default function SignUpPage() {
             </h1>
 
             <p className="text-lg text-orange-100 mb-10 max-w-md leading-relaxed">
-              Join thousands of event organizers who trust AddisVibe to power
+              Join thousands of event organizers who trust Megbiya to power
               their events.
             </p>
 
@@ -160,9 +160,7 @@ export default function SignUpPage() {
               <div className="h-9 w-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
                 <Calendar className="h-4 w-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-slate-900">
-                AddisVibe
-              </span>
+              <span className="text-lg font-bold text-slate-900">Megbiya</span>
             </Link>
 
             <Link
@@ -328,7 +326,7 @@ export default function SignUpPage() {
               >
                 Privacy Policy
               </Link>
-              <span className="text-slate-400">© 2024 AddisVibe</span>
+              <span className="text-slate-400">© 2024 Megbiya</span>
             </div>
           </div>
         </footer>
